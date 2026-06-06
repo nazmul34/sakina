@@ -1,0 +1,38 @@
+# Local development stack: Django backend + Postgres.
+# Usage: docker compose up --build
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sakina
+      POSTGRES_PASSWORD: sakina
+      POSTGRES_DB: sakina
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sakina"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DEBUG: "True"
+      SECRET_KEY: dev-insecure-secret-key-change-me
+      ALLOWED_HOSTS: "*"
+      DATABASE_URL: postgres://sakina:sakina@db:5432/sakina
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
