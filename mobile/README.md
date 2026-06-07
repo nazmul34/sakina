@@ -103,6 +103,31 @@ npm run android             # expo run:android — builds + installs the dev cli
 npm start                   # expo start --dev-client
 ```
 
+## Versioning (per release)
+
+Two numbers ship with every Android build:
+
+| | Source of truth | Who bumps it |
+|---|---|---|
+| `versionName` (human-facing, e.g. `1.0.1`) | `expo.version` in `app.json` | **You**, manually, per release (semantic) |
+| `versionCode` (integer Android compares) | git commit count | **Automatic** — `plugins/withVersionCode.js` |
+
+Android refuses to install an APK whose `versionCode` isn't higher than the
+installed one, so it must increase every release. Rather than hand-bump it,
+`plugins/withVersionCode.js` injects a Gradle helper that sets
+`versionCode = git rev-list --count HEAD`. Every commit ⇒ a higher code,
+automatically, for both local `./gradlew` builds and EAS.
+
+**Per release, you only:**
+1. Bump `expo.version` in `app.json` if the semantic version changed (e.g. `1.0.0` → `1.0.1`).
+2. Commit (this advances the commit count → new `versionCode`).
+3. Build.
+
+> The plugin edits the generated `android/` project, so after changing the
+> plugin run `npx expo prebuild --platform android --clean` once to re-apply it.
+> `eas.json` uses `appVersionSource: "local"` so cloud builds read these same
+> values.
+
 ## EAS Build (cloud builds)
 
 `npm run android` builds locally and is the fastest inner loop, but it needs the
