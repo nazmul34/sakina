@@ -26,6 +26,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
       DEBUG: "True"
       SECRET_KEY: dev-insecure-secret-key-change-me
       ALLOWED_HOSTS: "*"

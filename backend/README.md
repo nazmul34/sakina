@@ -1,14 +1,17 @@
 # Sakina Backend
 
-Django REST Framework backend for the Sakina app. This is the basic scaffold
-(issue #1): a runnable skeleton with env-based settings and a health-check
-endpoint. No domain models, auth, or feature endpoints yet.
+Django REST Framework backend for the Sakina app. A runnable skeleton with
+split per-environment settings (dev/prod), 12-factor env-based configuration,
+and a health-check endpoint. No domain models, auth, or feature endpoints yet.
 
 ## Layout
 
 ```
 backend/
-├── config/            # Django project (settings, urls, wsgi/asgi)
+├── config/
+│   ├── settings/      # Split settings: base.py + dev.py + prod.py
+│   ├── urls.py
+│   └── wsgi.py / asgi.py
 ├── core/              # Core app (health check; future shared bits)
 ├── manage.py
 ├── requirements.txt
@@ -38,16 +41,39 @@ curl http://127.0.0.1:8000/health
 
 ## Configuration
 
-Settings are environment-driven (see `.env.example`):
+### Settings layout (chosen pattern)
+
+Settings are **split per environment** under `config/settings/`, selected via
+the `DJANGO_SETTINGS_MODULE` environment variable:
+
+| Module | Use | Notes |
+|---|---|---|
+| `config.settings.base` | shared | 12-factor, env-driven (django-environ). Never loaded directly. |
+| `config.settings.dev` | local development | **Default** (set in `manage.py`/`wsgi.py`/`asgi.py`). `DEBUG=True`, permissive CORS. |
+| `config.settings.prod` | production | `DEBUG=False` forced, strict CORS allowlist, TLS/HSTS/secure-cookie hardening, rejects the insecure dev secret. |
+
+All environments standardize on **django-environ** for reading configuration;
+`base.py` defines a single `env` instance the other modules reuse.
+
+Run with production settings:
+
+```bash
+DJANGO_SETTINGS_MODULE=config.settings.prod gunicorn config.wsgi:application
+```
+
+### Environment variables (see `.env.example`)
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `DEBUG` | `False` | Django debug mode. `True` for local dev only. |
-| `SECRET_KEY` | insecure dev key | Django secret. Set a real one outside local dev. |
-| `ALLOWED_HOSTS` | `*` | Comma-separated allowed hosts. |
+| `DJANGO_SETTINGS_MODULE` | `config.settings.dev` | Which settings module to load. |
+| `DEBUG` | `True` (dev) / forced `False` (prod) | Django debug mode. |
+| `SECRET_KEY` | insecure dev key | Django secret. **Required** in prod (boot fails otherwise). |
+| `ALLOWED_HOSTS` | `localhost,127.0.0.1` | Comma-separated hosts. **Required & non-wildcard** in prod. |
 | `DATABASE_URL` | SQLite file | e.g. `postgres://user:pass@host:5432/db`. |
-| `CORS_ALLOW_ALL_ORIGINS` | `True` | Allow any origin (dev). Set `False` in prod. |
-| `CORS_ALLOWED_ORIGINS` | empty | Explicit origins when not allowing all. |
+| `CORS_ALLOW_ALL_ORIGINS` | `True` (dev) / forced `False` (prod) | Allow any origin. |
+| `CORS_ALLOWED_ORIGINS` | empty | Explicit origins; the only CORS source in prod. |
+| `SECURE_SSL_REDIRECT` | `True` (prod) | Redirect HTTP→HTTPS. |
+| `SECURE_HSTS_SECONDS` | `31536000` (prod) | HSTS max-age; `0` to disable. |
 
 The database defaults to a local SQLite file so the project runs with zero
 setup. Per the PRD (§7.3) we start DB-light (Path B) and can move to
