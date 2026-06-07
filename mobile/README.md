@@ -15,6 +15,7 @@ mobile/
 ├── App.tsx                     # Root: SafeAreaProvider + NavigationContainer
 ├── index.ts                    # Expo entry point
 ├── app.json                    # Expo config (Android-first, dev-client plugin)
+├── eas.json                    # EAS Build profiles (development / preview / production)
 ├── src/
 │   ├── config/env.ts           # API base URL from EXPO_PUBLIC_* env
 │   ├── navigation/             # Root stack navigator + route types
@@ -102,6 +103,56 @@ npm run android             # expo run:android — builds + installs the dev cli
 npm start                   # expo start --dev-client
 ```
 
+## EAS Build (cloud builds)
+
+`npm run android` builds locally and is the fastest inner loop, but it needs the
+full Android toolchain above. **EAS Build** compiles in the cloud instead — the
+only supported way to produce shareable artifacts (an installable dev client for
+testers, or a Play Store bundle). Profiles live in `eas.json`:
+
+| Profile | Output | Distribution | Use |
+|---|---|---|---|
+| `development` | APK with `developmentClient: true` | internal | Install on a device, then connect the Metro bundler. Needed to load the native `RingerControl` module (issue #6) — Expo Go can't. |
+| `preview` | release APK | internal | Hand a single installable file to testers; no dev tooling. |
+| `production` | AAB (`app-bundle`), `autoIncrement` | store | Google Play submission. |
+
+### One-time setup
+
+```bash
+npm install --global eas-cli
+eas login                       # Expo account
+eas init                        # links the project; writes extra.eas.projectId into app.json
+```
+
+> `eas init` requires an Expo account and is the step that populates
+> `extra.eas.projectId` in `app.json` (intentionally not committed yet — it is
+> account-specific and gets created on first `eas init`).
+
+### Build commands
+
+```bash
+npm run build:dev               # eas build --profile development --platform android
+npm run build:preview           # internal release APK
+npm run build:prod              # production AAB for Play
+```
+
+Install a finished `development` build on your device, then run `npm start` to
+attach the bundler.
+
+### Signing keys — decision
+
+**Use EAS-managed credentials** (the default). On the first Android build EAS
+generates and stores the upload keystore for us; no keystore is checked into the
+repo. To migrate to a self-managed keystore later, run
+`eas credentials -p android` and supply your own — no code change required. This
+keeps secrets out of git and matches the "free/cheap to run, solo dev" posture
+of the PRD.
+
+> **EAS free-tier budget:** the free plan caps the number of cloud builds per
+> month. Prefer local `npm run android` for day-to-day iteration and reserve EAS
+> builds for shareable dev-client / preview / production artifacts. If we hit the
+> cap, self-host a build runner (`eas build --local`) on the dev machine.
+
 ## Configuration
 
 | Variable | Default | Purpose |
@@ -115,6 +166,9 @@ npm start                   # expo start --dev-client
 | `npm start` | Start the Metro bundler for the dev client |
 | `npm run android` | Build + run on Android (dev client) |
 | `npm run ios` | Build + run on iOS (lite, no auto-silent) |
+| `npm run build:dev` | EAS cloud build — development dev-client APK (internal) |
+| `npm run build:preview` | EAS cloud build — release APK for testers (internal) |
+| `npm run build:prod` | EAS cloud build — production AAB for Google Play |
 | `npm run lint` | ESLint |
 | `npm run format` | Prettier write |
 | `npm run typecheck` | `tsc --noEmit` |
