@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { RingerControlPanel } from '../components/RingerControlPanel';
 import { API_BASE_URL } from '../config/env';
 
 /**
@@ -14,6 +15,7 @@ export function HomeScreen() {
         Your phone, respectful around mosques and during prayer.
       </Text>
       <Text style={styles.meta}>API: {API_BASE_URL}</Text>
+      <RingerControlPanel />
     </View>
   );
 }

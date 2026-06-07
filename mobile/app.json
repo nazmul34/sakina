@@ -24,6 +24,10 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-dev-client", "./plugins/withVersionCode"]
+    "plugins": [
+      "expo-dev-client",
+      "./plugins/withVersionCode",
+      "./plugins/withRingerControl"
+    ]
   }
 }
