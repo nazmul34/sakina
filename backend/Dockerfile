@@ -1,8 +1,11 @@
 FROM python:3.12-slim
 
 # Keep Python from writing .pyc files and buffering stdout/stderr.
+# The image defaults to production settings; override DJANGO_SETTINGS_MODULE
+# (e.g. config.settings.dev) for non-prod use such as the local compose stack.
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    DJANGO_SETTINGS_MODULE=config.settings.prod
 
 WORKDIR /app
 
