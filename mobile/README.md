@@ -108,12 +108,64 @@ npm start                   # expo start --dev-client
 |---|---|---|
 | `EXPO_PUBLIC_API_BASE_URL` | `http://10.0.2.2:8000` | Backend base URL. `10.0.2.2` is the host loopback from the Android emulator; use your LAN IP for a physical device. |
 
+## EAS Build (cloud builds)
+
+[EAS Build](https://docs.expo.dev/build/introduction/) runs Android/iOS builds on
+Expo's cloud infrastructure without requiring the local Android toolchain.
+
+### Prerequisites
+
+```bash
+npm install -g eas-cli
+eas login          # authenticate with your Expo account
+```
+
+### Build profiles (`eas.json`)
+
+| Profile | Distribution | Android artifact | Purpose |
+|---|---|---|---|
+| `development` | internal | APK (debug) | Dev-client APK for real device/emulator testing of native modules |
+| `preview` | internal | APK | QA/stakeholder testing without a store listing |
+| `production` | store | AAB | Play Store submission |
+
+### Build commands
+
+```bash
+# Build a dev-client APK and share it internally
+eas build --profile development --platform android
+
+# Build a preview APK
+eas build --profile preview --platform android
+
+# Build a production AAB for the Play Store
+eas build --profile production --platform android
+```
+
+After the `development` build finishes, download and install the APK on your
+device, then start the local Metro bundler:
+
+```bash
+npm start   # expo start --dev-client — scan the QR code from the installed dev-client app
+```
+
+### Signing-key decision
+
+**Current decision: EAS-managed credentials** (the default).
+
+EAS generates and stores the Android keystore on Expo's servers, encrypted at
+rest. This is the simplest option for a small team and costs nothing on the free
+tier. The keystore can be exported at any time via `eas credentials` if you later
+want to self-host or move to manual management.
+
+Manual keystore management (checking the keystore into secret storage) remains an
+option; revisit this decision before the first production release.
+
 ## Scripts
 
 | Command | Description |
 |---|---|
 | `npm start` | Start the Metro bundler for the dev client |
-| `npm run android` | Build + run on Android (dev client) |
+| `npm run android` | Build + run on Android (dev client, local build) |
 | `npm run ios` | Build + run on iOS (lite, no auto-silent) |
 | `npm run lint` | ESLint |
 | `npm run format` | Prettier write |
