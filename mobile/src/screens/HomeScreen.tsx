@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { AutoSilentToggle } from '../components/AutoSilentToggle';
 import { RingerControlPanel } from '../components/RingerControlPanel';
 import { API_BASE_URL } from '../config/env';
 import { apiFetch } from '../lib/api';
@@ -39,6 +40,7 @@ export function HomeScreen() {
       </Text>
       <Text style={styles.meta}>API: {API_BASE_URL}</Text>
       <Text style={styles.meta}>Device: {deviceId ?? '…'}</Text>
+      <AutoSilentToggle />
       <RingerControlPanel />
     </View>
   );
