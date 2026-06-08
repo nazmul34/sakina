@@ -28,6 +28,7 @@
       "expo-dev-client",
       "./plugins/withVersionCode",
       "./plugins/withRingerControl",
+      "./plugins/withAutoSilent",
       "expo-secure-store"
     ]
   }
