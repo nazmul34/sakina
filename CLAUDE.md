@@ -18,6 +18,17 @@ Rules:
 CI (`.github/workflows/ci.yml`) runs on every PR and on pushes to both
 `develop` and `main`.
 
+### Merging & branch cleanup
+
+Delete the source branch **per PR**, not repo-wide. Repo-wide auto-delete is
+unsafe here because `develop` can't be protected on the free plan, so an epic
+`develop → main` merge would try to delete `develop` itself.
+
+- **Feature PR (`feat/... → develop`):** delete the branch after merge —
+  `gh pr merge <PR#> --squash --delete-branch`, or click **Delete branch** in the UI.
+- **Epic PR (`develop → main`):** merge **without** `--delete-branch` (don't click
+  Delete branch) so `develop` is preserved.
+  
 ### Enforcement
 
 GitHub server-side branch protection / rulesets are paywalled on this repo
