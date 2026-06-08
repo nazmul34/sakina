@@ -28,6 +28,8 @@ unsafe here because `develop` can't be protected on the free plan, so an epic
   `gh pr merge <PR#> --squash --delete-branch`, or click **Delete branch** in the UI.
 - **Epic PR (`develop → main`):** merge **without** `--delete-branch` (don't click
   Delete branch) so `develop` is preserved.
+  
+### Enforcement
 
 GitHub server-side branch protection / rulesets are paywalled on this repo
 (private + free plan), so enforcement is local: a `pre-push` hook in
