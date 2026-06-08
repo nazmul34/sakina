@@ -27,7 +27,8 @@
     "plugins": [
       "expo-dev-client",
       "./plugins/withVersionCode",
-      "./plugins/withRingerControl"
+      "./plugins/withRingerControl",
+      "expo-secure-store"
     ]
   }
 }
