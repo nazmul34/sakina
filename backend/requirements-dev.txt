@@ -1,0 +1,7 @@
+# Sakina backend development / CI dependencies.
+# Installed on top of requirements.txt in local dev and in CI (see
+# .github/workflows/ci.yml). Keep runtime deps out of this file.
+
+# Linter + formatter (lint is enforced in CI; format is available locally
+# via `ruff format`).
+ruff==0.15.16
