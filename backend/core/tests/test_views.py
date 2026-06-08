@@ -1,4 +1,4 @@
-"""Tests for the core app."""
+"""Tests for core/views.py."""
 
 from rest_framework import status
 from rest_framework.test import APITestCase
