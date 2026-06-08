@@ -13,6 +13,7 @@
 import { useCallback, useState } from 'react';
 
 import AutoSilent from '../../modules/auto-silent';
+import { armGeofencing, disarmGeofencing } from './geofencing';
 
 /** Whether the auto-silent master toggle is currently on. */
 export function isAutoSilentEnabled(): boolean {
@@ -22,6 +23,11 @@ export function isAutoSilentEnabled(): boolean {
 /** Persist the master toggle and arm/disarm monitoring accordingly. */
 export function setAutoSilentEnabled(value: boolean): void {
   AutoSilent.setEnabled(value);
+  // Register/tear down the geofence set to match (F-01.2). Fire-and-forget: the
+  // native flag above is the source of truth, and arming is best-effort (it
+  // no-ops if permissions or candidates are missing), so we don't block the UI
+  // toggle on it.
+  void (value ? armGeofencing() : disarmGeofencing());
   // TODO(EPIC-07): opportunistically mirror this to the backend DeviceSettings
   // so it follows the user across devices. Local stays the source of truth.
 }

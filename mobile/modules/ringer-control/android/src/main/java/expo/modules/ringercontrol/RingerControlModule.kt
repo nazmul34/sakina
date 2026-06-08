@@ -1,9 +1,7 @@
 package expo.modules.ringercontrol
 
-import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.media.AudioManager
 import android.provider.Settings
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -12,8 +10,12 @@ import expo.modules.kotlin.modules.ModuleDefinition
  * `RingerControl` — Android native module (Expo Modules API).
  *
  * Exposes the ringer + Do Not Disturb primitives the auto-silent flagship
- * (EPIC-01) needs. All methods are synchronous `Function`s because each is a
- * cheap system-service call; none block on I/O.
+ * (EPIC-01) needs. The low-level ringer/DND access lives in [RingerIO] so it can
+ * be shared with [RingerSilenceController]. All methods are synchronous
+ * `Function`s because each is a cheap system-service or prefs call.
+ *
+ * The `onZoneEnter` / `onZoneExit` methods are the hand-off seam from the JS
+ * geofencing task (F-01.2) into the capture/restore state machine (F-01.3).
  *
  * Min SDK note: the DND APIs used here
  * (`NotificationManager.isNotificationPolicyAccessGranted`,
@@ -26,7 +28,7 @@ class RingerControlModule : Module() {
     Name("RingerControl")
 
     Function("isDndAccessGranted") {
-      notificationManager.isNotificationPolicyAccessGranted
+      RingerIO.isDndAccessGranted(context)
     }
 
     Function("openDndSettings") {
@@ -42,16 +44,27 @@ class RingerControlModule : Module() {
     }
 
     Function("getRingerMode") {
-      ringerModeToString(audioManager.ringerMode)
+      RingerIO.getRingerMode(context)
     }
 
     Function("setRingerMode") { mode: String ->
-      // Moving into or out of silent requires notification-policy access on
-      // API 23+; without it the system silently ignores the change.
-      if (!notificationManager.isNotificationPolicyAccessGranted) {
-        throw DndAccessNotGrantedException()
-      }
-      audioManager.ringerMode = ringerModeFromString(mode)
+      RingerIO.setRingerMode(context, mode)
+    }
+
+    // --- Auto-silent zone hand-off (F-01.3) ---------------------------------
+    // Called by the geofencing task on enter/exit, passing the geofence region
+    // identifier. Return the active-zone count for debugging/observability.
+
+    Function("onZoneEnter") { regionId: String ->
+      RingerSilenceController.enterZone(context, regionId)
+    }
+
+    Function("onZoneExit") { regionId: String ->
+      RingerSilenceController.exitZone(context, regionId)
+    }
+
+    Function("activeZoneCount") {
+      RingerSilenceController.activeZoneCount(context)
     }
 
     Function("getDeviceId") {
@@ -61,25 +74,4 @@ class RingerControlModule : Module() {
 
   private val context: Context
     get() = appContext.reactContext ?: throw MissingContextException()
-
-  private val audioManager: AudioManager
-    get() = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-
-  private val notificationManager: NotificationManager
-    get() = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-  private fun ringerModeToString(mode: Int): String =
-    when (mode) {
-      AudioManager.RINGER_MODE_SILENT -> "silent"
-      AudioManager.RINGER_MODE_VIBRATE -> "vibrate"
-      else -> "normal"
-    }
-
-  private fun ringerModeFromString(mode: String): Int =
-    when (mode) {
-      "silent" -> AudioManager.RINGER_MODE_SILENT
-      "vibrate" -> AudioManager.RINGER_MODE_VIBRATE
-      "normal" -> AudioManager.RINGER_MODE_NORMAL
-      else -> throw InvalidRingerModeException(mode)
-    }
 }

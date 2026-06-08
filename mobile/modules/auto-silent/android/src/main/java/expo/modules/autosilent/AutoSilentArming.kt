@@ -6,27 +6,29 @@ import android.util.Log
 /**
  * Single place that arms and disarms auto-silent monitoring.
  *
- * F-01.1 delivers only the master toggle, its persistence, and the boot
- * re-arm plumbing. The parts that actually monitor location land later:
- *   - geofence registration via expo-location + expo-task-manager (F-01.2)
- *   - foreground service + persistent notification (F-01.7)
+ * Geofencing itself (F-01.2) now lives on the JS side (expo-location +
+ * expo-task-manager): registration persists across app-kill and is re-registered
+ * after a reboot by expo-task-manager's own boot receiver, so the geofences do
+ * not need this native path to come back. What still belongs here is the
+ * foreground service + persistent notification (F-01.7), which the boot
+ * [BootReceiver] must start so monitoring is visible and protected after a reboot.
  *
  * Both call sites are wired through here now, so toggling the master switch and
- * re-arming on [BootReceiver] already route to the right seam — today they only
- * log. When F-01.2 / F-01.7 land, fill these in instead of hunting for callers.
+ * re-arming on boot already route to the right seam — today they only log. When
+ * F-01.7 lands, fill these in instead of hunting for callers.
  */
 internal object AutoSilentArming {
   private const val TAG = "AutoSilent"
 
-  /** Start monitoring: register geofences from cache and run the foreground service. */
+  /** Start monitoring: run the foreground service (F-01.7). */
   fun rearm(context: Context) {
-    // TODO(F-01.2 / F-01.7): register geofences + start the foreground service.
-    Log.i(TAG, "rearm(): master toggle on — monitoring starts once F-01.2/F-01.7 land")
+    // TODO(F-01.7): start the foreground service + persistent notification.
+    Log.i(TAG, "rearm(): master toggle on — foreground service starts once F-01.7 lands")
   }
 
-  /** Stop monitoring: de-register geofences and stop the foreground service. */
+  /** Stop monitoring: stop the foreground service (F-01.7). */
   fun disarm(context: Context) {
-    // TODO(F-01.2 / F-01.7): de-register geofences + stop the foreground service.
-    Log.i(TAG, "disarm(): master toggle off — geofences/service torn down")
+    // TODO(F-01.7): stop the foreground service.
+    Log.i(TAG, "disarm(): master toggle off — foreground service torn down")
   }
 }
