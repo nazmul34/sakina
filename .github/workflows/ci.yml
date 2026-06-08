@@ -1,11 +1,11 @@
 name: CI
 
-# Runs on every PR (the acceptance gate) and on pushes to main so the
-# default branch is always validated post-merge.
+# Runs on every PR (the acceptance gate) and on pushes to the long-lived
+# branches (develop, main) so they are always validated post-merge.
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [develop, main]
 
 # Cancel superseded runs on the same branch/PR to save CI minutes.
 concurrency:

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#
+# Blocks direct pushes to protected branches (main, develop).
+# All changes to those branches must go through a pull request.
+#
+# Enable once per clone:   git config core.hooksPath .githooks
+#
+# Emergency bypass (use sparingly):   git push --no-verify
+
+protected="main develop"
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  branch="${remote_ref#refs/heads/}"
+  for p in $protected; do
+    if [ "$branch" = "$p" ]; then
+      echo "✋ Direct push to '$p' is blocked." >&2
+      echo "   Open a pull request instead (feature -> develop, develop -> main)." >&2
+      echo "   To override in an emergency: git push --no-verify" >&2
+      exit 1
+    fi
+  done
+done
+
+exit 0
