@@ -41,22 +41,29 @@ export declare class RingerControlModule extends NativeModule {
 
   /**
    * Records entry into a geofenced zone (F-01.3), identified by its geofence
-   * region id. On the first active zone this captures the current ringer mode
-   * and switches the phone to silent; further enters just reference-count.
-   * Returns the number of zones now active. Safe to call from the background
-   * geofencing task — state is persisted natively and survives app-kill/reboot.
+   * region id. Does not silence immediately: it starts a dwell grace (F-01.4) and
+   * silences only if the user is still inside when it elapses, so a drive-past
+   * never silences. On the first committed zone this captures the current ringer
+   * mode and switches to silent; further enters just reference-count. A re-entry
+   * during a zone's exit buffer cancels the pending restore (GPS-jitter bounce).
+   * Returns the number of zones currently silencing (excludes those still in the
+   * dwell grace). Safe to call from the background geofencing task — state is
+   * persisted natively and survives app-kill/reboot.
    */
   onZoneEnter(regionId: string): number;
 
   /**
-   * Records exit from a geofenced zone (F-01.3). On the last active zone this
-   * restores the exact captured prior mode, falling back to a non-silent mode
-   * rather than leaving the user stranded on silent. Returns the number of
-   * zones still active.
+   * Records exit from a geofenced zone (F-01.3). Does not restore immediately: it
+   * starts an exit-buffer grace (F-01.4) to absorb GPS jitter, and restores only
+   * if the user hasn't re-entered when it elapses. An exit before the dwell grace
+   * elapsed cancels the pending silence outright (drive-past). On the last
+   * committed zone this restores the exact captured prior mode, falling back to a
+   * non-silent mode rather than leaving the user stranded on silent. Returns the
+   * number of zones still silencing.
    */
   onZoneExit(regionId: string): number;
 
-  /** Number of geofenced zones currently entered (debugging/observability). */
+  /** Number of zones currently silencing the phone (debugging/observability). */
   activeZoneCount(): number;
 
   /**
