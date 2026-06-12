@@ -19,6 +19,13 @@ import android.content.Context
  *   - [pendingExitZones]: active zones that have been exited but are still serving
  *     their exit-buffer grace (FR-1.4) — a pending restore that a jitter re-entry
  *     cancels. These remain counted in [activeZones] until the buffer elapses.
+ *   - [lastSetMode]: the ringer mode we last left the device in programmatically,
+ *     during the current in-zone session (FR-1.5). It's the reference for spotting
+ *     a *user-initiated* change: if the live mode later differs from this, the user
+ *     moved the ringer themselves. `null` when we're not managing the ringer.
+ *   - [overridden]: set once a user-initiated change is detected this session
+ *     (FR-1.5). While set, we stop touching the ringer — no re-silence, no restore
+ *     on exit — and it clears when the session ends.
  *
  * Persisting to disk — not memory — is what lets a relaunch after an app-kill
  * mid-zone still restore the correct prior mode. `applicationContext` keeps the
@@ -55,6 +62,22 @@ internal class RingerSnapshotStore(context: Context) {
     get() = readSet(KEY_PENDING_EXIT)
     set(value) = writeSet(KEY_PENDING_EXIT, value)
 
+  /** The mode we last set the ringer to this session, or `null` (FR-1.5). */
+  var lastSetMode: String?
+    get() = prefs.getString(KEY_LAST_SET_MODE, null)
+    set(value) {
+      prefs.edit().apply {
+        if (value == null) remove(KEY_LAST_SET_MODE) else putString(KEY_LAST_SET_MODE, value)
+      }.apply()
+    }
+
+  /** Whether the user has manually overridden the ringer this session (FR-1.5). */
+  var overridden: Boolean
+    get() = prefs.getBoolean(KEY_OVERRIDDEN, false)
+    set(value) {
+      prefs.edit().putBoolean(KEY_OVERRIDDEN, value).apply()
+    }
+
   /** SharedPreferences hands back a shared, unmodifiable set, so copy defensively. */
   private fun readSet(key: String): MutableSet<String> =
     HashSet(prefs.getStringSet(key, emptySet()) ?: emptySet())
@@ -69,5 +92,7 @@ internal class RingerSnapshotStore(context: Context) {
     const val KEY_ACTIVE_ZONES = "active_zones"
     const val KEY_PENDING_ENTER = "pending_enter_zones"
     const val KEY_PENDING_EXIT = "pending_exit_zones"
+    const val KEY_LAST_SET_MODE = "last_set_mode"
+    const val KEY_OVERRIDDEN = "overridden"
   }
 }

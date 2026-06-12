@@ -58,8 +58,10 @@ export declare class RingerControlModule extends NativeModule {
    * if the user hasn't re-entered when it elapses. An exit before the dwell grace
    * elapsed cancels the pending silence outright (drive-past). On the last
    * committed zone this restores the exact captured prior mode, falling back to a
-   * non-silent mode rather than leaving the user stranded on silent. Returns the
-   * number of zones still silencing.
+   * non-silent mode rather than leaving the user stranded on silent — unless the
+   * user manually changed the ringer while in the zone (F-01.5), in which case
+   * their choice is honored and nothing is restored. Returns the number of zones
+   * still silencing.
    */
   onZoneExit(regionId: string): number;
 
