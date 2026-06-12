@@ -92,6 +92,39 @@ don't ask — learn where the user *dwells*; the important places emerge.**
 
 ---
 
+## Q6. Grace / hysteresis: how do we stop GPS jitter and drive-bys from false-triggering? (F-01.4)
+
+✅ **Handled now**, natively in `ringer-control` (`RingerHysteresis.kt` +
+`RingerSilenceController.kt`). Raw geofence enter/exit events are noisy, so we
+defer both sides of the transition:
+
+- **Dwell — `DWELL_MS = 45 s`.** An *enter* starts a timer; we silence only if
+  the user is still inside when it fires. A drive-past exits first and never
+  silences. 45 s sits mid-range of the FR-1.4 30–60 s window: long enough to
+  reject a pass-by (crossing a 150 m-radius zone's ~300 m diameter takes <30 s
+  above ~25 km/h) without making a real visitor wait a full minute.
+- **Exit buffer — `EXIT_BUFFER_MS = 20 s`.** An *exit* starts a timer; we restore
+  only if the user hasn't re-entered when it fires. A jitter bounce re-enters
+  within the window and cancels the restore, so the ringer doesn't flap. 20 s
+  comfortably covers a momentary bounce while restoring only trivially late for
+  someone genuinely leaving.
+
+**Fixed for v1, not configurable** (per the issue's recommendation) — revisit
+with field data. Values live in `RingerHysteresis` (the native owner); change
+them there.
+
+**Why native + AlarmManager, not a JS `setTimeout`:** a geofence transition runs
+a *headless* JS task that finishes (and the process may be killed) long before a
+45 s dwell elapses, so a JS timer would never fire. AlarmManager wakes the app —
+even from a killed process — to deliver to `RingerTimerReceiver`. We use
+`setAndAllowWhileIdle` (fires through Doze, no `SCHEDULE_EXACT_ALARM` permission);
+the device was just woken by the transition, so the short delays land close to on
+time. AlarmManager alarms don't survive a **reboot**, so `RingerBootReceiver`
+reconciles any zone caught mid-grace at boot (drop pending silences; complete
+pending restores so the phone is never stranded on silent).
+
+---
+
 ## Implementation reminders when EPIC-02 lands
 
 - Replace the dev fixture in `candidates.ts` with the Overpass-proxy fetch +

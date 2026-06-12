@@ -6,7 +6,9 @@
  * it spins up the JS runtime headless — no React tree is mounted — runs this
  * task, and shuts down. The task is therefore deliberately thin: it routes the
  * enter/exit straight to the native ringer state machine (F-01.3), which owns all
- * the persistence, reference-counting, and restoration.
+ * the persistence, reference-counting, and restoration. The dwell + exit-buffer
+ * grace (F-01.4) is applied natively too, on AlarmManager — a JS timer here would
+ * be lost when this headless task shuts down before the grace elapses.
  *
  * This file is imported for its side effect from `index.ts` (the app entry), so
  * the task is defined before TaskManager ever needs it — including on a headless
