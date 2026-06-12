@@ -1,5 +1,6 @@
+import { useNavigation } from '@react-navigation/native';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AutoSilentToggle } from '../components/AutoSilentToggle';
 import { RingerControlPanel } from '../components/RingerControlPanel';
@@ -12,6 +13,7 @@ import { getDeviceId } from '../lib/deviceId';
  * nearby mosques, auto-silent status, etc.) replaces this later.
  */
 export function HomeScreen() {
+  const navigation = useNavigation();
   const [deviceId, setDeviceId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -41,6 +43,13 @@ export function HomeScreen() {
       <Text style={styles.meta}>API: {API_BASE_URL}</Text>
       <Text style={styles.meta}>Device: {deviceId ?? '…'}</Text>
       <AutoSilentToggle />
+      <Pressable
+        style={styles.permissionsLink}
+        onPress={() => navigation.navigate('Permissions')}
+        accessibilityRole="button"
+      >
+        <Text style={styles.permissionsLinkText}>Set up permissions</Text>
+      </Pressable>
       <RingerControlPanel />
     </View>
   );
@@ -66,5 +75,17 @@ const styles = StyleSheet.create({
   meta: {
     fontSize: 12,
     opacity: 0.5,
+  },
+  permissionsLink: {
+    alignSelf: 'stretch',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#E6F4FE',
+    alignItems: 'center',
+  },
+  permissionsLinkText: {
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

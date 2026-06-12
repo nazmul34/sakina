@@ -1,0 +1,185 @@
+/**
+ * Permissions model for the auto-silent checklist (FR-1.6).
+ *
+ * Auto-silent needs four separate grants, each from a different Android subsystem:
+ *
+ *   - **DND access** — to flip the ringer into/out of silent (notification policy).
+ *   - **Location, all the time** — fine + background, so geofence enter/exit fires
+ *     while the app is backgrounded or killed.
+ *   - **Notifications** — for the foreground-service status + warnings (F-01.7).
+ *   - **Battery-optimization exemption** — so Doze doesn't defer our geofence/alarm
+ *     work.
+ *
+ * This module is the single source of truth for *reading* each status and for the
+ * *fix* action that deep-links to the right place. Status reads are mostly
+ * synchronous native calls; location is async (expo-location). The UI
+ * ({@link ../screens/PermissionsScreen}) just renders these and re-checks on focus.
+ */
+
+import * as Location from 'expo-location';
+import { Alert, Linking } from 'react-native';
+
+import RingerControl from '../../modules/ringer-control';
+
+/** Stable identifier for each checklist item. */
+export type PermissionKey = 'dnd' | 'location' | 'notifications' | 'battery';
+
+export interface PermissionItem {
+  readonly key: PermissionKey;
+  readonly title: string;
+  /** One-line "why we need it", shown under the title. */
+  readonly description: string;
+  readonly granted: boolean;
+}
+
+const COPY: Record<PermissionKey, { title: string; description: string }> = {
+  dnd: {
+    title: 'Do Not Disturb access',
+    description: 'Lets Sakina silence — and restore — your ringer near mosques.',
+  },
+  location: {
+    title: 'Location — “Allow all the time”',
+    description:
+      'Detects when you arrive at and leave a mosque, even in the background.',
+  },
+  notifications: {
+    title: 'Notifications',
+    description: 'Shows the ongoing auto-silent status and any warnings.',
+  },
+  battery: {
+    title: 'Ignore battery optimization',
+    description: 'Stops the system from delaying auto-silent while idle.',
+  },
+};
+
+/**
+ * Whether location is granted at the level geofencing needs: background
+ * ("Allow all the time") *and* fine accuracy. Background implies foreground, but
+ * we still check fine accuracy explicitly — coarse isn't enough for a 150 m ring.
+ */
+async function isLocationReady(): Promise<boolean> {
+  const [foreground, background] = await Promise.all([
+    Location.getForegroundPermissionsAsync(),
+    Location.getBackgroundPermissionsAsync(),
+  ]);
+  return background.granted && foreground.android?.accuracy === 'fine';
+}
+
+/** Read the live status of all four permissions. */
+export async function checkPermissions(): Promise<PermissionItem[]> {
+  const location = await isLocationReady();
+  return [
+    { key: 'dnd', ...COPY.dnd, granted: RingerControl.isDndAccessGranted() },
+    { key: 'location', ...COPY.location, granted: location },
+    {
+      key: 'notifications',
+      ...COPY.notifications,
+      granted: RingerControl.areNotificationsEnabled(),
+    },
+    {
+      key: 'battery',
+      ...COPY.battery,
+      granted: RingerControl.isIgnoringBatteryOptimizations(),
+    },
+  ];
+}
+
+/**
+ * Run the "Fix" action for a permission: request it in-app where Android allows,
+ * otherwise deep-link to the right system screen. Resolves once the user-facing
+ * step has been launched/completed; the caller re-checks status afterward.
+ */
+export async function fixPermission(key: PermissionKey): Promise<void> {
+  switch (key) {
+    case 'dnd':
+      RingerControl.openDndSettings();
+      return;
+    case 'notifications':
+      RingerControl.openNotificationSettings();
+      return;
+    case 'battery':
+      RingerControl.openBatteryOptimizationSettings();
+      return;
+    case 'location':
+      await fixLocation();
+      return;
+  }
+}
+
+/**
+ * Request location in the order Android mandates — foreground first, then
+ * background — with a plain-language rationale before each ask (FR-1.6). Android
+ * 11+ won't grant "Allow all the time" from a dialog, so when the background
+ * request comes back denied we hand off to the app's system settings.
+ */
+async function fixLocation(): Promise<void> {
+  const foreground = await Location.getForegroundPermissionsAsync();
+  if (!foreground.granted) {
+    // Already permanently denied → only system settings can change it.
+    if (!foreground.canAskAgain) {
+      await openSettings(
+        'Location is turned off',
+        'Enable Location for Sakina in system settings, then choose “Allow all the time”.',
+      );
+      return;
+    }
+    const proceed = await confirm(
+      'Location access',
+      'Sakina uses your location to silence your phone near mosques and during prayer. First allow location, then choose “Allow all the time”.',
+    );
+    if (!proceed) return;
+    const requested = await Location.requestForegroundPermissionsAsync();
+    if (!requested.granted) return;
+  }
+
+  const background = await Location.getBackgroundPermissionsAsync();
+  if (background.granted) return;
+
+  const proceed = await confirm(
+    'Allow all the time',
+    'So silencing keeps working when the app is closed, set Location to “Allow all the time” on the next screen.',
+  );
+  if (!proceed) return;
+
+  const requested = await Location.requestBackgroundPermissionsAsync();
+  if (!requested.granted) {
+    // Android 11+: the only path to "Allow all the time" is system settings.
+    await Linking.openSettings();
+  }
+}
+
+/** Promise-based two-button confirm. Resolves false on cancel/dismiss. */
+function confirm(title: string, message: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    Alert.alert(
+      title,
+      message,
+      [
+        { text: 'Not now', style: 'cancel', onPress: () => resolve(false) },
+        { text: 'Continue', onPress: () => resolve(true) },
+      ],
+      { onDismiss: () => resolve(false) },
+    );
+  });
+}
+
+/** Explain, then open the app's system settings page. */
+function openSettings(title: string, message: string): Promise<void> {
+  return new Promise((resolve) => {
+    Alert.alert(
+      title,
+      message,
+      [
+        { text: 'Not now', style: 'cancel', onPress: () => resolve() },
+        {
+          text: 'Open settings',
+          onPress: () => {
+            void Linking.openSettings();
+            resolve();
+          },
+        },
+      ],
+      { onDismiss: () => resolve() },
+    );
+  });
+}

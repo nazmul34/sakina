@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { HomeScreen } from '../screens/HomeScreen';
+import { PermissionsScreen } from '../screens/PermissionsScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -16,6 +17,11 @@ export function RootNavigator() {
         name="Home"
         component={HomeScreen}
         options={{ title: 'Sakina' }}
+      />
+      <Stack.Screen
+        name="Permissions"
+        component={PermissionsScreen}
+        options={{ title: 'Permissions' }}
       />
     </Stack.Navigator>
   );
