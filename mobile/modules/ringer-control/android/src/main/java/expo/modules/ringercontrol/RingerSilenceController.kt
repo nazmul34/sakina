@@ -29,6 +29,17 @@ import android.util.Log
  * prematurely. The dwell and exit-buffer waits are scheduled on [RingerHysteresis];
  * the [commitEnter] / [commitExit] halves below run when those timers fire (via
  * [RingerTimerReceiver]).
+ *
+ * **Manual override (FR-1.5).** The user wins: if they move the ringer themselves
+ * while in a zone, we honor it until they leave. We tell our own change apart from
+ * theirs by recording the mode we leave the device in ([RingerSnapshotStore.lastSetMode])
+ * and, at each geofence event, comparing it to the live mode — a mismatch is the
+ * user ([refreshOverride]). Once flagged, the session is hands-off: no re-silence,
+ * and on exit we keep the user's mode instead of restoring. The flag clears when the
+ * session ends, so normal capture/restore resumes on the next entry. (We compare at
+ * event boundaries rather than via a live `RINGER_MODE_CHANGED` receiver because the
+ * background process is usually dead and a manifest receiver can't get that implicit
+ * broadcast on API 26+ — see geofencing `NOTES.md` Q7.)
  */
 internal object RingerSilenceController {
   private const val TAG = "RingerSilence"
@@ -43,6 +54,7 @@ internal object RingerSilenceController {
   fun enterZone(context: Context, regionId: String): Int =
     synchronized(lock) {
       val store = RingerSnapshotStore(context)
+      refreshOverride(context, store)
 
       // Jitter bounce: re-entered while waiting to restore — cancel the restore,
       // the zone simply stays active and silent.
@@ -76,6 +88,7 @@ internal object RingerSilenceController {
   fun exitZone(context: Context, regionId: String): Int =
     synchronized(lock) {
       val store = RingerSnapshotStore(context)
+      refreshOverride(context, store)
 
       // Drive-past: exited before the dwell elapsed — never silence for this zone.
       val pendingEnter = store.pendingEnterZones
@@ -107,6 +120,7 @@ internal object RingerSilenceController {
   fun commitEnter(context: Context, regionId: String) {
     synchronized(lock) {
       val store = RingerSnapshotStore(context)
+      refreshOverride(context, store)
       val pendingEnter = store.pendingEnterZones
       // Cancelled (drive-past) before the dwell fired — nothing to do.
       if (!pendingEnter.remove(regionId)) return
@@ -115,9 +129,14 @@ internal object RingerSilenceController {
       val zones = store.activeZones
       if (!zones.add(regionId)) return
 
-      // First active zone: capture the prior mode, then silence. Persist the
-      // snapshot before touching the ringer so a kill mid-call can still restore.
+      // First active zone: a fresh hands-on session. Capture the prior mode, then
+      // silence. Persist the snapshot before touching the ringer so a kill mid-call
+      // can still restore. Record the mode we leave the device in (read back, so a
+      // failed silence is reflected too) as the baseline for spotting a later
+      // user-initiated change (FR-1.5). Subsequent overlapping zones never re-touch
+      // the ringer, so an override mid-session is never fought.
       if (zones.size == 1) {
+        store.overridden = false
         store.snapshot = RingerIO.getRingerMode(context)
         try {
           RingerIO.setRingerMode(context, "silent")
@@ -126,6 +145,7 @@ internal object RingerSilenceController {
           // the zone membership; the phone simply isn't silenced this time.
           Log.w(TAG, "commitEnter($regionId): could not switch to silent", e)
         }
+        store.lastSetMode = RingerIO.getRingerMode(context)
       }
 
       store.activeZones = zones
@@ -140,6 +160,7 @@ internal object RingerSilenceController {
   fun commitExit(context: Context, regionId: String) {
     synchronized(lock) {
       val store = RingerSnapshotStore(context)
+      refreshOverride(context, store)
       val pendingExit = store.pendingExitZones
       // Cancelled by a jitter re-entry before the buffer fired — nothing to do.
       if (!pendingExit.remove(regionId)) return
@@ -150,7 +171,7 @@ internal object RingerSilenceController {
       store.activeZones = zones
 
       if (zones.isEmpty()) {
-        restore(context, store)
+        endSession(context, store)
       }
       Log.i(TAG, "commitExit($regionId): ${zones.size} active zone(s)")
     }
@@ -189,10 +210,49 @@ internal object RingerSilenceController {
         store.activeZones = zones
         store.pendingExitZones = HashSet()
         if (zones.isEmpty()) {
-          restore(context, store)
+          endSession(context, store)
         }
       }
     }
+  }
+
+  /**
+   * Detect a *user-initiated* ringer change for the current session (FR-1.5).
+   *
+   * We compare the live ringer mode against [RingerSnapshotStore.lastSetMode] — the
+   * mode we last left the device in. A mismatch means the user moved the ringer
+   * themselves (our own changes update `lastSetMode`, so they never look like an
+   * override). Once flagged we stop touching the ringer for the rest of the
+   * session. No-op when we're not managing the ringer (`lastSetMode == null`) or the
+   * override is already recorded. Cheap (one system-service read), so it runs on
+   * every geofence event — the reliable detection point given the background
+   * process is usually dead between events.
+   */
+  private fun refreshOverride(context: Context, store: RingerSnapshotStore) {
+    if (store.overridden) return
+    val expected = store.lastSetMode ?: return
+    val current = RingerIO.getRingerMode(context)
+    if (current != expected) {
+      store.overridden = true
+      Log.i(TAG, "manual override detected: expected '$expected', live '$current'")
+    }
+  }
+
+  /**
+   * End the in-zone session on the last committed exit. Restore the captured prior
+   * mode — unless the user took manual control (FR-1.5), in which case we leave the
+   * ringer exactly as they set it. Either way clear all session state so the next
+   * entry starts a fresh capture/silence/restore.
+   */
+  private fun endSession(context: Context, store: RingerSnapshotStore) {
+    if (store.overridden) {
+      Log.i(TAG, "endSession: honoring manual override — leaving ringer as the user set it")
+      store.snapshot = null
+    } else {
+      restore(context, store)
+    }
+    store.lastSetMode = null
+    store.overridden = false
   }
 
   /**

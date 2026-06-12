@@ -125,6 +125,44 @@ pending restores so the phone is never stranded on silent).
 
 ---
 
+## Q7. Manual override: if the user changes the ringer while in a zone, how do we honor it without fighting them — and how do we tell their change from our own? (F-01.5)
+
+✅ **Handled now**, natively in `RingerSilenceController` (`lastSetMode` +
+`overridden` in `RingerSnapshotStore`).
+
+**Telling our change from theirs (the feedback-loop problem).** The app sets the
+ringer itself, so we can't just react to "the ringer changed." We record the mode
+we leave the device in (`lastSetMode`, read back after each of our writes so a
+failed silence is reflected too). A user-initiated change is then simply: the live
+ringer mode differs from `lastSetMode`. Once detected we set `overridden` and go
+hands-off for the rest of the session — no re-silence, and on exit we leave the
+ringer exactly as the user set it instead of restoring. The flag clears when the
+session ends (last committed exit), so normal capture/restore resumes next entry.
+
+In practice we never re-silence mid-session anyway (silencing only fires on the
+*first* committed zone; overlapping zones don't re-touch the ringer), so the
+concrete behavior change is **skipping the restore-on-exit when the user has taken
+over** — plus recording the override so any future re-silence path respects it.
+
+**Why event-boundary comparison, not a live `RINGER_MODE_CHANGED` receiver.** The
+issue floated a broadcast receiver. Two problems make it the wrong primitive here:
+
+1. `AudioManager.RINGER_MODE_CHANGED_ACTION` is an *implicit* broadcast, and
+   manifest-declared receivers stopped getting those on **API 26+** (it's not on
+   the exemption list). So it can only be a **runtime** `registerReceiver`.
+2. A runtime receiver needs a **living process**. In the background our process is
+   usually dead between geofence events; until the F-01.7 foreground service
+   exists there's nothing to host it, so it would only fire while the app is
+   foregrounded — exactly when it matters least.
+
+Comparing `lastSetMode` to the live mode at each geofence event (enter / exit /
+dwell-commit / buffer-commit) needs no live process and works across app-kill and
+reboot, so it's strictly more reliable for the background case. If a live foreground
+service lands (F-01.7), a runtime receiver could be added on top for *real-time*
+detection, but it isn't required for correctness.
+
+---
+
 ## Implementation reminders when EPIC-02 lands
 
 - Replace the dev fixture in `candidates.ts` with the Overpass-proxy fetch +
