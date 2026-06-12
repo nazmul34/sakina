@@ -29,6 +29,36 @@ export declare class RingerControlModule extends NativeModule {
    */
   openDndSettings(): void;
 
+  /**
+   * Whether the app may post notifications. On Android 13+ this reflects the
+   * `POST_NOTIFICATIONS` runtime grant; below that it reflects whether the user
+   * has left the app's notifications enabled. The auto-silent foreground service
+   * + warnings (F-01.7) need this. Part of the permissions checklist (F-01.6).
+   */
+  areNotificationsEnabled(): boolean;
+
+  /**
+   * Opens this app's system notification settings so the user can enable
+   * notifications. Returns immediately; re-check {@link areNotificationsEnabled}
+   * after the user returns.
+   */
+  openNotificationSettings(): void;
+
+  /**
+   * Whether the app is exempt from battery optimization (Doze). Without the
+   * exemption the OS can defer the geofence/alarm work that drives auto-silent,
+   * so the checklist (F-01.6) surfaces it.
+   */
+  isIgnoringBatteryOptimizations(): boolean;
+
+  /**
+   * Prompts the user to exempt this app from battery optimization — the one-tap
+   * system dialog when available, otherwise the battery-optimization settings
+   * list. Returns immediately; re-check {@link isIgnoringBatteryOptimizations}
+   * after the user returns.
+   */
+  openBatteryOptimizationSettings(): void;
+
   /** Reads the device's current ringer mode. */
   getRingerMode(): RingerMode;
 
