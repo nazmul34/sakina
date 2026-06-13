@@ -146,6 +146,10 @@ internal object RingerSilenceController {
           Log.w(TAG, "commitEnter($regionId): could not switch to silent", e)
         }
         store.lastSetMode = RingerIO.getRingerMode(context)
+        // Remember the zone that opened the session so the restore event can name
+        // it (FR-1.8), and log the silence now that auto-silent has engaged.
+        store.sessionZoneId = regionId
+        ActivityLogStore(context).append(ActivityLogStore.EVENT_SILENCED, regionId)
       }
 
       store.activeZones = zones
@@ -246,11 +250,16 @@ internal object RingerSilenceController {
    */
   private fun endSession(context: Context, store: RingerSnapshotStore) {
     if (store.overridden) {
+      // The user took manual control (FR-1.5): we restored nothing, so there is no
+      // restore event to log — the trail honestly shows the silence without a close.
       Log.i(TAG, "endSession: honoring manual override — leaving ringer as the user set it")
       store.snapshot = null
     } else {
       restore(context, store)
+      ActivityLogStore(context)
+        .append(ActivityLogStore.EVENT_RESTORED, store.sessionZoneId ?: "")
     }
+    store.sessionZoneId = null
     store.lastSetMode = null
     store.overridden = false
   }

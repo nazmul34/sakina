@@ -6,6 +6,7 @@
 export type RootStackParamList = {
   Home: undefined;
   Permissions: undefined;
+  Activity: undefined;
 };
 
 declare global {

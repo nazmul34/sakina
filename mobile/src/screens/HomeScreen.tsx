@@ -50,6 +50,13 @@ export function HomeScreen() {
       >
         <Text style={styles.permissionsLinkText}>Set up permissions</Text>
       </Pressable>
+      <Pressable
+        style={styles.permissionsLink}
+        onPress={() => navigation.navigate('Activity')}
+        accessibilityRole="button"
+      >
+        <Text style={styles.permissionsLinkText}>Activity log</Text>
+      </Pressable>
       <RingerControlPanel />
     </View>
   );
