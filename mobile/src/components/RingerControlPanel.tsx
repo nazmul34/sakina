@@ -5,10 +5,20 @@ import RingerControl, { type RingerMode } from '../../modules/ringer-control';
 
 const MODES: RingerMode[] = ['silent', 'vibrate', 'normal'];
 
+/** Synthetic region id used by the manual zone-trigger buttons. */
+const TEST_ZONE = 'test-zone';
+
 /**
- * Dev-only panel that exercises every method of the native `RingerControl`
- * module — a manual harness for the F-00.2 acceptance criteria. Real
- * auto-silent UI replaces this once EPIC-01 lands.
+ * Dev/QA panel that exercises the native `RingerControl` module directly — a
+ * manual harness for the F-00.2 ringer primitives and, via the zone Enter/Exit
+ * buttons, the full F-01.3/1.4/1.5/1.8/1.9 state machine without needing real
+ * geofence data (EPIC-02/03) or physical movement. Real auto-silent UI replaces
+ * this later.
+ *
+ * The Enter/Exit buttons feed the same `onZoneEnter`/`onZoneExit` seam the
+ * background geofencing task uses, so they drive the genuine dwell → silence →
+ * exit-buffer → restore flow (and its activity log + failure warnings), just on
+ * demand instead of from GPS.
  */
 export function RingerControlPanel() {
   // The native getters are synchronous, so we can seed state lazily on first
@@ -20,11 +30,15 @@ export function RingerControlPanel() {
   const [ringerMode, setRingerModeState] = useState<RingerMode>(() =>
     RingerControl.getRingerMode(),
   );
+  const [activeZones, setActiveZones] = useState(() =>
+    RingerControl.activeZoneCount(),
+  );
 
   const refresh = useCallback(() => {
     setDndGranted(RingerControl.isDndAccessGranted());
     setRingerModeState(RingerControl.getRingerMode());
     setDeviceId(RingerControl.getDeviceId());
+    setActiveZones(RingerControl.activeZoneCount());
   }, []);
 
   const applyMode = useCallback((mode: RingerMode) => {
@@ -36,6 +50,14 @@ export function RingerControlPanel() {
     }
   }, []);
 
+  const enterZone = useCallback(() => {
+    setActiveZones(RingerControl.onZoneEnter(TEST_ZONE));
+  }, []);
+
+  const exitZone = useCallback(() => {
+    setActiveZones(RingerControl.onZoneExit(TEST_ZONE));
+  }, []);
+
   return (
     <View style={styles.panel}>
       <Text style={styles.heading}>RingerControl (dev)</Text>
@@ -44,6 +66,7 @@ export function RingerControlPanel() {
         DND access: {dndGranted ? 'granted' : 'not granted'}
       </Text>
       <Text style={styles.row}>Ringer mode: {ringerMode}</Text>
+      <Text style={styles.row}>Active zones: {activeZones}</Text>
 
       <View style={styles.buttons}>
         {MODES.map((mode) => (
@@ -55,6 +78,15 @@ export function RingerControlPanel() {
             <Text style={styles.buttonText}>{mode}</Text>
           </Pressable>
         ))}
+      </View>
+
+      <View style={styles.buttons}>
+        <Pressable style={styles.button} onPress={enterZone}>
+          <Text style={styles.buttonText}>Enter zone</Text>
+        </Pressable>
+        <Pressable style={styles.button} onPress={exitZone}>
+          <Text style={styles.buttonText}>Exit zone</Text>
+        </Pressable>
       </View>
 
       <View style={styles.buttons}>
