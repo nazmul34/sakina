@@ -140,10 +140,15 @@ internal object RingerSilenceController {
         store.snapshot = RingerIO.getRingerMode(context)
         try {
           RingerIO.setRingerMode(context, "silent")
+          // Silencing worked — clear any standing DND warning so a future failure
+          // warns again immediately (FR-1.9).
+          AutoSilentWarnings.clear(context, WarningType.DND_ACCESS)
         } catch (e: Exception) {
-          // Most likely DND access not granted. We keep the captured snapshot and
-          // the zone membership; the phone simply isn't silenced this time.
+          // DND access was revoked: we kept the captured snapshot and the zone
+          // membership, but the phone isn't silenced this time. Warn the user so
+          // the failure isn't silent — throttled so it isn't spammy (FR-1.9).
           Log.w(TAG, "commitEnter($regionId): could not switch to silent", e)
+          AutoSilentWarnings.report(context, WarningType.DND_ACCESS)
         }
         store.lastSetMode = RingerIO.getRingerMode(context)
         // Remember the zone that opened the session so the restore event can name
