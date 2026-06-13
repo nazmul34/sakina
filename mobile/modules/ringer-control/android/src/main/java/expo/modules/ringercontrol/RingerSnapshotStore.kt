@@ -26,6 +26,9 @@ import android.content.Context
  *   - [overridden]: set once a user-initiated change is detected this session
  *     (FR-1.5). While set, we stop touching the ringer — no re-silence, no restore
  *     on exit — and it clears when the session ends.
+ *   - [sessionZoneId]: the zone that started the current session, kept so the
+ *     activity log (FR-1.8) can name the place on the restore event. Clears with
+ *     the session.
  *
  * Persisting to disk — not memory — is what lets a relaunch after an app-kill
  * mid-zone still restore the correct prior mode. `applicationContext` keeps the
@@ -78,6 +81,20 @@ internal class RingerSnapshotStore(context: Context) {
       prefs.edit().putBoolean(KEY_OVERRIDDEN, value).apply()
     }
 
+  /**
+   * The geofence region id of the zone that *started* the current session — the
+   * first committed entry. Recorded so the activity log's restore event (FR-1.8)
+   * can name the place even though the restore fires on the last exit, possibly
+   * for a different zone. `null` when no session is active.
+   */
+  var sessionZoneId: String?
+    get() = prefs.getString(KEY_SESSION_ZONE, null)
+    set(value) {
+      prefs.edit().apply {
+        if (value == null) remove(KEY_SESSION_ZONE) else putString(KEY_SESSION_ZONE, value)
+      }.apply()
+    }
+
   /** SharedPreferences hands back a shared, unmodifiable set, so copy defensively. */
   private fun readSet(key: String): MutableSet<String> =
     HashSet(prefs.getStringSet(key, emptySet()) ?: emptySet())
@@ -94,5 +111,6 @@ internal class RingerSnapshotStore(context: Context) {
     const val KEY_PENDING_EXIT = "pending_exit_zones"
     const val KEY_LAST_SET_MODE = "last_set_mode"
     const val KEY_OVERRIDDEN = "overridden"
+    const val KEY_SESSION_ZONE = "session_zone"
   }
 }

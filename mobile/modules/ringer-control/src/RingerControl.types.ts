@@ -7,6 +7,25 @@ import type { NativeModule } from 'expo';
 export type RingerMode = 'silent' | 'vibrate' | 'normal';
 
 /**
+ * An auto-silent activity-log event (FR-1.8): the phone was switched to silent on
+ * entering a zone, or restored to its prior mode on leaving the last one.
+ */
+export type ActivityEventType = 'silenced' | 'restored';
+
+/** One entry in the device-local auto-silent activity log (FR-1.8). */
+export interface ActivityLogEntry {
+  /** Whether this entry records a silence or a restore. */
+  readonly event: ActivityEventType;
+  /**
+   * Geofence region id of the zone involved. A human-readable mosque/pin name
+   * replaces this once EPIC-02/03 supply one; empty string if it was unavailable.
+   */
+  readonly zone: string;
+  /** When it happened, in epoch milliseconds. */
+  readonly at: number;
+}
+
+/**
  * Native interface backing the `RingerControl` Expo module.
  *
  * The auto-silent flagship (EPIC-01) toggles the ringer when the device
@@ -97,6 +116,16 @@ export declare class RingerControlModule extends NativeModule {
 
   /** Number of zones currently silencing the phone (debugging/observability). */
   activeZoneCount(): number;
+
+  /**
+   * The auto-silent activity log (FR-1.8): silence/restore events recorded
+   * device-locally by the state machine, newest first, capped at the most recent
+   * 100. Synchronous — it's a single SharedPreferences read.
+   */
+  getActivityLog(): ActivityLogEntry[];
+
+  /** Clears the activity log. */
+  clearActivityLog(): void;
 
   /**
    * A stable, per-install device identifier (Android `Settings.Secure.ANDROID_ID`).

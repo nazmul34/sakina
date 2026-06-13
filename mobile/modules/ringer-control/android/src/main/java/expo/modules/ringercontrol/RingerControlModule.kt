@@ -101,6 +101,18 @@ class RingerControlModule : Module() {
       RingerSilenceController.activeZoneCount(context)
     }
 
+    // --- Activity log (F-01.8) ----------------------------------------------
+    // Read/clear the device-local silence/restore trail. The events are written
+    // natively by the state machine; these expose the persisted log to the UI.
+
+    Function("getActivityLog") {
+      ActivityLogStore(context).entries()
+    }
+
+    Function("clearActivityLog") {
+      ActivityLogStore(context).clear()
+    }
+
     Function("getDeviceId") {
       Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
     }

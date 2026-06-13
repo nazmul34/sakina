@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { ActivityScreen } from '../screens/ActivityScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { PermissionsScreen } from '../screens/PermissionsScreen';
 import type { RootStackParamList } from './types';
@@ -22,6 +23,11 @@ export function RootNavigator() {
         name="Permissions"
         component={PermissionsScreen}
         options={{ title: 'Permissions' }}
+      />
+      <Stack.Screen
+        name="Activity"
+        component={ActivityScreen}
+        options={{ title: 'Activity' }}
       />
     </Stack.Navigator>
   );
