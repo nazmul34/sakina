@@ -32,12 +32,12 @@ def mosques(request: Request) -> Response:
     """``GET /mosques?lat=&lng=&radius_m=`` — nearby mosques, nearest first (F-02.1).
 
     Validates the query point, clamps the radius to FR-2.1 bounds, then resolves
-    mosques through the geo layer (Geoapify proxy; cache/fallback slot in behind
-    ``find_nearby_mosques`` via #47/#41). Distances are haversine metres and the
-    list is sorted by proximity.
+    mosques through the geo layer (Geoapify primary, Overpass fallback; the #47
+    tile cache slots in behind the same ``find_nearby_mosques`` seam). Distances
+    are haversine metres and the list is sorted by proximity.
 
-    A provider failure returns ``502`` rather than ``500`` so the client can fall
-    back to its own cached results (FR-2.3).
+    Returns ``502`` only when *every* provider fails, so the client can fall back
+    to its own cached results (FR-2.3).
     """
     try:
         lat = _parse_coord(request.query_params.get("lat"), "lat", limit=90.0)

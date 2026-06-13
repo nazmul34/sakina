@@ -75,8 +75,10 @@ DJANGO_SETTINGS_MODULE=config.settings.prod gunicorn config.wsgi:application
 | `CORS_ALLOWED_ORIGINS` | empty | Explicit origins; the only CORS source in prod. |
 | `SECURE_SSL_REDIRECT` | `True` (prod) | Redirect HTTP→HTTPS. |
 | `SECURE_HSTS_SECONDS` | `31536000` (prod) | HSTS max-age; `0` to disable. |
-| `GEOAPIFY_API_KEY` | empty | Server-side key for `GET /mosques` (EPIC-02). `/mosques` returns `502` until set. |
-| `GEOAPIFY_TIMEOUT_S` | `15` | Outbound provider timeout (FR-2.3). |
+| `GEOAPIFY_API_KEY` | empty | Server-side key for `GET /mosques` (EPIC-02). Without it the Overpass fallback is used. |
+| `GEOAPIFY_TIMEOUT_S` | `15` | Geoapify request timeout (FR-2.3). |
+| `OVERPASS_API_URL` | `overpass-api.de` | Keyless OSM fallback used when Geoapify fails / is over quota. |
+| `OVERPASS_TIMEOUT_S` | `25` | Overpass request timeout. |
 
 The database defaults to a local SQLite file so the project runs with zero
 setup. Per the PRD (§7.3) we start DB-light (Path B) and can move to
@@ -101,5 +103,5 @@ python manage.py test
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/health` | Liveness probe → `{"status": "ok"}` |
-| `GET` | `/mosques?lat=&lng=&radius_m=` | Nearby mosques (Geoapify proxy), sorted by haversine distance. `radius_m` defaults to 300, capped at 5000. |
+| `GET` | `/mosques?lat=&lng=&radius_m=` | Nearby mosques (Geoapify primary, Overpass fallback), sorted by haversine distance. `radius_m` defaults to 300, capped at 5000. |
 | | `/admin/` | Django admin |

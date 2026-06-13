@@ -142,3 +142,8 @@ REST_FRAMEWORK = {
 # to the server IP once deployed. GEOAPIFY_TIMEOUT_S backs the FR-2.3 15s budget.
 GEOAPIFY_API_KEY = env("GEOAPIFY_API_KEY", default="")
 GEOAPIFY_TIMEOUT_S = env.int("GEOAPIFY_TIMEOUT_S", default=15)
+
+# Overpass — keyless OSM fallback used when Geoapify fails or is over quota
+# (F-02.2). Also keeps /mosques working in dev before a Geoapify key is set.
+OVERPASS_API_URL = env("OVERPASS_API_URL", default="https://overpass-api.de/api/interpreter")
+OVERPASS_TIMEOUT_S = env.int("OVERPASS_TIMEOUT_S", default=25)
