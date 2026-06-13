@@ -133,3 +133,12 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
 }
+
+# ---------------------------------------------------------------------------
+# Geoapify Places — nearby-mosque source (EPIC-02, FR-2.5)
+# ---------------------------------------------------------------------------
+# Server-side only; never exposed to the client. Get a key at geoapify.com and
+# set GEOAPIFY_API_KEY in .env (dev) / the platform env (prod). Restrict the key
+# to the server IP once deployed. GEOAPIFY_TIMEOUT_S backs the FR-2.3 15s budget.
+GEOAPIFY_API_KEY = env("GEOAPIFY_API_KEY", default="")
+GEOAPIFY_TIMEOUT_S = env.int("GEOAPIFY_TIMEOUT_S", default=15)
