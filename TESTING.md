@@ -71,10 +71,11 @@ warning notifications are suppressed on Android 13+.
       the app (see foreground-service notification returns, F-01.7).
 
 ### F-01.2 / F-01.3 — Geofence trigger + capture/restore
-- [ ] Grant DND; set ringer **normal**. **Enter zone** → "Active zones: 1"
-      immediately, phone **not** yet silent. **Wait 45 s** → phone goes **silent**.
-- [ ] **Exit zone** → not restored immediately; **wait 20 s** → ringer **restored**
-      to the prior mode (normal).
+- [ ] Grant DND; set ringer **normal**. **Enter zone** → the zone enters its
+      **45 s dwell** (pending, not yet silencing), so "Active zones" stays **0**.
+      **Wait 45 s**, tap **Refresh** → "Active zones: 1" and the phone is **silent**.
+- [ ] **Exit zone** → not restored immediately; **wait 20 s**, tap **Refresh** →
+      ringer **restored** to the prior mode (normal); "Active zones" back to 0.
 - [ ] (Real geofences: deferred until mosque data exists — EPIC-02/03.)
 
 ### F-01.4 — Dwell + exit-buffer grace
@@ -94,7 +95,9 @@ warning notifications are suppressed on Android 13+.
 
 ### F-01.7 — Foreground service + persistent notification
 - [ ] Toggle ON → persistent notification *"Auto-silent is on — Sakina is watching
-      for nearby mosques…"* appears (quiet, ongoing).
+      for nearby mosques…"* appears (quiet, ongoing). **Note:** it may take up to
+      ~10 s to appear — expected, because the channel is low-importance and Android
+      defers low-importance foreground-service notifications.
 - [ ] Toggle OFF → notification disappears.
 - [ ] Notification requires the **Notifications** permission (Android 13+); if denied,
       the service still runs but the notification is suppressed.
