@@ -2,7 +2,8 @@
 
 Django REST Framework backend for the Sakina app. A runnable skeleton with
 split per-environment settings (dev/prod), 12-factor env-based configuration,
-and a health-check endpoint. No domain models, auth, or feature endpoints yet.
+a health-check endpoint, the anonymous device-ID flow, and nearby-mosque
+discovery (`GET /mosques`, Geoapify-backed).
 
 ## Layout
 
@@ -74,6 +75,8 @@ DJANGO_SETTINGS_MODULE=config.settings.prod gunicorn config.wsgi:application
 | `CORS_ALLOWED_ORIGINS` | empty | Explicit origins; the only CORS source in prod. |
 | `SECURE_SSL_REDIRECT` | `True` (prod) | Redirect HTTP→HTTPS. |
 | `SECURE_HSTS_SECONDS` | `31536000` (prod) | HSTS max-age; `0` to disable. |
+| `GEOAPIFY_API_KEY` | empty | Server-side key for `GET /mosques` (EPIC-02). `/mosques` returns `502` until set. |
+| `GEOAPIFY_TIMEOUT_S` | `15` | Outbound provider timeout (FR-2.3). |
 
 The database defaults to a local SQLite file so the project runs with zero
 setup. Per the PRD (§7.3) we start DB-light (Path B) and can move to
@@ -98,4 +101,5 @@ python manage.py test
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/health` | Liveness probe → `{"status": "ok"}` |
+| `GET` | `/mosques?lat=&lng=&radius_m=` | Nearby mosques (Geoapify proxy), sorted by haversine distance. `radius_m` defaults to 300, capped at 5000. |
 | | `/admin/` | Django admin |
