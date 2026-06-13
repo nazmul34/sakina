@@ -1,14 +1,8 @@
-import { useMemo } from 'react';
-import {
-  Alert,
-  Pressable,
-  SectionList,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import type { ActivityLogEntry } from '../../modules/ringer-control';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useActivityLog } from '../lib/activityLog';
 
 /**
@@ -23,14 +17,13 @@ import { useActivityLog } from '../lib/activityLog';
  */
 export function ActivityScreen() {
   const { entries, clear } = useActivityLog();
+  const [confirmVisible, setConfirmVisible] = useState(false);
 
   const sections = useMemo(() => groupByDay(entries), [entries]);
 
-  const confirmClear = () => {
-    Alert.alert('Clear activity log?', 'This removes all recorded events.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear', style: 'destructive', onPress: clear },
-    ]);
+  const onConfirmClear = () => {
+    setConfirmVisible(false);
+    clear();
   };
 
   if (entries.length === 0) {
@@ -38,32 +31,43 @@ export function ActivityScreen() {
       <View style={styles.empty}>
         <Text style={styles.emptyTitle}>No activity yet</Text>
         <Text style={styles.emptyBody}>
-          When auto-silent silences your phone near a mosque and restores it after
-          you leave, those events show up here.
+          When auto-silent silences your phone near a mosque and restores it
+          after you leave, those events show up here.
         </Text>
       </View>
     );
   }
 
   return (
-    <SectionList
-      sections={sections}
-      keyExtractor={(item, index) => `${item.at}-${index}`}
-      contentContainerStyle={styles.list}
-      renderSectionHeader={({ section }) => (
-        <Text style={styles.sectionHeader}>{section.title}</Text>
-      )}
-      renderItem={({ item }) => <ActivityRow entry={item} />}
-      ListHeaderComponent={
-        <Pressable
-          style={styles.clearButton}
-          onPress={confirmClear}
-          accessibilityRole="button"
-        >
-          <Text style={styles.clearButtonText}>Clear log</Text>
-        </Pressable>
-      }
-    />
+    <>
+      <SectionList
+        sections={sections}
+        keyExtractor={(item, index) => `${item.at}-${index}`}
+        contentContainerStyle={styles.list}
+        renderSectionHeader={({ section }) => (
+          <Text style={styles.sectionHeader}>{section.title}</Text>
+        )}
+        renderItem={({ item }) => <ActivityRow entry={item} />}
+        ListHeaderComponent={
+          <Pressable
+            style={styles.clearButton}
+            onPress={() => setConfirmVisible(true)}
+            accessibilityRole="button"
+          >
+            <Text style={styles.clearButtonText}>Clear log</Text>
+          </Pressable>
+        }
+      />
+      <ConfirmDialog
+        visible={confirmVisible}
+        title="Clear activity log?"
+        message="This removes all recorded events. This can't be undone."
+        confirmLabel="Clear"
+        destructive
+        onConfirm={onConfirmClear}
+        onCancel={() => setConfirmVisible(false)}
+      />
+    </>
   );
 }
 
