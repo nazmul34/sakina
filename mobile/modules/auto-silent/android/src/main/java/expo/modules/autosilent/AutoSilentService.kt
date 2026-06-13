@@ -24,8 +24,8 @@ import androidx.core.content.ContextCompat
  * eagerly — which would stop the phone ever silencing. A foreground service is
  * the one signal Android gives the OEM that the user has an ongoing,
  * user-visible task, so the process keeps its priority and the geofences keep
- * firing. Android's mandatory ongoing notification is the price for that, and
- * doubles as honest disclosure that monitoring is active.
+ * firing. Android's mandatory foreground-service notification is the price for
+ * that, and doubles as honest disclosure that monitoring is active.
  *
  * **Lifecycle.** Started by [AutoSilentArming.rearm] when the master toggle goes
  * on, and again after a reboot by [BootReceiver]; stopped by
@@ -95,7 +95,9 @@ class AutoSilentService : Service() {
       .setContentText("Sakina is watching for nearby mosques to silence your phone.")
       .setSmallIcon(R.drawable.ic_auto_silent_notification)
       .setContentIntent(launchPendingIntent())
-      .setOngoing(true)
+      // Deliberately not setOngoing(true): the user can swipe it away on
+      // Android 14+ while monitoring keeps running. (Below 14 the OS pins any
+      // foreground-service notification regardless, so it stays put there.)
       .setShowWhen(false)
       .setCategory(NotificationCompat.CATEGORY_SERVICE)
       .setPriority(NotificationCompat.PRIORITY_LOW)
