@@ -11,6 +11,7 @@ Scope of *this* module: the Geoapify HTTP call + parsing + distance ranking.
 It hits the network on every call; caching lives in F-02.8 (#47).
 """
 
+import uuid
 from dataclasses import dataclass
 from typing import Optional
 
@@ -32,6 +33,11 @@ GEOAPIFY_LIMIT = 100
 
 # FR-2.3: 15s network timeout, then graceful failure.
 DEFAULT_TIMEOUT_S = 15
+
+# Fixed namespace for deriving a stable, opaque public id from a provider's
+# (source, external_id). Lets the API expose one id without leaking which
+# provider a mosque came from, and stays stable once #47 persists rows.
+_MOSQUE_ID_NAMESPACE = uuid.UUID("6f3a7e0c-1f2b-5d4a-9c8e-0a1b2c3d4e5f")
 
 
 class GeoProviderError(Exception):
@@ -57,6 +63,16 @@ class Mosque:
     lng: float
     distance_m: float
     source: str = "geoapify"
+
+    @property
+    def public_id(self) -> str:
+        """A stable, opaque id for the API to expose.
+
+        Derived from ``(source, external_id)`` so the client never sees the
+        provider or its place id, yet the same mosque keeps the same id across
+        requests (and once #47 persists rows, across the DB id too).
+        """
+        return str(uuid.uuid5(_MOSQUE_ID_NAMESPACE, f"{self.source}:{self.external_id}"))
 
 
 def find_nearby_mosques(lat: float, lng: float, radius_m: int) -> list[Mosque]:

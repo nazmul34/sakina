@@ -105,12 +105,15 @@ def _clamp_radius(raw: object) -> "int | None":
 
 
 def _serialize(mosque: Mosque) -> dict:
-    """Shape a :class:`Mosque` for the JSON response (name + distance + pin)."""
+    """Shape a :class:`Mosque` for the JSON response (id + name + distance + pin).
+
+    Exposes only an opaque ``id``; the provider (``source``) and its raw
+    ``external_id`` are internal and never returned to the client.
+    """
     return {
-        "external_id": mosque.external_id,
+        "id": mosque.public_id,
         "name": mosque.name,
         "lat": mosque.lat,
         "lng": mosque.lng,
         "distance_m": round(mosque.distance_m, 1),
-        "source": mosque.source,
     }

@@ -1,5 +1,6 @@
 """Tests for the nearby-mosque endpoint and geo layer (F-02.1, FR-2.5)."""
 
+import uuid
 from unittest.mock import MagicMock, patch
 
 import requests
@@ -113,6 +114,26 @@ class MosquesEndpointTests(APITestCase):
         self.assertLessEqual(
             first["distance_m"], body["mosques"][1]["distance_m"]
         )
+
+    def test_exposes_opaque_id_and_hides_provider_fields(self):
+        features = [_feature("place-123", "Near Mosque", 23.7819, 90.4070)]
+        with patch("core.geo.geoapify.requests.get", _fake_geoapify(features)):
+            response = self._get(lat=QUERY_LAT, lng=QUERY_LNG)
+
+        mosque = response.json()["mosques"][0]
+        self.assertEqual(set(mosque), {"id", "name", "lat", "lng", "distance_m"})
+        # Opaque id: a UUID, not the provider's raw place id.
+        self.assertEqual(str(uuid.UUID(mosque["id"])), mosque["id"])
+        self.assertNotIn("place-123", response.content.decode())
+        self.assertNotIn("geoapify", response.content.decode())
+
+    def test_id_is_stable_across_requests(self):
+        features = [_feature("place-123", "Near Mosque", 23.7819, 90.4070)]
+        with patch("core.geo.geoapify.requests.get", _fake_geoapify(features)):
+            first = self._get(lat=QUERY_LAT, lng=QUERY_LNG).json()["mosques"][0]["id"]
+        with patch("core.geo.geoapify.requests.get", _fake_geoapify(features)):
+            second = self._get(lat=QUERY_LAT, lng=QUERY_LNG).json()["mosques"][0]["id"]
+        self.assertEqual(first, second)
 
     def test_missing_lat_or_lng_is_400(self):
         self.assertEqual(self._get(lng=QUERY_LNG).status_code, 400)
