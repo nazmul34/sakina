@@ -250,9 +250,10 @@ function openNavigation(mosque: NearbyMosque): void {
   });
 }
 
-const relativeFormatter = new Intl.RelativeTimeFormat(undefined, {
-  numeric: 'auto',
-});
+// Hermes on Android ships Intl.DateTimeFormat but NOT Intl.RelativeTimeFormat —
+// constructing the latter throws "undefined is not a constructor" and, because
+// this screen is imported eagerly by the navigator, crashes the app at launch.
+// So format relative times by hand and keep DateTimeFormat for the fallback.
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   month: 'short',
   day: 'numeric',
@@ -260,16 +261,18 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
   minute: '2-digit',
 });
 
-/** "5 minutes ago" within a day; an absolute date/time beyond that. */
+/** "5 min ago" within a day; an absolute date/time beyond that. */
 function formatRelative(at: number): string {
-  const diffMs = at - Date.now();
-  const diffMin = Math.round(diffMs / 60_000);
-  if (Math.abs(diffMin) < 60) {
-    return relativeFormatter.format(diffMin, 'minute');
+  const diffMin = Math.round((Date.now() - at) / 60_000);
+  if (diffMin < 1) {
+    return 'just now';
   }
-  const diffHr = Math.round(diffMs / 3_600_000);
-  if (Math.abs(diffHr) < 24) {
-    return relativeFormatter.format(diffHr, 'hour');
+  if (diffMin < 60) {
+    return `${diffMin} min ago`;
+  }
+  const diffHr = Math.round(diffMin / 60);
+  if (diffHr < 24) {
+    return `${diffHr} h ago`;
   }
   return dateFormatter.format(new Date(at));
 }
