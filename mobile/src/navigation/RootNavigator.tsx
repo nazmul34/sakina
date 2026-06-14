@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { ActivityScreen } from '../screens/ActivityScreen';
 import { HomeScreen } from '../screens/HomeScreen';
+import { NearbyMosquesScreen } from '../screens/NearbyMosquesScreen';
 import { PermissionsScreen } from '../screens/PermissionsScreen';
 import type { RootStackParamList } from './types';
 
@@ -28,6 +29,11 @@ export function RootNavigator() {
         name="Activity"
         component={ActivityScreen}
         options={{ title: 'Activity' }}
+      />
+      <Stack.Screen
+        name="NearbyMosques"
+        component={NearbyMosquesScreen}
+        options={{ title: 'Nearby mosques' }}
       />
     </Stack.Navigator>
   );
