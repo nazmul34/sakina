@@ -29,6 +29,7 @@ import { useNearbyMosques } from '../hooks/useNearbyMosques';
 import { bearingDegrees } from '../lib/geofencing/geo';
 import { LocationPermissionError } from '../lib/location';
 import type { NearbyMosque } from '../lib/mosques';
+import { submitMosqueReport } from '../lib/mosqueReports';
 
 // 8-point compass, indexed by round(bearing / 45). Arrows point the way the
 // mosque lies relative to the user; the label spells it out for accessibility.
@@ -114,14 +115,18 @@ export function NearbyMosquesScreen() {
         />
       }
       ListHeaderComponent={
-        fromCache && lastUpdatedAt != null ? (
+        lastUpdatedAt == null ? null : fromCache ? (
           <View style={styles.staleBanner}>
             <Text style={styles.staleText}>
               Showing saved results from {formatRelative(lastUpdatedAt)} —
               couldn&apos;t refresh.
             </Text>
           </View>
-        ) : null
+        ) : (
+          <Text style={styles.freshness}>
+            Updated {formatRelative(lastUpdatedAt)}
+          </Text>
+        )
       }
       ListEmptyComponent={
         <View style={styles.centered}>
@@ -158,15 +163,59 @@ function MosqueRow({ item }: { item: MosqueItem }) {
           {point != null ? ` · ${point}` : ''}
         </Text>
       </View>
-      <Pressable
-        style={styles.navButton}
-        onPress={() => openNavigation(mosque)}
-        accessibilityRole="button"
-        accessibilityLabel={`Navigate to ${mosque.name}`}
-      >
-        <Text style={styles.navButtonText}>Navigate</Text>
-      </Pressable>
+      <View style={styles.actions}>
+        <Pressable
+          style={styles.navButton}
+          onPress={() => openNavigation(mosque)}
+          accessibilityRole="button"
+          accessibilityLabel={`Navigate to ${mosque.name}`}
+        >
+          <Text style={styles.navButtonText}>Navigate</Text>
+        </Pressable>
+        <Pressable
+          style={styles.reportButton}
+          onPress={() => reportIncorrect(mosque)}
+          accessibilityRole="button"
+          accessibilityLabel={`Report ${mosque.name} as incorrect`}
+        >
+          <Text style={styles.reportButtonText}>Report</Text>
+        </Pressable>
+      </View>
     </View>
+  );
+}
+
+/**
+ * Flag a mosque as incorrect (FR-2.6). Confirms first, then hands the report to
+ * {@link submitMosqueReport} (an EPIC-08 stub today) and acknowledges it — the
+ * report never edits live data, it feeds the moderated crowdsourcing flow.
+ */
+function reportIncorrect(mosque: NearbyMosque): void {
+  Alert.alert(
+    'Report incorrect mosque',
+    `Let us know "${mosque.name}" looks wrong — closed, misnamed, or not a mosque. We'll review it.`,
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Report',
+        style: 'destructive',
+        onPress: () => {
+          void submitMosqueReport(mosque)
+            .then(() =>
+              Alert.alert(
+                'Thanks for the report',
+                "We'll review this mosque's details.",
+              ),
+            )
+            .catch(() =>
+              Alert.alert(
+                'Could not send report',
+                'Please try again in a moment.',
+              ),
+            );
+        },
+      },
+    ],
   );
 }
 
@@ -270,6 +319,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#8A6D00',
   },
+  freshness: {
+    fontSize: 12,
+    opacity: 0.55,
+    marginBottom: 4,
+    paddingHorizontal: 2,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -303,14 +358,32 @@ const styles = StyleSheet.create({
     fontSize: 13,
     opacity: 0.6,
   },
+  actions: {
+    gap: 6,
+    alignItems: 'stretch',
+  },
   navButton: {
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 10,
     backgroundColor: '#E6F4FE',
+    alignItems: 'center',
   },
   navButtonText: {
     fontSize: 13,
     fontWeight: '700',
+  },
+  reportButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#999',
+    alignItems: 'center',
+  },
+  reportButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    opacity: 0.7,
   },
 });
