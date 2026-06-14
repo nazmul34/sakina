@@ -20,8 +20,12 @@ class Mosque(UUIDModel, TimeStampedModel):
     """
 
     source = models.CharField(max_length=32)
-    external_id = models.CharField(max_length=255)
-    name = models.CharField(max_length=255, null=True, blank=True)
+    # Provider place ids can be long (Geoapify ids especially); keep generous
+    # headroom — Postgres enforces the limit even though SQLite ignores it.
+    external_id = models.CharField(max_length=512)
+    # Names are free text and occasionally very long (multilingual/descriptive),
+    # so don't cap them with a CharField limit.
+    name = models.TextField(null=True, blank=True)
     lat = models.FloatField()
     lng = models.FloatField()
 
