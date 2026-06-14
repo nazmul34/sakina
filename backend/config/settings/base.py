@@ -152,3 +152,8 @@ OVERPASS_TIMEOUT_S = env.int("OVERPASS_TIMEOUT_S", default=25)
 # never supplies or controls it, so "nearby" stays consistent and maps onto a
 # single ~5 km tile in the #47 cache. Tunable via env without an app release.
 MOSQUE_SEARCH_RADIUS_M = env.int("MOSQUE_SEARCH_RADIUS_M", default=5000)
+
+# How long a fetched map tile stays fresh before the next request re-queries the
+# provider (F-02.8, #47). Mosque locations rarely change, so the default is
+# generous to keep provider calls (and cost) low.
+MOSQUE_TILE_TTL_DAYS = env.int("MOSQUE_TILE_TTL_DAYS", default=30)

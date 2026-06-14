@@ -1,11 +1,15 @@
-"""Geo service — orchestrates providers behind one ``find_nearby_mosques`` seam.
+"""Provider orchestration — the network side of nearby-mosque discovery.
 
-This is the single entry point the ``GET /mosques`` view (and later the #47 tile
-cache) calls. It tries each provider in priority order — Geoapify primary, then
-the Overpass fallback — moving on when one raises :class:`GeoProviderError`
-(failure or quota), and sorts the first successful result by distance. Because
-ordering and provider selection live here, swapping a provider or moving to
-PostGIS never touches the caller.
+Tries each provider in priority order — Geoapify primary, then the Overpass
+fallback — moving on when one raises :class:`GeoProviderError` (failure or
+quota), and sorts the first successful result by distance. Because ordering and
+provider selection live here, swapping a provider or moving to PostGIS never
+touches the caller.
+
+This is the *uncached* path: the #47 tile cache (:mod:`core.geo.cache`) calls
+``fetch_from_providers`` only on a tile miss, then serves everyone else from the
+DB. The ``GET /mosques`` view goes through the cache's ``find_nearby_mosques``,
+not this module directly.
 """
 
 import logging
@@ -26,17 +30,18 @@ DEFAULT_PROVIDERS: tuple[MosqueProvider, ...] = (
 )
 
 
-def find_nearby_mosques(
+def fetch_from_providers(
     lat: float,
     lng: float,
     radius_m: int,
     providers: Optional[Sequence[MosqueProvider]] = None,
 ) -> list[Mosque]:
-    """Return mosques within ``radius_m`` of ``(lat, lng)``, nearest first.
+    """Return mosques within ``radius_m`` of ``(lat, lng)`` from a live provider.
 
     Walks the provider chain until one returns, then sorts by distance. Raises
-    :class:`GeoProviderError` only if *every* provider fails, so the view can
-    answer ``502`` and let the client fall back to its cache (FR-2.3).
+    :class:`GeoProviderError` only if *every* provider fails, so the cache (and,
+    on a cold tile, the view) can answer ``502`` and let the client fall back to
+    its own cache (FR-2.3).
     """
     chain = providers if providers is not None else DEFAULT_PROVIDERS
 
