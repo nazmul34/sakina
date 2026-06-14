@@ -8,16 +8,12 @@ Overpass fallback) and the distance/cache strategy (#47) can change behind
 from .base import GeoProviderError, Mosque, MosqueProvider
 from .service import find_nearby_mosques
 
-# Configurable radius bounds (FR-2.1): default 300 m, hard cap 5000 m. The view
-# clamps client input into ``[1, MAX_RADIUS_M]`` and defaults to DEFAULT.
-DEFAULT_RADIUS_M = 300
-MAX_RADIUS_M = 5000
+# Note: the search radius is a server-side setting (``MOSQUE_SEARCH_RADIUS_M``,
+# FR-2.1), fixed per request by the view — not a geo-layer constant.
 
 __all__ = [
     "find_nearby_mosques",
     "Mosque",
     "MosqueProvider",
     "GeoProviderError",
-    "DEFAULT_RADIUS_M",
-    "MAX_RADIUS_M",
 ]

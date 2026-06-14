@@ -147,3 +147,8 @@ GEOAPIFY_TIMEOUT_S = env.int("GEOAPIFY_TIMEOUT_S", default=15)
 # (F-02.2). Also keeps /mosques working in dev before a Geoapify key is set.
 OVERPASS_API_URL = env("OVERPASS_API_URL", default="https://overpass-api.de/api/interpreter")
 OVERPASS_TIMEOUT_S = env.int("OVERPASS_TIMEOUT_S", default=25)
+
+# Nearby-mosque search radius in metres (FR-2.1). Fixed server-side: the client
+# never supplies or controls it, so "nearby" stays consistent and maps onto a
+# single ~5 km tile in the #47 cache. Tunable via env without an app release.
+MOSQUE_SEARCH_RADIUS_M = env.int("MOSQUE_SEARCH_RADIUS_M", default=5000)
