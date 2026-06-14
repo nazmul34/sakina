@@ -23,6 +23,7 @@ import { distanceMeters } from '../lib/geofencing/geo';
 import type { LatLng } from '../lib/geofencing/types';
 import { getHighAccuracyFix } from '../lib/location';
 import { fetchNearbyMosques, type NearbyMosque } from '../lib/mosques';
+import { readMosquesCache, writeMosquesCache } from '../lib/mosquesCache';
 
 /**
  * Re-query once the user is at least this far (metres) from the last fetch
@@ -38,6 +39,14 @@ export interface UseNearbyMosques {
   readonly mosques: NearbyMosque[];
   readonly status: NearbyMosquesStatus;
   readonly error: Error | null;
+  /**
+   * Whether the currently shown `mosques` came from the on-device cache after a
+   * failed/timed-out fetch, rather than a fresh response (FR-2.3). The UI uses
+   * this with {@link lastUpdatedAt} to render a "showing cached results" notice.
+   */
+  readonly fromCache: boolean;
+  /** Epoch ms the shown results were fetched from the network; null until any load. */
+  readonly lastUpdatedAt: number | null;
   /** Force a fetch at the latest known position, ignoring the movement gate. */
   readonly refresh: () => void;
 }
@@ -49,6 +58,8 @@ export function useNearbyMosques(): UseNearbyMosques {
   const [mosques, setMosques] = useState<NearbyMosque[]>([]);
   const [status, setStatus] = useState<NearbyMosquesStatus>('idle');
   const [error, setError] = useState<Error | null>(null);
+  const [fromCache, setFromCache] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
 
   // Refs (not state) so the long-lived watch callback always reads the latest
   // values without the effect having to re-subscribe:
@@ -72,13 +83,29 @@ export function useNearbyMosques(): UseNearbyMosques {
       if (!mounted.current) {
         return;
       }
+      const now = Date.now();
       setMosques(next);
       setError(null);
+      setFromCache(false);
+      setLastUpdatedAt(now);
       setStatus('success');
       lastFetchedAt.current = at;
+      void writeMosquesCache(next, now);
     } catch (err) {
-      if (mounted.current) {
-        setError(toError(err));
+      // Timeout/network failure (FR-2.3): fall back to the last cached results
+      // with a staleness marker, rather than blanking the list. Only a hard
+      // error (no cache to show) surfaces as `status: 'error'`.
+      const cached = await readMosquesCache();
+      if (!mounted.current) {
+        return;
+      }
+      setError(toError(err));
+      if (cached) {
+        setMosques(cached.mosques);
+        setFromCache(true);
+        setLastUpdatedAt(cached.fetchedAt);
+        setStatus('success');
+      } else {
         setStatus('error');
       }
     } finally {
@@ -153,5 +180,22 @@ export function useNearbyMosques(): UseNearbyMosques {
     };
   }, [fetchAround]);
 
-  return { mosques, status, error, refresh };
+  // Seed from cache on mount so the list shows last-known results immediately
+  // (FR-2.3) instead of an empty screen while the first fix + fetch resolve.
+  // Bails if a fresh fetch already landed, so it never clobbers live data.
+  useEffect(() => {
+    let active = true;
+    void readMosquesCache().then((cached) => {
+      if (active && cached && lastFetchedAt.current === null) {
+        setMosques(cached.mosques);
+        setFromCache(true);
+        setLastUpdatedAt(cached.fetchedAt);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return { mosques, status, error, fromCache, lastUpdatedAt, refresh };
 }
