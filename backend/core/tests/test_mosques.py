@@ -262,21 +262,28 @@ class MosquesEndpointTests(APITestCase):
         self.assertEqual(self._get(lat=120, lng=QUERY_LNG).status_code, 400)
         self.assertEqual(self._get(lat=QUERY_LAT, lng=200).status_code, 400)
 
-    def test_radius_defaults_to_300_when_omitted(self):
+    @override_settings(MOSQUE_SEARCH_RADIUS_M=5000)
+    def test_uses_server_fixed_radius(self):
+        # FR-2.1: radius comes from the server setting, not the client, and is echoed.
         with self._patch_seam(return_value=[]) as seam:
             response = self._get(lat=QUERY_LAT, lng=QUERY_LNG)
-        self.assertEqual(response.json()["radius_m"], 300)
-        self.assertEqual(seam.call_args.args[2], 300)
+        self.assertEqual(response.json()["radius_m"], 5000)
+        self.assertEqual(seam.call_args.args[2], 5000)
 
-    def test_radius_clamped_to_max_5000(self):
+    @override_settings(MOSQUE_SEARCH_RADIUS_M=5000)
+    def test_client_radius_param_is_ignored(self):
+        # The client can't widen/narrow the search: any radius_m is ignored.
         with self._patch_seam(return_value=[]) as seam:
             response = self._get(lat=QUERY_LAT, lng=QUERY_LNG, radius_m=99999)
         self.assertEqual(response.json()["radius_m"], 5000)
-        # The clamped value is what reaches the geo layer.
         self.assertEqual(seam.call_args.args[2], 5000)
 
-    def test_non_positive_radius_is_400(self):
-        self.assertEqual(self._get(lat=QUERY_LAT, lng=QUERY_LNG, radius_m=0).status_code, 400)
+    @override_settings(MOSQUE_SEARCH_RADIUS_M=1234)
+    def test_radius_configurable_via_setting(self):
+        with self._patch_seam(return_value=[]) as seam:
+            response = self._get(lat=QUERY_LAT, lng=QUERY_LNG)
+        self.assertEqual(response.json()["radius_m"], 1234)
+        self.assertEqual(seam.call_args.args[2], 1234)
 
     def test_all_providers_down_is_502_not_500(self):
         with self._patch_seam(side_effect=GeoProviderError("all down")):

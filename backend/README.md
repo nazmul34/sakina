@@ -79,6 +79,7 @@ DJANGO_SETTINGS_MODULE=config.settings.prod gunicorn config.wsgi:application
 | `GEOAPIFY_TIMEOUT_S` | `15` | Geoapify request timeout (FR-2.3). |
 | `OVERPASS_API_URL` | `overpass-api.de` | Keyless OSM fallback used when Geoapify fails / is over quota. |
 | `OVERPASS_TIMEOUT_S` | `25` | Overpass request timeout. |
+| `MOSQUE_SEARCH_RADIUS_M` | `5000` | Fixed nearby-search radius in metres (FR-2.1); client never controls it. |
 
 The database defaults to a local SQLite file so the project runs with zero
 setup. Per the PRD (§7.3) we start DB-light (Path B) and can move to
@@ -103,5 +104,5 @@ python manage.py test
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/health` | Liveness probe → `{"status": "ok"}` |
-| `GET` | `/mosques?lat=&lng=&radius_m=` | Nearby mosques (Geoapify primary, Overpass fallback), sorted by haversine distance. `radius_m` defaults to 300, capped at 5000. |
+| `GET` | `/mosques?lat=&lng=` | Nearby mosques (Geoapify primary, Overpass fallback), sorted by haversine distance. Radius is fixed server-side via `MOSQUE_SEARCH_RADIUS_M` (default 5000 m); not client-controlled. |
 | | `/admin/` | Django admin |
