@@ -47,6 +47,11 @@ export interface UseNearbyMosques {
   readonly fromCache: boolean;
   /** Epoch ms the shown results were fetched from the network; null until any load. */
   readonly lastUpdatedAt: number | null;
+  /**
+   * Position the shown results were fetched around — the origin distances and
+   * bearings are measured from (FR-2.4). Null until the first load.
+   */
+  readonly origin: LatLng | null;
   /** Force a fetch at the latest known position, ignoring the movement gate. */
   readonly refresh: () => void;
 }
@@ -60,6 +65,7 @@ export function useNearbyMosques(): UseNearbyMosques {
   const [error, setError] = useState<Error | null>(null);
   const [fromCache, setFromCache] = useState(false);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+  const [origin, setOrigin] = useState<LatLng | null>(null);
 
   // Refs (not state) so the long-lived watch callback always reads the latest
   // values without the effect having to re-subscribe:
@@ -88,9 +94,10 @@ export function useNearbyMosques(): UseNearbyMosques {
       setError(null);
       setFromCache(false);
       setLastUpdatedAt(now);
+      setOrigin(at);
       setStatus('success');
       lastFetchedAt.current = at;
-      void writeMosquesCache(next, now);
+      void writeMosquesCache(next, now, at);
     } catch (err) {
       // Timeout/network failure (FR-2.3): fall back to the last cached results
       // with a staleness marker, rather than blanking the list. Only a hard
@@ -104,6 +111,7 @@ export function useNearbyMosques(): UseNearbyMosques {
         setMosques(cached.mosques);
         setFromCache(true);
         setLastUpdatedAt(cached.fetchedAt);
+        setOrigin(cached.origin);
         setStatus('success');
       } else {
         setStatus('error');
@@ -190,6 +198,7 @@ export function useNearbyMosques(): UseNearbyMosques {
         setMosques(cached.mosques);
         setFromCache(true);
         setLastUpdatedAt(cached.fetchedAt);
+        setOrigin(cached.origin);
       }
     });
     return () => {
@@ -197,5 +206,13 @@ export function useNearbyMosques(): UseNearbyMosques {
     };
   }, []);
 
-  return { mosques, status, error, fromCache, lastUpdatedAt, refresh };
+  return {
+    mosques,
+    status,
+    error,
+    fromCache,
+    lastUpdatedAt,
+    origin,
+    refresh,
+  };
 }

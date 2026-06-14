@@ -17,6 +17,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import type { LatLng } from './geofencing/types';
 import type { NearbyMosque } from './mosques';
 
 const CACHE_KEY = 'sakina.mosques_cache';
@@ -25,6 +26,8 @@ export interface CachedMosques {
   readonly mosques: NearbyMosque[];
   /** Epoch ms when these results were fetched from the network. */
   readonly fetchedAt: number;
+  /** Position the results were fetched around — the origin for bearing/distance. */
+  readonly origin: LatLng;
 }
 
 /** Read the cached results, or `null` if absent/corrupt/unavailable. */
@@ -35,7 +38,12 @@ export async function readMosquesCache(): Promise<CachedMosques | null> {
       return null;
     }
     const parsed = JSON.parse(raw) as CachedMosques;
-    if (!Array.isArray(parsed.mosques) || typeof parsed.fetchedAt !== 'number') {
+    if (
+      !Array.isArray(parsed.mosques) ||
+      typeof parsed.fetchedAt !== 'number' ||
+      typeof parsed.origin?.latitude !== 'number' ||
+      typeof parsed.origin?.longitude !== 'number'
+    ) {
       return null;
     }
     return parsed;
@@ -44,13 +52,17 @@ export async function readMosquesCache(): Promise<CachedMosques | null> {
   }
 }
 
-/** Persist a fresh result set with the time it was fetched. Best-effort. */
+/**
+ * Persist a fresh result set with the time and origin it was fetched around.
+ * Best-effort — a failed write must not turn a successful fetch into a failure.
+ */
 export async function writeMosquesCache(
   mosques: NearbyMosque[],
   fetchedAt: number,
+  origin: LatLng,
 ): Promise<void> {
   try {
-    const payload: CachedMosques = { mosques, fetchedAt };
+    const payload: CachedMosques = { mosques, fetchedAt, origin };
     await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(payload));
   } catch {
     // A failed cache write must not turn a successful fetch into a failure.

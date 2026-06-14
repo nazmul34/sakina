@@ -45,6 +45,13 @@ export function HomeScreen() {
       <AutoSilentToggle />
       <Pressable
         style={styles.permissionsLink}
+        onPress={() => navigation.navigate('NearbyMosques')}
+        accessibilityRole="button"
+      >
+        <Text style={styles.permissionsLinkText}>Nearby mosques</Text>
+      </Pressable>
+      <Pressable
+        style={styles.permissionsLink}
         onPress={() => navigation.navigate('Permissions')}
         accessibilityRole="button"
       >

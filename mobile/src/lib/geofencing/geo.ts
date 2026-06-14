@@ -8,6 +8,7 @@ import type { LatLng } from './types';
 const EARTH_RADIUS_M = 6_371_000;
 
 const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
+const toDegrees = (radians: number): number => (radians * 180) / Math.PI;
 
 /**
  * Great-circle distance in metres between two coordinates (haversine). Accurate
@@ -25,4 +26,22 @@ export function distanceMeters(a: LatLng, b: LatLng): number {
     Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
 
   return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(h));
+}
+
+/**
+ * Initial great-circle bearing from `from` to `to`, in degrees clockwise from
+ * true north (0 = N, 90 = E, 180 = S, 270 = W), normalised to [0, 360). Used to
+ * show which way a nearby mosque lies (FR-2.4).
+ */
+export function bearingDegrees(from: LatLng, to: LatLng): number {
+  const lat1 = toRadians(from.latitude);
+  const lat2 = toRadians(to.latitude);
+  const dLon = toRadians(to.longitude - from.longitude);
+
+  const y = Math.sin(dLon) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+
+  return (toDegrees(Math.atan2(y, x)) + 360) % 360;
 }
