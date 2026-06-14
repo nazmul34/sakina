@@ -1,17 +1,29 @@
-"""Tests for the nearby-mosque endpoint and geo layer (F-02.1, F-02.2)."""
+"""Tests for the nearby-mosque endpoint and geo layer (F-02.1, F-02.2, F-02.8)."""
 
 import uuid
+from datetime import timedelta
 from unittest.mock import MagicMock, patch
 
 import requests
 from django.test import override_settings
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from core.geo import GeoProviderError, Mosque, MosqueProvider, find_nearby_mosques
+from core.geo import (
+    GeoProviderError,
+    Mosque,
+    MosqueProvider,
+    fetch_from_providers,
+    find_nearby_mosques,
+    invalidate_tile_at,
+)
 from core.geo.distance import haversine_m
 from core.geo.geoapify import GeoapifyProvider
 from core.geo.overpass import OverpassProvider
+from core.geo.tiles import snap_to_tile
+from core.models import FetchedTile
+from core.models import Mosque as MosqueRecord
 
 QUERY_LAT, QUERY_LNG = 23.7806, 90.4070
 
@@ -182,7 +194,7 @@ class ProviderChainTests(APITestCase):
     def test_primary_success_skips_fallback(self):
         primary = _StubProvider("primary", result=[_mosque("a", "A", 10.0)])
         fallback = _StubProvider("fallback", result=[_mosque("b", "B", 5.0)])
-        results = find_nearby_mosques(QUERY_LAT, QUERY_LNG, 300, providers=[primary, fallback])
+        results = fetch_from_providers(QUERY_LAT, QUERY_LNG, 300, providers=[primary, fallback])
 
         self.assertEqual([m.external_id for m in results], ["a"])
         self.assertTrue(primary.called)
@@ -191,7 +203,7 @@ class ProviderChainTests(APITestCase):
     def test_falls_back_when_primary_errors(self):
         primary = _StubProvider("primary", error=GeoProviderError("down"))
         fallback = _StubProvider("fallback", result=[_mosque("b", "B", 5.0)])
-        results = find_nearby_mosques(QUERY_LAT, QUERY_LNG, 300, providers=[primary, fallback])
+        results = fetch_from_providers(QUERY_LAT, QUERY_LNG, 300, providers=[primary, fallback])
 
         self.assertEqual([m.external_id for m in results], ["b"])
         self.assertTrue(fallback.called)
@@ -199,7 +211,7 @@ class ProviderChainTests(APITestCase):
     def test_empty_success_does_not_fall_back(self):
         primary = _StubProvider("primary", result=[])
         fallback = _StubProvider("fallback", result=[_mosque("b", "B", 5.0)])
-        results = find_nearby_mosques(QUERY_LAT, QUERY_LNG, 300, providers=[primary, fallback])
+        results = fetch_from_providers(QUERY_LAT, QUERY_LNG, 300, providers=[primary, fallback])
 
         self.assertEqual(results, [])
         self.assertFalse(fallback.called)
@@ -208,13 +220,13 @@ class ProviderChainTests(APITestCase):
         primary = _StubProvider("primary", error=GeoProviderError("down"))
         fallback = _StubProvider("fallback", error=GeoProviderError("also down"))
         with self.assertRaises(GeoProviderError):
-            find_nearby_mosques(QUERY_LAT, QUERY_LNG, 300, providers=[primary, fallback])
+            fetch_from_providers(QUERY_LAT, QUERY_LNG, 300, providers=[primary, fallback])
 
     def test_results_sorted_by_distance(self):
         provider = _StubProvider(
             "p", result=[_mosque("far", "Far", 600.0), _mosque("near", "Near", 145.0)]
         )
-        results = find_nearby_mosques(QUERY_LAT, QUERY_LNG, 300, providers=[provider])
+        results = fetch_from_providers(QUERY_LAT, QUERY_LNG, 300, providers=[provider])
         self.assertEqual([m.external_id for m in results], ["near", "far"])
 
 
@@ -289,3 +301,115 @@ class MosquesEndpointTests(APITestCase):
         with self._patch_seam(side_effect=GeoProviderError("all down")):
             response = self._get(lat=QUERY_LAT, lng=QUERY_LNG)
         self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
+
+
+# --------------------------------------------------------------------------- #
+# Tile geometry (pure) — deterministic snapping to ~5 km cells (F-02.8).
+# --------------------------------------------------------------------------- #
+class TileGeometryTests(APITestCase):
+    def test_tile_id_is_southwest_corner(self):
+        self.assertEqual(snap_to_tile(QUERY_LAT, QUERY_LNG), "23.75,90.40")
+
+    def test_nearby_points_share_a_tile(self):
+        # ~1.4 km apart, same 0.05° cell → same cache key.
+        self.assertEqual(snap_to_tile(23.76, 90.41), snap_to_tile(23.77, 90.42))
+
+    def test_distant_points_differ(self):
+        self.assertNotEqual(snap_to_tile(23.76, 90.40), snap_to_tile(23.82, 90.46))
+
+
+# --------------------------------------------------------------------------- #
+# Tile cache + coverage tracking (F-02.8) — exercised over stub providers and
+# the real DB, so hits/misses, dedupe, TTL, and degradation are all covered.
+# --------------------------------------------------------------------------- #
+class TileCacheTests(APITestCase):
+    QUERY_TILE = "23.75,90.40"
+
+    def _near(self):  # ~111 m north of the query point — inside the radius
+        return _mosque("near", "Near Mosque", 0.0, lat=23.7816, lng=90.4070)
+
+    def _far(self):  # ~11 km north — outside the 5 km radius
+        return _mosque("far", "Far Mosque", 0.0, lat=23.8806, lng=90.4070)
+
+    def _find(self, providers):
+        return find_nearby_mosques(QUERY_LAT, QUERY_LNG, 5000, providers=providers)
+
+    def test_miss_populates_db_and_writes_receipt(self):
+        provider = _StubProvider("primary", result=[self._near()])
+        results = self._find([provider])
+
+        self.assertTrue(provider.called)
+        self.assertEqual([m.external_id for m in results], ["near"])
+        self.assertEqual(MosqueRecord.objects.count(), 1)
+        self.assertTrue(FetchedTile.objects.filter(pk=self.QUERY_TILE).exists())
+
+    def test_hit_serves_from_db_without_calling_provider(self):
+        self._find([_StubProvider("primary", result=[self._near()])])
+        # A second request must not touch the network: this provider would raise.
+        guard = _StubProvider("primary", error=GeoProviderError("must not be called"))
+        results = self._find([guard])
+
+        self.assertFalse(guard.called)
+        self.assertEqual([m.external_id for m in results], ["near"])
+
+    def test_radius_filters_far_mosques_but_keeps_them_cached(self):
+        results = self._find([_StubProvider("primary", result=[self._near(), self._far()])])
+
+        self.assertEqual([m.external_id for m in results], ["near"])
+        # The whole tile fetch is cached even though "far" is outside the radius.
+        self.assertEqual(MosqueRecord.objects.count(), 2)
+
+    def test_overlapping_fetches_dedupe_by_external_id(self):
+        self._find([_StubProvider("primary", result=[self._near()])])
+        invalidate_tile_at(QUERY_LAT, QUERY_LNG)
+        renamed = _mosque("near", "Renamed Mosque", 0.0, lat=23.7816, lng=90.4070)
+        self._find([_StubProvider("primary", result=[renamed])])
+
+        self.assertEqual(
+            MosqueRecord.objects.filter(source="geoapify", external_id="near").count(), 1
+        )
+        self.assertEqual(MosqueRecord.objects.get(external_id="near").name, "Renamed Mosque")
+
+    def test_empty_area_records_receipt_and_does_not_refetch(self):
+        self._find([_StubProvider("primary", result=[])])
+        self.assertTrue(FetchedTile.objects.filter(pk=self.QUERY_TILE).exists())
+
+        guard = _StubProvider("primary", error=GeoProviderError("must not refetch"))
+        results = self._find([guard])
+        self.assertFalse(guard.called)
+        self.assertEqual(results, [])
+
+    def test_stale_tile_triggers_refetch(self):
+        self._find([_StubProvider("primary", result=[self._near()])])
+        self._age_tile(days=31)
+
+        refetch = _StubProvider("primary", result=[self._near()])
+        self._find([refetch])
+        self.assertTrue(refetch.called)
+
+    def test_cold_tile_provider_failure_raises(self):
+        with self.assertRaises(GeoProviderError):
+            self._find([_StubProvider("primary", error=GeoProviderError("down"))])
+
+    def test_stale_tile_provider_failure_serves_stale_cache(self):
+        self._find([_StubProvider("primary", result=[self._near()])])
+        self._age_tile(days=31)
+
+        down = _StubProvider("primary", error=GeoProviderError("down"))
+        results = self._find([down])
+        self.assertTrue(down.called)  # it attempted a refresh
+        self.assertEqual([m.external_id for m in results], ["near"])  # then served stale
+
+    def test_invalidate_drops_receipt_and_forces_refetch(self):
+        self._find([_StubProvider("primary", result=[self._near()])])
+        invalidate_tile_at(QUERY_LAT, QUERY_LNG)
+        self.assertFalse(FetchedTile.objects.filter(pk=self.QUERY_TILE).exists())
+
+        refetch = _StubProvider("primary", result=[self._near()])
+        self._find([refetch])
+        self.assertTrue(refetch.called)
+
+    def _age_tile(self, *, days):
+        tile = FetchedTile.objects.get(pk=self.QUERY_TILE)
+        tile.fetched_at = timezone.now() - timedelta(days=days)
+        tile.save(update_fields=["fetched_at"])
