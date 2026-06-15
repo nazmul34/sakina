@@ -33,12 +33,18 @@ class OverpassProvider(MosqueProvider):
         url = getattr(settings, "OVERPASS_API_URL", DEFAULT_OVERPASS_URL)
         timeout = getattr(settings, "OVERPASS_TIMEOUT_S", DEFAULT_TIMEOUT_S)
 
-        # nwr = node/way/relation; mosques are tagged amenity=place_of_worship +
-        # religion=muslim. `out center` gives ways/relations a single point.
+        # nwr = node/way/relation. Most mosques are amenity=place_of_worship +
+        # religion=muslim, but many in under-mapped regions carry only
+        # building=mosque (no religion tag), so union both to widen coverage —
+        # Overpass dedupes overlapping elements. `out center` gives ways/relations
+        # a single point.
         query = (
             f"[out:json][timeout:{timeout}];"
+            f"("
             f'nwr["amenity"="place_of_worship"]["religion"="muslim"]'
             f"(around:{radius_m},{lat},{lng});"
+            f'nwr["building"="mosque"](around:{radius_m},{lat},{lng});'
+            f");"
             f"out center tags;"
         )
 

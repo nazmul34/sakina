@@ -1,27 +1,28 @@
 """Map-tile geometry for the mosque cache (F-02.8, #47).
 
-Pure functions, no DB: lay an invisible ~5 km grid over the map and map any
+Pure functions, no DB: lay an invisible ~1 km grid over the map and map any
 ``(lat, lng)`` to the discrete cell it falls in, so everyone in the same cell
 shares one cache entry. A tile is named by its south-west corner (rounded down
 to the grid), which keeps the id deterministic and human-readable
 (``"23.75,90.40"``).
 
-Tile size is matched to the fixed ~5 km search radius (FR-2.1); see the #47
-decision (rounded 0.05° over geohash for simplicity and determinism).
+Tiles are kept small (~1 km) so each provider fetch covers a tight area; see the
+#47 decision (rounded 0.01° over geohash for simplicity and determinism).
 """
 
 import math
 
 from .distance import haversine_m
 
-# Grid step in degrees. 0.05° ≈ 5.5 km of latitude (less in longitude away from
-# the equator). One tile ≈ one "nearby" query area.
-TILE_SIZE_DEG = 0.05
+# Grid step in degrees. 0.01° ≈ 1.1 km of latitude (less in longitude away from
+# the equator), so a tile's centre→corner radius peaks at ~0.8 km. Two decimals
+# capture the grid exactly, keeping tile ids clean.
+TILE_SIZE_DEG = 0.01
 
 # Populate each tile by fetching a circle a bit larger than the tile itself, so a
 # mosque just across a tile edge isn't missed — completeness is non-negotiable
 # for auto-silent (F-01.2). This is the slack beyond the tile's own half-diagonal.
-TILE_FETCH_MARGIN_M = 2_000
+TILE_FETCH_MARGIN_M = 500
 
 
 def _floor_to_grid(value: float) -> float:
@@ -33,7 +34,7 @@ def snap_to_tile(lat: float, lng: float) -> str:
     """Map a coordinate to its tile id — the cell's south-west corner.
 
     Deterministic: any two points in the same cell return the same id, so they
-    share a cache entry. Two decimals exactly capture the 0.05° grid.
+    share a cache entry. Two decimals exactly capture the 0.01° grid.
     """
     return f"{_floor_to_grid(lat):.2f},{_floor_to_grid(lng):.2f}"
 

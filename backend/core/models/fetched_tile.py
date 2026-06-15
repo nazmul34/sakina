@@ -15,7 +15,7 @@ class FetchedTile(TimeStampedModel):
     the next request re-fetches and refreshes this receipt.
 
     The id is the deterministic tile key from :func:`core.geo.tiles.snap_to_tile`,
-    so everyone inside the same ~5 km cell shares one receipt.
+    so everyone inside the same ~1 km cell shares one receipt.
     """
 
     tile_id = models.CharField(max_length=32, primary_key=True)

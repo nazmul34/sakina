@@ -20,6 +20,7 @@ from core.geo import (
 )
 from core.geo.distance import haversine_m
 from core.geo.geoapify import GeoapifyProvider
+from core.geo.masjidnearme import MasjidNearMeProvider
 from core.geo.overpass import OverpassProvider
 from core.geo.tiles import snap_to_tile
 from core.models import FetchedTile
@@ -124,6 +125,75 @@ class GeoapifyProviderTests(APITestCase):
     def test_missing_api_key_raises_geo_provider_error(self):
         with self.assertRaises(GeoProviderError):
             GeoapifyProvider().find_nearby(QUERY_LAT, QUERY_LNG, 300)
+
+
+# --------------------------------------------------------------------------- #
+# MasjidNearMe provider (primary)
+# --------------------------------------------------------------------------- #
+def _masjid(mid, name, lat, lng):
+    # masjidLocation is a GeoJSON Point: coordinates are [lng, lat].
+    return {
+        "_id": mid,
+        "masjidName": name,
+        "masjidLocation": {"type": "Point", "coordinates": [lng, lat]},
+    }
+
+
+def _fake_get_mn(masjids):
+    response = MagicMock()
+    response.raise_for_status.return_value = None
+    response.json.return_value = {"code": 200, "status": "OK", "data": {"masjids": masjids}}
+    return MagicMock(return_value=response)
+
+
+class MasjidNearMeProviderTests(APITestCase):
+    def test_parses_masjids_with_geojson_coords(self):
+        masjids = [_masjid("abc", "Near Masjid", 23.7819, 90.4070)]
+        with patch("core.geo.masjidnearme.requests.get", _fake_get_mn(masjids)):
+            results = MasjidNearMeProvider().find_nearby(QUERY_LAT, QUERY_LNG, 1000)
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].external_id, "abc")
+        self.assertEqual(results[0].name, "Near Masjid")
+        self.assertEqual(results[0].source, "masjidnearme")
+        self.assertAlmostEqual(results[0].lat, 23.7819)
+        self.assertAlmostEqual(results[0].lng, 90.4070)
+        self.assertGreater(results[0].distance_m, 0)
+
+    def test_filters_results_beyond_radius(self):
+        # The API's radius is advisory and overshoots; the provider enforces it.
+        masjids = [
+            _masjid("near", "Near", 23.7819, 90.4070),   # ~145 m
+            _masjid("far", "Far", 23.8006, 90.4070),      # ~2.2 km, beyond 1 km
+        ]
+        with patch("core.geo.masjidnearme.requests.get", _fake_get_mn(masjids)):
+            results = MasjidNearMeProvider().find_nearby(QUERY_LAT, QUERY_LNG, 1000)
+        self.assertEqual([m.external_id for m in results], ["near"])
+
+    def test_sends_lat_lng_radius_params(self):
+        fake = _fake_get_mn([])
+        with patch("core.geo.masjidnearme.requests.get", fake):
+            MasjidNearMeProvider().find_nearby(QUERY_LAT, QUERY_LNG, 300)
+
+        params = fake.call_args.kwargs["params"]
+        self.assertEqual(params["lat"], QUERY_LAT)
+        self.assertEqual(params["lng"], QUERY_LNG)  # `lng`, not `lon`
+        self.assertEqual(params["radius"], 300)
+
+    def test_skips_unplaceable_records(self):
+        masjids = [
+            {"_id": "no-coords", "masjidName": "Nowhere"},
+            {"masjidName": "No id", "masjidLocation": {"coordinates": [90.40, 23.78]}},
+            _masjid("ok", "Good Masjid", 23.7819, 90.4070),
+        ]
+        with patch("core.geo.masjidnearme.requests.get", _fake_get_mn(masjids)):
+            results = MasjidNearMeProvider().find_nearby(QUERY_LAT, QUERY_LNG, 1000)
+        self.assertEqual([m.external_id for m in results], ["ok"])
+
+    def test_timeout_raises_geo_provider_error(self):
+        with patch("core.geo.masjidnearme.requests.get", side_effect=requests.Timeout):
+            with self.assertRaises(GeoProviderError):
+                MasjidNearMeProvider().find_nearby(QUERY_LAT, QUERY_LNG, 300)
 
 
 # --------------------------------------------------------------------------- #
@@ -304,15 +374,15 @@ class MosquesEndpointTests(APITestCase):
 
 
 # --------------------------------------------------------------------------- #
-# Tile geometry (pure) — deterministic snapping to ~5 km cells (F-02.8).
+# Tile geometry (pure) — deterministic snapping to ~1 km cells (F-02.8).
 # --------------------------------------------------------------------------- #
 class TileGeometryTests(APITestCase):
     def test_tile_id_is_southwest_corner(self):
-        self.assertEqual(snap_to_tile(QUERY_LAT, QUERY_LNG), "23.75,90.40")
+        self.assertEqual(snap_to_tile(QUERY_LAT, QUERY_LNG), "23.78,90.40")
 
     def test_nearby_points_share_a_tile(self):
-        # ~1.4 km apart, same 0.05° cell → same cache key.
-        self.assertEqual(snap_to_tile(23.76, 90.41), snap_to_tile(23.77, 90.42))
+        # ~0.9 km apart, same 0.01° cell → same cache key.
+        self.assertEqual(snap_to_tile(23.781, 90.401), snap_to_tile(23.789, 90.409))
 
     def test_distant_points_differ(self):
         self.assertNotEqual(snap_to_tile(23.76, 90.40), snap_to_tile(23.82, 90.46))
@@ -323,7 +393,7 @@ class TileGeometryTests(APITestCase):
 # the real DB, so hits/misses, dedupe, TTL, and degradation are all covered.
 # --------------------------------------------------------------------------- #
 class TileCacheTests(APITestCase):
-    QUERY_TILE = "23.75,90.40"
+    QUERY_TILE = "23.78,90.40"
 
     def _near(self):  # ~111 m north of the query point — inside the radius
         return _mosque("near", "Near Mosque", 0.0, lat=23.7816, lng=90.4070)
