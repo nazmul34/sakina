@@ -1,0 +1,314 @@
+/**
+ * Drop / edit a pinned silent zone (FR-3.1).
+ *
+ * Hosts the {@link PinMap} (tap-to-drop, draggable marker over OSM tiles) plus the
+ * two per-pin controls — a label field and a radius preset row — and persists the
+ * result with {@link savePin}. Opened fresh (no params) to create a pin centred on
+ * the user's current location, or with a `pinId` to edit an existing one in place.
+ */
+
+import {
+  useNavigation,
+  useRoute,
+  type RouteProp,
+} from '@react-navigation/native';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { PinMap } from '../components/PinMap';
+import type { LatLng } from '../lib/geofencing/types';
+import { getHighAccuracyFix } from '../lib/location';
+import {
+  DEFAULT_PIN_RADIUS_M,
+  PIN_RADIUS_PRESETS_M,
+  deletePin,
+  readPins,
+  savePin,
+  type Pin,
+} from '../lib/pins';
+import type { RootStackParamList } from '../navigation/types';
+
+// Used only when we can't get a location fix and aren't editing an existing pin,
+// so the map still has somewhere to start from and the user can pan/tap from there.
+const FALLBACK_CENTER: LatLng = { latitude: 21.4225, longitude: 39.8262 }; // Kaaba
+
+export function PinEditorScreen() {
+  const navigation = useNavigation();
+  const { params } = useRoute<RouteProp<RootStackParamList, 'PinEditor'>>();
+  const pinId = params?.pinId;
+
+  // The map mounts once we have a centre; until then we show a spinner. `position`
+  // tracks the live marker; `center` is the fixed initial view and never changes.
+  const [center, setCenter] = useState<LatLng | null>(null);
+  const [position, setPosition] = useState<LatLng | null>(null);
+  const [label, setLabel] = useState('');
+  const [radiusM, setRadiusM] = useState<number>(DEFAULT_PIN_RADIUS_M);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function init() {
+      if (pinId) {
+        const existing = (await readPins()).find((p) => p.id === pinId);
+        if (existing && active) {
+          seedFromPin(existing);
+          return;
+        }
+      }
+      // New pin: centre on the user. If location is unavailable, fall back so the
+      // map is still usable — the user can pan and tap to place the pin manually.
+      const fix = await getHighAccuracyFix().catch(() => FALLBACK_CENTER);
+      if (active) {
+        setCenter(fix);
+        setPosition(fix);
+      }
+    }
+
+    function seedFromPin(pin: Pin) {
+      const at = { latitude: pin.latitude, longitude: pin.longitude };
+      setCenter(at);
+      setPosition(at);
+      setLabel(pin.label);
+      setRadiusM(pin.radiusM);
+    }
+
+    void init();
+    return () => {
+      active = false;
+    };
+  }, [pinId]);
+
+  async function handleSave() {
+    if (!position) {
+      return;
+    }
+    await savePin(
+      {
+        label: label.trim(),
+        latitude: position.latitude,
+        longitude: position.longitude,
+        radiusM,
+      },
+      pinId,
+    );
+    navigation.goBack();
+  }
+
+  async function handleDelete() {
+    if (pinId) {
+      await deletePin(pinId);
+    }
+    setConfirmingDelete(false);
+    navigation.goBack();
+  }
+
+  if (!center) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator />
+        <Text style={styles.centeredBody}>Finding your location…</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.mapWrap}>
+        <PinMap center={center} radiusM={radiusM} onMove={setPosition} />
+      </View>
+
+      <ScrollView
+        style={styles.panel}
+        contentContainerStyle={styles.panelContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={styles.hint}>
+          Tap the map or drag the pin to set the spot.
+        </Text>
+
+        <Text style={styles.fieldLabel}>Label</Text>
+        <TextInput
+          style={styles.input}
+          value={label}
+          onChangeText={setLabel}
+          placeholder="e.g. My local masjid"
+          returnKeyType="done"
+          maxLength={60}
+        />
+
+        <Text style={styles.fieldLabel}>Radius</Text>
+        <View style={styles.presets}>
+          {PIN_RADIUS_PRESETS_M.map((preset) => {
+            const selected = preset === radiusM;
+            return (
+              <Pressable
+                key={preset}
+                style={[styles.preset, selected && styles.presetSelected]}
+                onPress={() => setRadiusM(preset)}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+              >
+                <Text
+                  style={[
+                    styles.presetText,
+                    selected && styles.presetTextSelected,
+                  ]}
+                >
+                  {formatRadius(preset)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Pressable
+          style={[styles.saveButton, !position && styles.saveButtonDisabled]}
+          onPress={handleSave}
+          disabled={!position}
+          accessibilityRole="button"
+        >
+          <Text style={styles.saveButtonText}>
+            {pinId ? 'Save changes' : 'Save pin'}
+          </Text>
+        </Pressable>
+
+        {pinId ? (
+          <Pressable
+            style={styles.deleteButton}
+            onPress={() => setConfirmingDelete(true)}
+            accessibilityRole="button"
+          >
+            <Text style={styles.deleteButtonText}>Delete pin</Text>
+          </Pressable>
+        ) : null}
+      </ScrollView>
+
+      <ConfirmDialog
+        visible={confirmingDelete}
+        title="Delete this pin?"
+        message="This silent zone will be removed from this device."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmingDelete(false)}
+      />
+    </View>
+  );
+}
+
+/** Metres → a short label: "150 m" under 1 km, else "1 km". */
+function formatRadius(meters: number): string {
+  if (meters < 1000) {
+    return `${meters} m`;
+  }
+  return `${meters / 1000} km`;
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  mapWrap: {
+    flex: 1,
+    minHeight: 220,
+  },
+  panel: {
+    maxHeight: '52%',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#999',
+  },
+  panelContent: {
+    padding: 16,
+    gap: 8,
+  },
+  hint: {
+    fontSize: 13,
+    opacity: 0.6,
+    marginBottom: 4,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    opacity: 0.7,
+  },
+  input: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#999',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+  },
+  presets: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  preset: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#999',
+  },
+  presetSelected: {
+    backgroundColor: '#E6F4FE',
+    borderColor: '#0B6FB8',
+  },
+  presetText: {
+    fontSize: 14,
+    fontWeight: '600',
+    opacity: 0.7,
+  },
+  presetTextSelected: {
+    opacity: 1,
+    color: '#0B6FB8',
+  },
+  saveButton: {
+    marginTop: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#E6F4FE',
+    alignItems: 'center',
+  },
+  saveButtonDisabled: {
+    opacity: 0.5,
+  },
+  saveButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0B6FB8',
+  },
+  deleteButton: {
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  deleteButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#B3261E',
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    gap: 10,
+  },
+  centeredBody: {
+    fontSize: 14,
+    textAlign: 'center',
+    opacity: 0.7,
+  },
+});

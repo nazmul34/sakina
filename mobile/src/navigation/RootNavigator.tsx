@@ -4,6 +4,8 @@ import { ActivityScreen } from '../screens/ActivityScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { NearbyMosquesScreen } from '../screens/NearbyMosquesScreen';
 import { PermissionsScreen } from '../screens/PermissionsScreen';
+import { PinEditorScreen } from '../screens/PinEditorScreen';
+import { PinnedLocationsScreen } from '../screens/PinnedLocationsScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -34,6 +36,16 @@ export function RootNavigator() {
         name="NearbyMosques"
         component={NearbyMosquesScreen}
         options={{ title: 'Nearby mosques' }}
+      />
+      <Stack.Screen
+        name="PinnedLocations"
+        component={PinnedLocationsScreen}
+        options={{ title: 'Pinned zones' }}
+      />
+      <Stack.Screen
+        name="PinEditor"
+        component={PinEditorScreen}
+        options={{ title: 'Pin a location' }}
       />
     </Stack.Navigator>
   );

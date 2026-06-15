@@ -52,6 +52,13 @@ export function HomeScreen() {
       </Pressable>
       <Pressable
         style={styles.permissionsLink}
+        onPress={() => navigation.navigate('PinnedLocations')}
+        accessibilityRole="button"
+      >
+        <Text style={styles.permissionsLinkText}>Pinned zones</Text>
+      </Pressable>
+      <Pressable
+        style={styles.permissionsLink}
         onPress={() => navigation.navigate('Permissions')}
         accessibilityRole="button"
       >

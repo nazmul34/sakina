@@ -2,8 +2,8 @@
 
 A living, on-device QA checklist. Each epic gets a section; tick the boxes as you
 verify a build, and update the **Status** line when an epic is completed or its
-behaviour changes. Covers **EPIC-0**, **EPIC-1**, and **EPIC-2** today (F-01.10 is
-deferred — see issue #26). Add new epics as they land.
+behaviour changes. Covers **EPIC-0**, **EPIC-1**, **EPIC-2**, and **EPIC-3** today
+(F-01.10 is deferred — see issue #26). Add new epics as they land.
 
 > Legend: 🟢 done · 🟡 in progress · ⚪ not started · ⏸️ deferred
 
@@ -202,6 +202,32 @@ manual zone triggers needed.
 - [ ] **Empty area:** query a location with no mosques → a `FetchedTile` receipt is
       still written and the list is empty; repeating the query does **not** re-hit
       the provider within the TTL.
+
+---
+
+## EPIC-3 — Custom Pinned Locations
+
+> Maps provider **D-5 → OSM tiles (free)**: Leaflet rendered in a WebView
+> (`react-native-webview`), no API key/billing. The map needs network to load
+> tiles + the Leaflet library (same as any map).
+
+### F-03.1 — Map pin drop + per-pin radius & label
+- [ ] Home → **Pinned zones** → empty state explains what a pinned zone is, with
+      an **+ Add a pin** button.
+- [ ] **Add a pin** → an OSM map opens centred on your current location (a pin is
+      dropped at centre). If location is denied, the map still opens at a fallback
+      and you can pan/tap.
+- [ ] **Tap the map** moves the pin to the tapped spot; **dragging** the pin
+      repositions it. The blue radius circle follows the pin.
+- [ ] Change the **Radius** preset (100/150/250/500/1000 m) → the circle resizes
+      live without reloading the map (zoom/pan preserved).
+- [ ] Enter a **Label** (e.g. "My local masjid"), **Save pin** → returns to the
+      list showing the pin with its label and radius.
+- [ ] **Persistence:** fully close and relaunch the app → Home → Pinned zones →
+      the saved pin(s) are still listed.
+- [ ] Tap a pin → editor opens seeded with its location, label, and radius; edit
+      and **Save changes** → the list reflects the edit.
+- [ ] **Delete pin** in the editor → confirm dialog → pin is removed from the list.
 
 ---
 
