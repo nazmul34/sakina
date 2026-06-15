@@ -13,18 +13,26 @@ import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { readPins, type Pin } from '../lib/pins';
+import { trySyncPins } from '../lib/pinsSync';
 
 export function PinnedLocationsScreen() {
   const navigation = useNavigation();
   const [pins, setPins] = useState<Pin[]>([]);
 
-  // Reload on focus so a save/delete in the editor is reflected on return.
+  // On focus, show local pins immediately (a save/delete in the editor is
+  // reflected on return), then reconcile with the server in the background and
+  // adopt the merged result. Sync is best-effort — offline, the local list stands.
   useFocusEffect(
     useCallback(() => {
       let active = true;
       void readPins().then((next) => {
         if (active) {
           setPins(next);
+        }
+      });
+      void trySyncPins().then((synced) => {
+        if (active && synced) {
+          setPins(synced);
         }
       });
       return () => {

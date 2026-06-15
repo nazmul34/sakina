@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from .models import Device, FetchedTile, Mosque
+from .models import Device, FetchedTile, Mosque, Pin
 
 
 @admin.register(Device)
@@ -31,3 +31,15 @@ class FetchedTileAdmin(admin.ModelAdmin):
     list_filter = ("source", "fetched_at")
     search_fields = ("tile_id",)
     readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(Pin)
+class PinAdmin(admin.ModelAdmin):
+    list_display = ("label", "device", "lat", "lng", "radius_m", "updated_at", "deleted_at")
+    list_filter = ("deleted_at", "created_at")
+    search_fields = ("label", "device__device_id")
+    readonly_fields = ("id", "created_at")
+
+    def get_queryset(self, request):
+        # Surface soft-deleted pins (tombstones) in the admin too.
+        return Pin.all_objects.select_related("device")
