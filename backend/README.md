@@ -2,7 +2,8 @@
 
 Django REST Framework backend for the Sakina app. A runnable skeleton with
 split per-environment settings (dev/prod), 12-factor env-based configuration,
-and a health-check endpoint. No domain models, auth, or feature endpoints yet.
+a health-check endpoint, the anonymous device-ID flow, and nearby-mosque
+discovery (`GET /mosques`, Geoapify-backed).
 
 ## Layout
 
@@ -74,6 +75,12 @@ DJANGO_SETTINGS_MODULE=config.settings.prod gunicorn config.wsgi:application
 | `CORS_ALLOWED_ORIGINS` | empty | Explicit origins; the only CORS source in prod. |
 | `SECURE_SSL_REDIRECT` | `True` (prod) | Redirect HTTP→HTTPS. |
 | `SECURE_HSTS_SECONDS` | `31536000` (prod) | HSTS max-age; `0` to disable. |
+| `GEOAPIFY_API_KEY` | empty | Server-side key for `GET /mosques` (EPIC-02). Without it the Overpass fallback is used. |
+| `GEOAPIFY_TIMEOUT_S` | `15` | Geoapify request timeout (FR-2.3). |
+| `OVERPASS_API_URL` | `overpass-api.de` | Keyless OSM fallback used when Geoapify fails / is over quota. |
+| `OVERPASS_TIMEOUT_S` | `25` | Overpass request timeout. |
+| `MOSQUE_SEARCH_RADIUS_M` | `5000` | Fixed nearby-search radius in metres (FR-2.1); client never controls it. |
+| `MOSQUE_TILE_TTL_DAYS` | `30` | How long a cached map tile stays fresh before re-fetching from the provider (F-02.8). |
 
 The database defaults to a local SQLite file so the project runs with zero
 setup. Per the PRD (§7.3) we start DB-light (Path B) and can move to
@@ -98,4 +105,5 @@ python manage.py test
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/health` | Liveness probe → `{"status": "ok"}` |
+| `GET` | `/mosques?lat=&lng=` | Nearby mosques sorted by haversine distance. Served from a per-tile DB cache (F-02.8), refreshed from the provider (Geoapify primary, Overpass fallback) only on a tile miss/stale. Radius is fixed server-side via `MOSQUE_SEARCH_RADIUS_M` (default 5000 m); not client-controlled. |
 | | `/admin/` | Django admin |

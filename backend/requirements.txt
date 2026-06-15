@@ -10,3 +10,6 @@ gunicorn==23.0.0
 
 # PostgreSQL driver (used when DATABASE_URL points at Postgres; SQLite is the dev default)
 psycopg2-binary==2.9.10
+
+# HTTP client for outbound provider calls (Geoapify Places, EPIC-02)
+requests==2.32.5

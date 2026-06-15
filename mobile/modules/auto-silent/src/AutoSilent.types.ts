@@ -17,8 +17,8 @@ export declare class AutoSilentModule extends NativeModule {
 
   /**
    * Turns the master toggle on or off and persists it. Enabling re-arms
-   * monitoring; disabling de-registers geofences and stops the foreground
-   * service (wired here, fully active once F-01.2 / F-01.7 land).
+   * monitoring and starts the foreground service (F-01.7); disabling
+   * de-registers geofences (F-01.2) and stops the foreground service.
    */
   setEnabled(value: boolean): void;
 }

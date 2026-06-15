@@ -2,7 +2,7 @@
   "expo": {
     "name": "Sakina",
     "slug": "sakina",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "sakina",
@@ -29,7 +29,15 @@
       "./plugins/withVersionCode",
       "./plugins/withRingerControl",
       "./plugins/withAutoSilent",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Sakina uses your location to silence your phone near mosques and pinned zones, even when the app is in the background.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": false
+        }
+      ]
     ]
   }
 }

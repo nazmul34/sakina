@@ -3,7 +3,9 @@ package expo.modules.ringercontrol
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.media.AudioManager
+import android.net.Uri
+import android.os.Build
+import android.os.PowerManager
 import android.provider.Settings
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -11,47 +13,104 @@ import expo.modules.kotlin.modules.ModuleDefinition
 /**
  * `RingerControl` — Android native module (Expo Modules API).
  *
- * Exposes the ringer + Do Not Disturb primitives the auto-silent flagship
- * (EPIC-01) needs. All methods are synchronous `Function`s because each is a
- * cheap system-service call; none block on I/O.
+ * Exposes the system-access primitives the auto-silent flagship (EPIC-01) needs:
+ * the ringer + Do Not Disturb controls, plus the notification and
+ * battery-optimization status/deep-links that back the permissions checklist
+ * (F-01.6). The low-level ringer/DND access lives in [RingerIO] so it can be
+ * shared with [RingerSilenceController]. All methods are synchronous `Function`s
+ * because each is a cheap system-service call or a fire-and-forget intent.
+ *
+ * The `onZoneEnter` / `onZoneExit` methods are the hand-off seam from the JS
+ * geofencing task (F-01.2) into the capture/restore state machine (F-01.3).
  *
  * Min SDK note: the DND APIs used here
  * (`NotificationManager.isNotificationPolicyAccessGranted`,
  * `Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS`, and the policy-access
  * requirement for `setRingerMode`) are all available from API 23, which is
  * below the project's min SDK (API 24+), so no version guards are required.
+ * `ACTION_APP_NOTIFICATION_SETTINGS` (API 26+) is the one exception and is
+ * guarded below.
  */
 class RingerControlModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("RingerControl")
 
     Function("isDndAccessGranted") {
-      notificationManager.isNotificationPolicyAccessGranted
+      RingerIO.isDndAccessGranted(context)
     }
 
     Function("openDndSettings") {
-      val intent = Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
-      // From an Activity we can start it directly; from the app context we must
-      // declare a new task or Android throws.
-      val activity = appContext.currentActivity
-      if (activity != null) {
-        activity.startActivity(intent)
+      launch(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+    }
+
+    Function("areNotificationsEnabled") {
+      val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+      nm.areNotificationsEnabled()
+    }
+
+    Function("openNotificationSettings") {
+      val intent =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+          Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+        } else {
+          appDetailsIntent()
+        }
+      launch(intent)
+    }
+
+    Function("isIgnoringBatteryOptimizations") {
+      val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+      pm.isIgnoringBatteryOptimizations(context.packageName)
+    }
+
+    Function("openBatteryOptimizationSettings") {
+      // Prefer the one-tap "allow?" dialog targeted at this app; if the device
+      // can't resolve it, fall back to the full battery-optimization list.
+      val request =
+        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+          .setData(Uri.parse("package:${context.packageName}"))
+      if (request.resolveActivity(context.packageManager) != null) {
+        launch(request)
       } else {
-        context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        launch(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
       }
     }
 
     Function("getRingerMode") {
-      ringerModeToString(audioManager.ringerMode)
+      RingerIO.getRingerMode(context)
     }
 
     Function("setRingerMode") { mode: String ->
-      // Moving into or out of silent requires notification-policy access on
-      // API 23+; without it the system silently ignores the change.
-      if (!notificationManager.isNotificationPolicyAccessGranted) {
-        throw DndAccessNotGrantedException()
-      }
-      audioManager.ringerMode = ringerModeFromString(mode)
+      RingerIO.setRingerMode(context, mode)
+    }
+
+    // --- Auto-silent zone hand-off (F-01.3) ---------------------------------
+    // Called by the geofencing task on enter/exit, passing the geofence region
+    // identifier. Return the active-zone count for debugging/observability.
+
+    Function("onZoneEnter") { regionId: String ->
+      RingerSilenceController.enterZone(context, regionId)
+    }
+
+    Function("onZoneExit") { regionId: String ->
+      RingerSilenceController.exitZone(context, regionId)
+    }
+
+    Function("activeZoneCount") {
+      RingerSilenceController.activeZoneCount(context)
+    }
+
+    // --- Activity log (F-01.8) ----------------------------------------------
+    // Read/clear the device-local silence/restore trail. The events are written
+    // natively by the state machine; these expose the persisted log to the UI.
+
+    Function("getActivityLog") {
+      ActivityLogStore(context).entries()
+    }
+
+    Function("clearActivityLog") {
+      ActivityLogStore(context).clear()
     }
 
     Function("getDeviceId") {
@@ -62,24 +121,21 @@ class RingerControlModule : Module() {
   private val context: Context
     get() = appContext.reactContext ?: throw MissingContextException()
 
-  private val audioManager: AudioManager
-    get() = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-
-  private val notificationManager: NotificationManager
-    get() = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-  private fun ringerModeToString(mode: Int): String =
-    when (mode) {
-      AudioManager.RINGER_MODE_SILENT -> "silent"
-      AudioManager.RINGER_MODE_VIBRATE -> "vibrate"
-      else -> "normal"
+  /**
+   * Start a settings [intent]. From an Activity we can start it directly; from
+   * the app context we must add `FLAG_ACTIVITY_NEW_TASK` or Android throws.
+   */
+  private fun launch(intent: Intent) {
+    val activity = appContext.currentActivity
+    if (activity != null) {
+      activity.startActivity(intent)
+    } else {
+      context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
+  }
 
-  private fun ringerModeFromString(mode: String): Int =
-    when (mode) {
-      "silent" -> AudioManager.RINGER_MODE_SILENT
-      "vibrate" -> AudioManager.RINGER_MODE_VIBRATE
-      "normal" -> AudioManager.RINGER_MODE_NORMAL
-      else -> throw InvalidRingerModeException(mode)
-    }
+  /** This app's "App info" settings screen — the universal fallback. */
+  private fun appDetailsIntent(): Intent =
+    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+      .setData(Uri.parse("package:${context.packageName}"))
 }

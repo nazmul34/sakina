@@ -133,3 +133,38 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
 }
+
+# ---------------------------------------------------------------------------
+# MasjidNearMe — primary nearby-mosque source (EPIC-02, FR-2.5)
+# ---------------------------------------------------------------------------
+# Community masjid DB with strong coverage where OSM is sparse (e.g. Bangladesh).
+# Keyless; its `radius` is advisory so the provider filters to the search radius.
+MASJIDNEARME_API_URL = env(
+    "MASJIDNEARME_API_URL", default="https://api.masjidnear.me/v1/masjids/search"
+)
+MASJIDNEARME_TIMEOUT_S = env.int("MASJIDNEARME_TIMEOUT_S", default=15)
+
+# ---------------------------------------------------------------------------
+# Geoapify Places — nearby-mosque source (EPIC-02, FR-2.5)
+# ---------------------------------------------------------------------------
+# Server-side only; never exposed to the client. Get a key at geoapify.com and
+# set GEOAPIFY_API_KEY in .env (dev) / the platform env (prod). Restrict the key
+# to the server IP once deployed. GEOAPIFY_TIMEOUT_S backs the FR-2.3 15s budget.
+GEOAPIFY_API_KEY = env("GEOAPIFY_API_KEY", default="")
+GEOAPIFY_TIMEOUT_S = env.int("GEOAPIFY_TIMEOUT_S", default=15)
+
+# Overpass — keyless OSM fallback used when Geoapify fails or is over quota
+# (F-02.2). Also keeps /mosques working in dev before a Geoapify key is set.
+OVERPASS_API_URL = env("OVERPASS_API_URL", default="https://overpass-api.de/api/interpreter")
+OVERPASS_TIMEOUT_S = env.int("OVERPASS_TIMEOUT_S", default=25)
+
+# Nearby-mosque search radius in metres (FR-2.1). Fixed server-side: the client
+# never supplies or controls it, so "nearby" stays consistent. Kept ≤ the ~1.25 km
+# tile fetch radius (#47 cache) so a single covering-tile fetch fully satisfies a
+# query — a larger search would return incomplete results. Tunable via env.
+MOSQUE_SEARCH_RADIUS_M = env.int("MOSQUE_SEARCH_RADIUS_M", default=1000)
+
+# How long a fetched map tile stays fresh before the next request re-queries the
+# provider (F-02.8, #47). Mosque locations rarely change, so the default is
+# generous to keep provider calls (and cost) low.
+MOSQUE_TILE_TTL_DAYS = env.int("MOSQUE_TILE_TTL_DAYS", default=30)
