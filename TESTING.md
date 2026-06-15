@@ -229,6 +229,27 @@ manual zone triggers needed.
       and **Save changes** → the list reflects the edit.
 - [ ] **Delete pin** in the editor → confirm dialog → pin is removed from the list.
 
+### F-03.2 — Pins CRUD API + soft-delete sync
+> Backend lives behind `GET/POST/PUT/DELETE /pins`, scoped to the device by the
+> `X-Device-Id` header. Sync is offline-first and last-write-wins on `updated_at`.
+
+- [ ] **Push on save:** add/edit a pin → in Django admin (or
+      `GET /pins` with the device's header) the pin appears with matching
+      label/lat/lng/radius. Sync fires on app foreground and on opening Pinned zones.
+- [ ] **Delete propagates (soft):** delete a pin → server row is **not** removed
+      but flips `is_deleted = true` (a tombstone); the app's list no longer shows it.
+- [ ] **Offline-first:** turn the backend off (or airplane mode), add/edit/delete
+      pins → the UI updates instantly with no error. Restore connectivity, reopen
+      Pinned zones → local changes are pushed and the server reflects them.
+- [ ] **Last-write-wins:** with a pin already on the server, `PUT /pins/{id}` with
+      an **older** `updated_at` is ignored (server state wins, echoed back); a
+      **newer** one applies. A newer edit to a deleted pin **resurrects** it.
+- [ ] **Restore on reinstall:** with pins synced, clear app data / reinstall →
+      relaunch → Pinned zones repopulates from the server (live pins only; tombstones
+      stay hidden).
+- [ ] **Upgrade keeps old pins:** pins saved by the F-03.1 build (no `deletedAt`)
+      survive the first F-03.2 sync rather than being dropped.
+
 ---
 
 ## Robustness / negative cases
