@@ -1,8 +1,8 @@
 """Geo layer for nearby-mosque discovery (EPIC-02).
 
-Public surface kept deliberately small so the provider (Geoapify primary,
-Overpass fallback) and the distance/cache strategy (#47) can change behind
-``find_nearby_mosques`` without touching the ``GET /mosques`` view.
+Public surface kept deliberately small so the provider (MasjidNearMe primary,
+Geoapify then Overpass fallback) and the distance/cache strategy (#47) can change
+behind ``find_nearby_mosques`` without touching the ``GET /mosques`` view.
 """
 
 from .base import GeoProviderError, Mosque, MosqueProvider
