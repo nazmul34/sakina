@@ -30,11 +30,13 @@ import type { LatLng } from '../lib/geofencing/types';
 import { getHighAccuracyFix } from '../lib/location';
 import {
   DEFAULT_PIN_RADIUS_M,
+  PIN_PRESETS,
   PIN_RADIUS_PRESETS_M,
   deletePin,
   readPins,
   savePin,
   type Pin,
+  type PinPreset,
 } from '../lib/pins';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -88,6 +90,11 @@ export function PinEditorScreen() {
       active = false;
     };
   }, [pinId]);
+
+  function applyPreset(preset: PinPreset) {
+    setLabel(preset.label);
+    setRadiusM(preset.radiusM);
+  }
 
   async function handleSave() {
     if (!position) {
@@ -143,6 +150,36 @@ export function PinEditorScreen() {
         <Text style={styles.hint}>
           Tap the map or drag the pin to set the spot.
         </Text>
+
+        {!pinId ? (
+          <>
+            <Text style={styles.fieldLabel}>Suggested</Text>
+            <View style={styles.presets}>
+              {PIN_PRESETS.map((preset) => {
+                const selected =
+                  label === preset.label && radiusM === preset.radiusM;
+                return (
+                  <Pressable
+                    key={preset.label}
+                    style={[styles.preset, selected && styles.presetSelected]}
+                    onPress={() => applyPreset(preset)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                  >
+                    <Text
+                      style={[
+                        styles.presetText,
+                        selected && styles.presetTextSelected,
+                      ]}
+                    >
+                      {preset.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </>
+        ) : null}
 
         <Text style={styles.fieldLabel}>Label</Text>
         <TextInput
