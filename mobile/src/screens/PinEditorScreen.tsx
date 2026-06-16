@@ -25,6 +25,7 @@ import {
 
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PinMap } from '../components/PinMap';
+import { armGeofencing } from '../lib/geofencing';
 import type { LatLng } from '../lib/geofencing/types';
 import { getHighAccuracyFix } from '../lib/location';
 import {
@@ -101,12 +102,19 @@ export function PinEditorScreen() {
       },
       pinId,
     );
+    // Fold the new/edited zone into the live geofence set (FR-3.3). Fire-and-forget
+    // and best-effort — armGeofencing no-ops when auto-silent is off or permissions
+    // are missing, and the pin is already persisted, so we don't block the UI on it.
+    void armGeofencing();
     navigation.goBack();
   }
 
   async function handleDelete() {
     if (pinId) {
       await deletePin(pinId);
+      // Drop the removed zone from the live geofence set (FR-3.3); same
+      // best-effort re-arm as on save.
+      void armGeofencing();
     }
     setConfirmingDelete(false);
     navigation.goBack();

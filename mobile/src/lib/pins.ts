@@ -2,7 +2,8 @@
  * On-device store of user-pinned silent zones (FR-3.1, FR-3.2).
  *
  * A pin is a user-chosen location with a label and a per-pin radius that behaves
- * like a mosque for auto-silent (the geofencing wiring lands in F-03.3). Pins are
+ * like a mosque for auto-silent: {@link ./geofencing/candidates} feeds live pins
+ * into the same geofence set as nearby mosques (F-03.3). Pins are
  * owned by the device and must survive app restarts, so they live in a single
  * JSON blob in AsyncStorage — the same fit as the mosques cache: a small list we
  * read/write whole and never query relationally, where SQLite would be overkill
@@ -27,7 +28,7 @@ const PINS_KEY = 'sakina.pins';
 
 /** A user-defined silent zone: a labelled location with its own ring radius. */
 export interface Pin extends LatLng {
-  /** Stable id; doubles as the geofence region id once F-03.3 wires pins in. */
+  /** Stable id; doubles as the geofence region id (see geofencing/candidates). */
   readonly id: string;
   /** Human label, e.g. "My local masjid". May be empty while being created. */
   readonly label: string;
