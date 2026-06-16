@@ -24,13 +24,19 @@ cd android && ./gradlew assembleRelease # debug-signed release APK (bundled JS, 
 
 ### ⚠️ Release-build caveat — use the manual zone triggers
 
-Real mosque data (EPIC-02/03) doesn't exist yet, and the synthetic geofence
-fixture is `__DEV__`-only — so in a **release** APK, turning Auto-silent ON
-registers **zero** geofences and GPS movement cannot trigger silencing.
+**Mosque** geofences still aren't real in a release APK: mosque candidate data
+(EPIC-02 wiring) isn't fed in yet, and the synthetic mosque fixture is
+`__DEV__`-only — so with **no pins saved**, turning Auto-silent ON registers
+**zero** geofences and GPS movement cannot trigger silencing.
 
-Use the **Enter zone / Exit zone** buttons in the on-screen *RingerControl (dev)*
-panel wherever a step says "Enter/Exit zone". They call the same native
-`onZoneEnter`/`onZoneExit` seam the background geofencing task uses, so they drive
+**Pins are the exception (F-03.3):** a saved pin **is** registered as a real
+geofence even in a release build, so on a physical device you can trigger
+silencing by actually walking into a pin's radius. See the F-03.3 steps below.
+
+For a deterministic trigger that doesn't depend on GPS, use the **Enter zone /
+Exit zone** buttons in the on-screen *RingerControl (dev)* panel wherever a step
+says "Enter/Exit zone". They call the same native `onZoneEnter`/`onZoneExit` seam
+the background geofencing task uses (with a fixed `test-zone` id), so they drive
 the real state machine on demand. _(Added in PR #37.)_
 
 **Timing:** dwell = **45 s** (before silencing) · exit-buffer = **20 s** (before restoring).
@@ -76,7 +82,8 @@ warning notifications are suppressed on Android 13+.
       **Wait 45 s**, tap **Refresh** → "Active zones: 1" and the phone is **silent**.
 - [ ] **Exit zone** → not restored immediately; **wait 20 s**, tap **Refresh** →
       ringer **restored** to the prior mode (normal); "Active zones" back to 0.
-- [ ] (Real geofences: deferred until mosque data exists — EPIC-02/03.)
+- [ ] (Real **pin** geofences work on a physical device now — see F-03.3. Real
+      **mosque** geofences are still deferred until EPIC-02 candidate wiring lands.)
 
 ### F-01.4 — Dwell + exit-buffer grace
 - [ ] **Drive-past:** Enter zone, then Exit zone **within 45 s** → phone **never**
@@ -207,6 +214,8 @@ manual zone triggers needed.
 
 ## EPIC-3 — Custom Pinned Locations
 
+**Status:** 🟢 done (pending device QA)
+
 > Maps provider **D-5 → OSM tiles (free)**: Leaflet rendered in a WebView
 > (`react-native-webview`), no API key/billing. The map needs network to load
 > tiles + the Leaflet library (same as any map).
@@ -250,12 +259,49 @@ manual zone triggers needed.
 - [ ] **Upgrade keeps old pins:** pins saved by the F-03.1 build (no `deletedAt`)
       survive the first F-03.2 sync rather than being dropped.
 
+### F-03.3 — Pinned zones participate in auto-silent
+> Pins are fed into the **same** geofence set as mosques and silence/restore
+> identically. Unlike mosques, a pin **is** a real geofence in a release APK, so
+> this is testable on a physical device. Grant all permissions and **Auto-silent
+> ON** first. Timing is the usual dwell **45 s** / exit-buffer **20 s**.
+
+- [ ] **Pin registers as a geofence:** with Auto-silent ON, save a pin **at your
+      current location** (small radius, e.g. 100 m). The foreground-service
+      notification stays up; the pin is now in the live geofence set.
+- [ ] **Enter silences (physical device):** start **outside** a pin's radius with
+      ringer **normal**, then walk **into** it → after the **45 s** dwell the phone
+      goes **silent** (Activity log shows 🔕 Silenced for the pin's zone id).
+- [ ] **Exit restores:** walk back **out** of the radius → after the **20 s**
+      buffer the ringer is **restored** (Activity log shows 🔔 Restored).
+- [ ] **Re-arm on edit:** with Auto-silent ON, add / edit / delete a pin → the set
+      re-registers immediately (no app relaunch needed); a deleted pin no longer
+      silences, a newly added one does.
+- [ ] **Deterministic fallback:** if you can't move physically, the dev-panel
+      **Enter zone / Exit zone** buttons still drive the same state machine (fixed
+      `test-zone` id) — use them to verify silence/restore without GPS.
+- [ ] **Cap (informational):** mosques + pins are capped at `MAX_GEOFENCES` (90)
+      with **pins prioritised first**. Hard to hit by hand; covered by the selection
+      logic. No user-visible failure when under the cap.
+
+### F-03.4 — Suggested presets
+> Quick-start presets prefill a new pin so common zones don't need typing.
+
+- [ ] **Surfaced when adding:** Pinned zones → **+ Add a pin** → a **Suggested**
+      row shows **My local masjid**, **Workplace prayer room**, **Home musallah**.
+- [ ] **Prefills label + radius:** tap a preset → the **Label** field fills with the
+      preset name and the **Radius** jumps to that preset's value (masjid = 150 m;
+      prayer room / musallah = 100 m). The tapped chip shows as selected.
+- [ ] **Still adjustable:** after picking a preset you can edit the label, change
+      the radius, and move the pin before **Save pin** — nothing is locked.
+- [ ] **Editing only, hidden:** open an **existing** pin (tap it in the list) → the
+      Suggested row is **not** shown (presets are for new pins only).
+
 ---
 
 ## Robustness / negative cases
 - [ ] Deny Notifications → foreground service still runs; its notification and
       warning notifications are suppressed (Android 13+).
 - [ ] Skip battery-optimization exemption → background reliability degrades on
-      aggressive OEMs (relevant once real geofences exist).
+      aggressive OEMs (testable now via real pin geofences — F-03.3).
 - [ ] Nearby mosques with the backend **down from the very first launch** (no
       cache yet) → clean error state, never a crash or infinite spinner.
