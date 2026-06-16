@@ -163,10 +163,20 @@ detection, but it isn't required for correctness.
 
 ---
 
+## Status: pins are wired (F-03.3 ✅)
+
+`candidates.ts` now feeds **live user pins** (from the on-device pin store) into
+the same candidate list as mosques; `selection.ts` already ranks pins first and
+caps the combined set at `MAX_GEOFENCES`, so pinned zones silence/restore exactly
+like mosque zones and always work offline. Saving/editing/deleting a pin re-arms
+the set (best-effort) from `PinEditorScreen`. The mosque side is still the dev
+fixture below until EPIC-02 lands.
+
 ## Implementation reminders when EPIC-02 lands
 
-- Replace the dev fixture in `candidates.ts` with the Overpass-proxy fetch +
-  on-disk cache (envelope wider than the registration radius).
+- Replace the dev **mosque** fixture in `candidates.ts` (`getMosqueCandidates`)
+  with the Overpass-proxy fetch + on-disk cache (envelope wider than the
+  registration radius). Pins already flow through `getPinCandidates`.
 - Make `armGeofencing()` resilient to fetch failure (keep prior set on error).
 - Add the two-threshold (select vs. fetch) split and tile/TTL caching.
 - Consider speed-gating re-registration (links F-02.4).
