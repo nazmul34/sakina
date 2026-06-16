@@ -55,6 +55,26 @@ export const DEFAULT_PIN_RADIUS_M = DEFAULT_GEOFENCE_RADIUS_M;
  */
 export const PIN_RADIUS_PRESETS_M = [100, 150, 250, 500, 1000] as const;
 
+/** A suggested starting point for a new pin: a label and a sensible radius. */
+export interface PinPreset {
+  readonly label: string;
+  readonly radiusM: number;
+}
+
+/**
+ * Suggested presets offered when creating a pin (FR-3.4). They prefill the label
+ * and a sensible radius so the user starts from a filled-in zone and only has to
+ * place it — they can still edit either field before saving. Each `radiusM` is one
+ * of {@link PIN_RADIUS_PRESETS_M} so it lands pre-selected in the radius row. The
+ * masjid uses the generous default ring; the room-scale presets use a tighter
+ * radius so they don't silence a whole building.
+ */
+export const PIN_PRESETS: readonly PinPreset[] = [
+  { label: 'My local masjid', radiusM: DEFAULT_PIN_RADIUS_M },
+  { label: 'Workplace prayer room', radiusM: 100 },
+  { label: 'Home musallah', radiusM: 100 },
+];
+
 function isPin(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null) {
     return false;
