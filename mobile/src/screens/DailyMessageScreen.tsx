@@ -7,9 +7,11 @@
  * "Share" hands the text + source label to the OS native share sheet.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import * as Sharing from 'expo-sharing';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   Share,
@@ -17,7 +19,9 @@ import {
   Text,
   View,
 } from 'react-native';
+import { captureRef } from 'react-native-view-shot';
 
+import { MessageShareCard } from '../components/MessageShareCard';
 import {
   composeShareText,
   fetchRandomMessage,
@@ -47,6 +51,10 @@ export function DailyMessageScreen() {
   const [message, setMessage] = useState<IslamicMessage | null>(null);
   const [status, setStatus] = useState<Status>('loading');
   const [errorDetail, setErrorDetail] = useState<string>('');
+  const [imageBusy, setImageBusy] = useState(false);
+
+  // Off-screen image card captured to a PNG for image sharing (F-04.4).
+  const cardRef = useRef<View>(null);
 
   const load = useCallback(
     async (cat: MessageCategory | undefined) => {
@@ -97,6 +105,30 @@ export function DailyMessageScreen() {
       await Share.share({ message: composeShareText(msg) });
     } catch {
       // ignore — cancelling the share sheet is not an error worth showing
+    }
+  }, []);
+
+  // Render the off-screen card to a PNG and hand the file to the OS share sheet
+  // (F-04.4). `expo-sharing` shares the file via a content URI, which is what
+  // Android's share targets (stories/status) expect.
+  const handleShareImage = useCallback(async () => {
+    if (cardRef.current === null) return;
+    setImageBusy(true);
+    try {
+      const uri = await captureRef(cardRef, { format: 'png', quality: 1 });
+      if (!(await Sharing.isAvailableAsync())) {
+        Alert.alert('Sharing unavailable', 'Image sharing is not available on this device.');
+        return;
+      }
+      await Sharing.shareAsync(uri, {
+        mimeType: 'image/png',
+        dialogTitle: 'Share message card',
+        UTI: 'public.png',
+      });
+    } catch {
+      Alert.alert('Could not create image', 'Something went wrong rendering the card.');
+    } finally {
+      setImageBusy(false);
     }
   }, []);
 
@@ -164,16 +196,35 @@ export function DailyMessageScreen() {
         )}
       </View>
 
-      {/* Share button — only meaningful when a message is on screen (F-04.3) */}
+      {/* Share buttons — only meaningful when a message is on screen */}
       {status === 'success' && message !== null && (
-        <Pressable
-          style={styles.shareButton}
-          onPress={() => void handleShare(message)}
-          accessibilityRole="button"
-          accessibilityLabel="Share this message"
-        >
-          <Text style={styles.shareButtonText}>Share</Text>
-        </Pressable>
+        <>
+          {/* Plain-text share (F-04.3) */}
+          <Pressable
+            style={styles.shareButton}
+            onPress={() => void handleShare(message)}
+            accessibilityRole="button"
+            accessibilityLabel="Share this message as text"
+          >
+            <Text style={styles.shareButtonText}>Share text</Text>
+          </Pressable>
+
+          {/* Rendered image-card share (F-04.4) */}
+          <Pressable
+            style={[
+              styles.shareImageButton,
+              imageBusy && styles.nextButtonDisabled,
+            ]}
+            onPress={() => void handleShareImage()}
+            disabled={imageBusy}
+            accessibilityRole="button"
+            accessibilityLabel="Share this message as an image card"
+          >
+            <Text style={styles.shareImageButtonText}>
+              {imageBusy ? 'Preparing image…' : 'Share as image'}
+            </Text>
+          </Pressable>
+        </>
       )}
 
       {/* Next / retry button */}
@@ -191,6 +242,17 @@ export function DailyMessageScreen() {
           {status === 'error' ? 'Try again' : 'Next message'}
         </Text>
       </Pressable>
+
+      {/*
+        Off-screen render target for the image card (F-04.4). Kept invisible
+        (opacity 0, non-interactive) but still laid out so view-shot can capture
+        it. Only mounted when there's a message to render.
+      */}
+      {message !== null && (
+        <View style={styles.offscreen} pointerEvents="none">
+          <MessageShareCard ref={cardRef} message={message} />
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -278,6 +340,26 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#fff',
+  },
+  shareImageButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#1A6B3C',
+    alignItems: 'center',
+  },
+  shareImageButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1A6B3C',
+  },
+  // Parked off-screen and fully transparent: laid out (so the capture has real
+  // pixels) but never visible or interactive to the user.
+  offscreen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    opacity: 0,
   },
   nextButton: {
     paddingVertical: 14,
