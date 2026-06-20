@@ -15,7 +15,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .geo import GeoProviderError, Mosque, find_nearby_mosques
-from .models import Pin
+from .models import IslamicMessage, Pin
 
 
 @api_view(["GET"])
@@ -156,6 +156,46 @@ def pin_detail(request: Request, pin_id: uuid.UUID) -> Response:
 
     _apply_last_write_wins(pin, fields)
     return Response(_serialize_pin(pin))
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def random_message(request: Request) -> Response:
+    """``GET /messages/random`` — one random active Islamic message (FR-4.1/4.2).
+
+    Optionally filter by ``?category=`` (quran / hadith / dua / reminder).
+    Returns ``404`` when no active messages match (e.g. unknown category or
+    empty seed), ``400`` when the category value is not a recognised choice.
+    """
+    qs = IslamicMessage.objects.filter(is_active=True)
+
+    category = request.query_params.get("category")
+    if category is not None:
+        valid = {c.value for c in IslamicMessage.Category}
+        if category not in valid:
+            return Response(
+                {"detail": f"Invalid category. Valid values: {', '.join(sorted(valid))}."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        qs = qs.filter(category=category)
+
+    msg = qs.order_by("?").first()
+    if msg is None:
+        return Response(
+            {"detail": "No messages available."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    return Response(_serialize_message(msg))
+
+
+def _serialize_message(msg: IslamicMessage) -> dict:
+    return {
+        "id": str(msg.id),
+        "text": msg.text,
+        "source_label": msg.source_label,
+        "category": msg.category,
+    }
 
 
 def _device_required() -> Response:
