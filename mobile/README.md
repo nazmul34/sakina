@@ -161,6 +161,34 @@ min SDK (API 24+), so no version guards are needed.
 > `npx expo prebuild --platform android --clean` and rebuild the dev client
 > (`npm run android`). A JS-only reload won't pick up native changes.
 
+## Share image card (F-04.4)
+
+The Daily message screen can share a message two ways: as plain text (F-04.3)
+and as a rendered **image card** for WhatsApp/Instagram stories & status
+(F-04.4).
+
+**Rendering lib — `react-native-view-shot`.** The card
+(`src/components/MessageShareCard.tsx`) is rendered off-screen (laid out but
+`opacity: 0`, non-interactive) and captured to a PNG with `captureRef`. The card
+has fixed logical dimensions (360×640, a 9:16 portrait ratio) so the export is
+crisp and consistent across devices — it's captured at the device pixel ratio,
+yielding roughly 1080×1920 on a 3× screen.
+
+**Sharing the file — `expo-sharing`.** `Sharing.shareAsync(uri, …)` hands the
+PNG to the OS share sheet via a content URI, which is what Android share targets
+expect. (React Native's `Share.share({ url })` only shares local image files
+reliably on iOS, so it's kept for the text path only.) `expo-sharing` adds a
+config plugin — rebuild the dev client after install (see the prebuild note
+above).
+
+**Template / branding decision.** Sakina-green field (`#1A6B3C`); a small
+uppercase "Daily reminder" kicker; the message centred in a large semibold
+weight under a decorative quote mark; an italic source label; and a **"Sakina"
+wordmark + "Find your calm" tagline** footer so a re-shared card always carries
+attribution back to the app. Long messages are not auto-fitted in v1 — the seed
+content is short enough to fit; revisit with `adjustsFontSizeToFit` if longer
+content lands.
+
 ## Versioning (per release)
 
 Two numbers ship with every Android build:

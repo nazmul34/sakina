@@ -37,7 +37,8 @@
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": false
         }
-      ]
+      ],
+      "expo-sharing"
     ]
   }
 }
