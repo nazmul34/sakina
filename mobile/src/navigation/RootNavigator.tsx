@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { ActivityScreen } from '../screens/ActivityScreen';
+import { DailyMessageScreen } from '../screens/DailyMessageScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { NearbyMosquesScreen } from '../screens/NearbyMosquesScreen';
 import { PermissionsScreen } from '../screens/PermissionsScreen';
@@ -46,6 +47,11 @@ export function RootNavigator() {
         name="PinEditor"
         component={PinEditorScreen}
         options={{ title: 'Pin a location' }}
+      />
+      <Stack.Screen
+        name="DailyMessage"
+        component={DailyMessageScreen}
+        options={{ title: 'Daily message' }}
       />
     </Stack.Navigator>
   );
