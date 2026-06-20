@@ -189,6 +189,24 @@ attribution back to the app. Long messages are not auto-fitted in v1 — the see
 content is short enough to fit; revisit with `adjustsFontSizeToFit` if longer
 content lands.
 
+## Saved messages (F-04.5)
+
+Users can favorite a daily message (the heart on the Daily message screen) and
+review their saved messages on a dedicated screen, **offline**.
+
+**Storage decision — local-only (AsyncStorage).** Favorites are persisted on the
+device (`src/lib/favorites.ts`, key `sakina.favorites`), storing the *whole*
+message object — text, source label, category — not just its id. That keeps the
+saved list fully renderable offline with no follow-up fetch, consistent with the
+app's other on-device caches (e.g. the nearby-mosque last-known cache).
+
+A server-synced favorites list (e.g. `GET /messages/saved`) was **deferred to
+EPIC-07**, where cross-device sync is designed holistically (the same place the
+pin sync lives). Until then this is a per-device list. The store is a small
+reactive wrapper (`useFavorites()` over `useSyncExternalStore`) so the heart
+toggle and the saved-list screen stay in sync without re-reading storage on
+every focus.
+
 ## Versioning (per release)
 
 Two numbers ship with every Android build:

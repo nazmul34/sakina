@@ -1,10 +1,11 @@
 /**
- * Daily Islamic message screen (F-04.2 / F-04.3 / FR-4.2 / FR-4.3).
+ * Daily Islamic message screen (F-04.2 → F-04.5 / FR-4.2 / FR-4.3 / FR-4.4).
  *
  * Shows one random active message from the backend with its source label.
  * Category chips (All / Qur'an / Hadith / Du'a / Reminder) let the user
  * narrow the pool; "Next" fetches another random pick from the same pool;
- * "Share" hands the text + source label to the OS native share sheet.
+ * "Share" hands the text + source label to the OS native share sheet; the
+ * heart saves the message to the offline favorites list (F-04.5).
  */
 
 import * as Sharing from 'expo-sharing';
@@ -22,6 +23,7 @@ import {
 import { captureRef } from 'react-native-view-shot';
 
 import { MessageShareCard } from '../components/MessageShareCard';
+import { useFavorites } from '../lib/favorites';
 import {
   composeShareText,
   fetchRandomMessage,
@@ -55,6 +57,11 @@ export function DailyMessageScreen() {
 
   // Off-screen image card captured to a PNG for image sharing (F-04.4).
   const cardRef = useRef<View>(null);
+
+  // Offline favorites (F-04.5). `isSaved` reflects the current message's state.
+  const { favorites, toggleFavorite } = useFavorites();
+  const isSaved =
+    message !== null && favorites.some((m) => m.id === message.id);
 
   const load = useCallback(
     async (cat: MessageCategory | undefined) => {
@@ -170,6 +177,18 @@ export function DailyMessageScreen() {
 
         {status === 'success' && message !== null && (
           <>
+            <Pressable
+              style={styles.heart}
+              onPress={() => toggleFavorite(message)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSaved }}
+              accessibilityLabel={isSaved ? 'Remove from saved' : 'Save message'}
+              hitSlop={12}
+            >
+              <Text style={[styles.heartIcon, isSaved && styles.heartIconOn]}>
+                {isSaved ? '♥' : '♡'}
+              </Text>
+            </Pressable>
             <Text style={styles.messageText}>{message.text}</Text>
             {message.source_label !== '' && (
               <Text style={styles.sourceLabel}>{message.source_label}</Text>
@@ -297,6 +316,19 @@ const styles = StyleSheet.create({
   centered: {
     alignItems: 'center',
     gap: 8,
+  },
+  heart: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    padding: 4,
+  },
+  heartIcon: {
+    fontSize: 26,
+    color: '#B0B0B0',
+  },
+  heartIconOn: {
+    color: '#B3261E',
   },
   messageText: {
     fontSize: 18,

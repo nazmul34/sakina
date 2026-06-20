@@ -7,6 +7,7 @@ import { NearbyMosquesScreen } from '../screens/NearbyMosquesScreen';
 import { PermissionsScreen } from '../screens/PermissionsScreen';
 import { PinEditorScreen } from '../screens/PinEditorScreen';
 import { PinnedLocationsScreen } from '../screens/PinnedLocationsScreen';
+import { SavedMessagesScreen } from '../screens/SavedMessagesScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -52,6 +53,11 @@ export function RootNavigator() {
         name="DailyMessage"
         component={DailyMessageScreen}
         options={{ title: 'Daily message' }}
+      />
+      <Stack.Screen
+        name="SavedMessages"
+        component={SavedMessagesScreen}
+        options={{ title: 'Saved messages' }}
       />
     </Stack.Navigator>
   );
