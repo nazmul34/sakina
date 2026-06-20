@@ -73,6 +73,13 @@ export function HomeScreen() {
       </Pressable>
       <Pressable
         style={styles.permissionsLink}
+        onPress={() => navigation.navigate('SavedMessages')}
+        accessibilityRole="button"
+      >
+        <Text style={styles.permissionsLinkText}>Saved messages</Text>
+      </Pressable>
+      <Pressable
+        style={styles.permissionsLink}
         onPress={() => navigation.navigate('Activity')}
         accessibilityRole="button"
       >
