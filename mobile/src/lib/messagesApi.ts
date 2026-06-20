@@ -40,3 +40,15 @@ export async function fetchRandomMessage(
 
   return (await response.json()) as IslamicMessage;
 }
+
+/**
+ * Compose the plain-text payload for sharing a message (F-04.3).
+ * Appends the source label on its own line when present, e.g.
+ *
+ *   Indeed, with hardship comes ease.
+ *   — Qur'an 94:6
+ */
+export function composeShareText(message: IslamicMessage): string {
+  const label = message.source_label.trim();
+  return label ? `${message.text}\n\n— ${label}` : message.text;
+}

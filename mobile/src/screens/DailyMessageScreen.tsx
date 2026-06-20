@@ -1,9 +1,10 @@
 /**
- * Daily Islamic message screen (F-04.2 / FR-4.2).
+ * Daily Islamic message screen (F-04.2 / F-04.3 / FR-4.2 / FR-4.3).
  *
  * Shows one random active message from the backend with its source label.
  * Category chips (All / Qur'an / Hadith / Du'a / Reminder) let the user
- * narrow the pool; "Next" fetches another random pick from the same pool.
+ * narrow the pool; "Next" fetches another random pick from the same pool;
+ * "Share" hands the text + source label to the OS native share sheet.
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -11,12 +12,14 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 
 import {
+  composeShareText,
   fetchRandomMessage,
   type IslamicMessage,
   type MessageCategory,
@@ -86,6 +89,17 @@ export function DailyMessageScreen() {
     setCategory(value);
   };
 
+  // Open the OS native share sheet with the message text + source label
+  // (F-04.3). A rejected promise here is a benign user cancel / no-sharer, so
+  // we swallow it rather than surfacing an error.
+  const handleShare = useCallback(async (msg: IslamicMessage) => {
+    try {
+      await Share.share({ message: composeShareText(msg) });
+    } catch {
+      // ignore — cancelling the share sheet is not an error worth showing
+    }
+  }, []);
+
   return (
     <ScrollView
       contentContainerStyle={styles.container}
@@ -149,6 +163,18 @@ export function DailyMessageScreen() {
           </View>
         )}
       </View>
+
+      {/* Share button — only meaningful when a message is on screen (F-04.3) */}
+      {status === 'success' && message !== null && (
+        <Pressable
+          style={styles.shareButton}
+          onPress={() => void handleShare(message)}
+          accessibilityRole="button"
+          accessibilityLabel="Share this message"
+        >
+          <Text style={styles.shareButtonText}>Share</Text>
+        </Pressable>
+      )}
 
       {/* Next / retry button */}
       <Pressable
@@ -241,6 +267,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.6,
     textAlign: 'center',
+  },
+  shareButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#1A6B3C',
+    alignItems: 'center',
+  },
+  shareButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fff',
   },
   nextButton: {
     paddingVertical: 14,
