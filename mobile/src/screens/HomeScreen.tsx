@@ -80,6 +80,13 @@ export function HomeScreen() {
       </Pressable>
       <Pressable
         style={styles.permissionsLink}
+        onPress={() => navigation.navigate('DailyReminder')}
+        accessibilityRole="button"
+      >
+        <Text style={styles.permissionsLinkText}>Daily reminder</Text>
+      </Pressable>
+      <Pressable
+        style={styles.permissionsLink}
         onPress={() => navigation.navigate('Activity')}
         accessibilityRole="button"
       >

@@ -207,6 +207,30 @@ reactive wrapper (`useFavorites()` over `useSyncExternalStore`) so the heart
 toggle and the saved-list screen stay in sync without re-reading storage on
 every focus.
 
+## Daily reminder (F-04.6)
+
+An optional daily notification that delivers a message at a user-chosen time.
+The Daily reminder screen (reached from Home) has an enable/disable switch and a
+time picker (`@react-native-community/datetimepicker`).
+
+**D-7 decision — local on-device scheduling.** Per the PRD's recommendation
+(cheapest option), reminders are scheduled locally with `expo-notifications`
+(`src/lib/dailyReminder.ts`): a repeating `SchedulableTriggerInputTypes.DAILY`
+trigger at the chosen hour/minute, on an Android `daily-reminder` channel. No
+backend, no push tokens — it works offline once scheduled, and settings persist
+in AsyncStorage (`sakina.daily_reminder`). Enabling requests OS notification
+permission; a denial is surfaced and leaves the toggle off.
+
+A **server-push** path (fresh content pushed daily, richer targeting/analytics)
+is deferred to the **EPIC-09 Notifications Hub**, which will own scheduling
+app-wide. Until then, note the local-scheduling caveat: a repeating local
+notification reuses the same body each day, so the embedded message is refreshed
+when the reminder is (re)scheduled — when the reminder screen is opened or the
+time is changed. Different-every-day content requires the server-push path.
+
+`expo-notifications` + `datetimepicker` are native modules, so rebuild the dev
+client after install (see the prebuild note under Native modules).
+
 ## Versioning (per release)
 
 Two numbers ship with every Android build:

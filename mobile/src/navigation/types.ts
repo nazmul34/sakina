@@ -13,6 +13,7 @@ export type RootStackParamList = {
   PinEditor: { pinId?: string } | undefined;
   DailyMessage: undefined;
   SavedMessages: undefined;
+  DailyReminder: undefined;
 };
 
 declare global {

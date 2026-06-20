@@ -2,6 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { ActivityScreen } from '../screens/ActivityScreen';
 import { DailyMessageScreen } from '../screens/DailyMessageScreen';
+import { DailyReminderScreen } from '../screens/DailyReminderScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { NearbyMosquesScreen } from '../screens/NearbyMosquesScreen';
 import { PermissionsScreen } from '../screens/PermissionsScreen';
@@ -58,6 +59,11 @@ export function RootNavigator() {
         name="SavedMessages"
         component={SavedMessagesScreen}
         options={{ title: 'Saved messages' }}
+      />
+      <Stack.Screen
+        name="DailyReminder"
+        component={DailyReminderScreen}
+        options={{ title: 'Daily reminder' }}
       />
     </Stack.Navigator>
   );
