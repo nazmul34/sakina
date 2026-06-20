@@ -66,9 +66,19 @@ export function DailyMessageScreen() {
     [],
   );
 
-  // Load on mount and whenever category changes.
+  // Load on mount and whenever category changes. Deferring through a microtask
+  // keeps the initial setState off the synchronous effect path (the loading
+  // state is set inside `load`), so it doesn't cascade renders.
   useEffect(() => {
-    void load(category);
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) {
+        void load(category);
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [category, load]);
 
   const handleChip = (value: MessageCategory | undefined) => {
@@ -132,7 +142,7 @@ export function DailyMessageScreen() {
 
         {status === 'error' && (
           <View style={styles.centered}>
-            <Text style={styles.errorTitle}>Couldn't load a message</Text>
+            <Text style={styles.errorTitle}>{"Couldn't load a message"}</Text>
             <Text style={styles.errorBody}>
               {errorDetail || 'Check your connection and try again.'}
             </Text>
