@@ -1,0 +1,206 @@
+/**
+ * Daily reminder settings screen (F-04.6 / FR-4.5).
+ *
+ * Lets the user enable an optional daily notification and pick the time it
+ * fires. Scheduling is local/on-device (D-7) via [[dailyReminder]] —
+ * `expo-notifications` — so it works with no backend. Enabling requests OS
+ * notification permission; a denial is surfaced and leaves the toggle off.
+ */
+
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
+
+import {
+  applyReminderSettings,
+  DEFAULT_REMINDER,
+  ensureNotificationPermission,
+  formatReminderTime,
+  getReminderSettings,
+  scheduleDailyReminder,
+  type ReminderSettings,
+} from '../lib/dailyReminder';
+
+export function DailyReminderScreen() {
+  const [settings, setSettings] = useState<ReminderSettings>(DEFAULT_REMINDER);
+  const [loading, setLoading] = useState(true);
+  const [showPicker, setShowPicker] = useState(false);
+
+  // Load persisted settings on mount. If a reminder is already enabled, refresh
+  // its content (the message) by rescheduling — local notifications otherwise
+  // reuse the same body every day.
+  useEffect(() => {
+    let active = true;
+    void getReminderSettings().then((loaded) => {
+      if (!active) return;
+      setSettings(loaded);
+      setLoading(false);
+      if (loaded.enabled) {
+        void scheduleDailyReminder(loaded.hour, loaded.minute);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const persist = (next: ReminderSettings) => {
+    setSettings(next);
+    void applyReminderSettings(next);
+  };
+
+  const handleToggle = async (value: boolean) => {
+    if (!value) {
+      persist({ ...settings, enabled: false });
+      return;
+    }
+    const granted = await ensureNotificationPermission();
+    if (!granted) {
+      Alert.alert(
+        'Notifications off',
+        'Enable notifications for Sakina in your system settings to get daily reminders.',
+      );
+      return;
+    }
+    persist({ ...settings, enabled: true });
+  };
+
+  const handleTimeChange = (
+    event: DateTimePickerEvent,
+    date: Date | undefined,
+  ) => {
+    setShowPicker(false);
+    if (event.type !== 'set' || date === undefined) {
+      return;
+    }
+    persist({
+      ...settings,
+      hour: date.getHours(),
+      minute: date.getMinutes(),
+    });
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  const pickerValue = new Date();
+  pickerValue.setHours(settings.hour, settings.minute, 0, 0);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.row}>
+        <View style={styles.rowText}>
+          <Text style={styles.title}>Daily reminder</Text>
+          <Text style={styles.subtitle}>
+            Get one message as a notification at a time you choose.
+          </Text>
+        </View>
+        <Switch
+          value={settings.enabled}
+          onValueChange={(value) => void handleToggle(value)}
+        />
+      </View>
+
+      <Pressable
+        style={[styles.timeRow, !settings.enabled && styles.timeRowDisabled]}
+        onPress={() => setShowPicker(true)}
+        disabled={!settings.enabled}
+        accessibilityRole="button"
+        accessibilityLabel="Change reminder time"
+      >
+        <Text style={styles.timeLabel}>Time</Text>
+        <Text style={styles.timeValue}>
+          {formatReminderTime(settings.hour, settings.minute)}
+        </Text>
+      </Pressable>
+
+      <Text style={styles.note}>
+        Reminders are scheduled on your device — no account needed, and they work
+        offline.
+      </Text>
+
+      {showPicker && (
+        <DateTimePicker
+          value={pickerValue}
+          mode="time"
+          is24Hour={false}
+          onChange={handleTimeChange}
+        />
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    gap: 16,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#999',
+  },
+  rowText: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  subtitle: {
+    fontSize: 13,
+    opacity: 0.7,
+    marginTop: 2,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: '#E6F4FE',
+  },
+  timeRowDisabled: {
+    opacity: 0.45,
+  },
+  timeLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  timeValue: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1A6B3C',
+  },
+  note: {
+    fontSize: 12,
+    opacity: 0.55,
+    lineHeight: 18,
+  },
+});
