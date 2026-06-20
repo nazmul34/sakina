@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from .models import Device, FetchedTile, Mosque, Pin
+from .models import Device, FetchedTile, IslamicMessage, Mosque, Pin
 
 
 @admin.register(Device)
@@ -31,6 +31,18 @@ class FetchedTileAdmin(admin.ModelAdmin):
     list_filter = ("source", "fetched_at")
     search_fields = ("tile_id",)
     readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(IslamicMessage)
+class IslamicMessageAdmin(admin.ModelAdmin):
+    list_display = ("source_label", "category", "is_active", "text_preview")
+    list_filter = ("category", "is_active")
+    search_fields = ("text", "source_label")
+    readonly_fields = ("id",)
+
+    @admin.display(description="Text")
+    def text_preview(self, obj):
+        return obj.text[:80] + ("…" if len(obj.text) > 80 else "")
 
 
 @admin.register(Pin)

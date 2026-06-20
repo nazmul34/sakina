@@ -16,6 +16,7 @@ from .base import (
 )
 from .device import Device
 from .fetched_tile import FetchedTile
+from .islamic_message import IslamicMessage
 from .mosque import Mosque
 from .pin import Pin
 
@@ -26,6 +27,7 @@ __all__ = [
     "SoftDeleteManager",
     "SoftDeleteQuerySet",
     "Device",
+    "IslamicMessage",
     "Mosque",
     "FetchedTile",
     "Pin",
