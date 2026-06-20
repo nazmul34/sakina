@@ -17,6 +17,7 @@ from .base import (
 from .device import Device
 from .fetched_tile import FetchedTile
 from .mosque import Mosque
+from .pin import Pin
 
 __all__ = [
     "UUIDModel",
@@ -27,4 +28,5 @@ __all__ = [
     "Device",
     "Mosque",
     "FetchedTile",
+    "Pin",
 ]
