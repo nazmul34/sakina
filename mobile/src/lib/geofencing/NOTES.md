@@ -184,3 +184,23 @@ fixture below until EPIC-02 lands.
   of home/work needed).
 - **Dwell-driven prefetch:** cache envelopes around stationary clusters; keep
   inference on-device.
+
+---
+
+## Prayer-aware silent integration seam (F-05.5 ✅ bridge / F-01.10 🟡 native step)
+
+The prayer-windows bridge is built and **off by default** (D-2: opt-in). Prayer
+windows are exposed to this layer as a pure decision —
+`evaluatePrayerAwareSilence(settings, location, config, now)` in
+`src/lib/prayerAwareSilent.ts` — returning the window to silence right now, or
+`null` (fall back to plain geofence presence).
+
+🟡 **Remaining native step.** Silencing is owned by the native `AutoSilent` /
+ringer state machine on geofence enter/exit (+ AlarmManager grace). To *act* on
+the prayer window in the background, the native side must, while a zone is
+entered and the setting is on, schedule the ringer change at the window's
+`start`/`end` (AlarmManager) instead of holding silent for the whole presence —
+falling back to current behaviour when the window is unknown. It should consult
+the **same** `evaluatePrayerAwareSilence` contract (bridge the setting + a
+last-known location into native) so JS, native, and tests don't diverge. Verify
+on-device before enabling; keep it gated behind the opt-in flag.

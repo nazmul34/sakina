@@ -263,6 +263,38 @@ plumbing: each scheduler tags its notifications with a `source` and cancels only
 its own (`cancelScheduledBySource`). EPIC-09 (Notifications Hub) will own this
 centrally. No native rebuild is needed — the new channels are created at runtime.
 
+## Prayer-aware silent (F-05.5 → F-01.10)
+
+The synergy between prayer times and the flagship: near a mosque, *tighten*
+silencing to the prayer window (just before jamaat to the end of salah) instead
+of the whole time you're inside the geofence.
+
+**D-2 decision (EPIC-13) — Phase 2 lean, opt-in, default off.** Per the PRD, v1
+stays focused on reliable geofence-based silencing, so prayer-aware silent ships
+as an **opt-in** toggle that is **off by default**. The flagship's runtime path
+is unchanged unless a user turns it on.
+
+**Window source.** Jamaat times aren't known precisely without crowdsourced data
+(**EPIC-08**), so a window is derived from the **computed adhan time + a jamaat
+offset**: `[adhan + jamaatOffset − preMinutes, adhan + jamaatOffset + salahMinutes]`
+(`src/lib/prayerWindows.ts`, defaults 10/5/20 min). When prayer times or location
+are unknown the feature degrades gracefully to plain geofence presence.
+
+**What ships here (the FR-5.5 bridge).** The prayer windows are *exposed to the
+auto-silent logic* as a pure, total decision:
+`evaluatePrayerAwareSilence(settings, location, config, now)` in
+`src/lib/prayerAwareSilent.ts` returns the window that should be silenced right
+now, or `null`. The opt-in setting (AsyncStorage `sakina.prayer_aware_silent`,
+cross-device mirror = EPIC-07) and a live "Active now" indicator are in the
+Prayer times screen.
+
+**Remaining step (tracked under F-01.10 / #26).** *Acting* on that decision in
+the background — scheduling the native ringer change at window boundaries while
+inside a zone — is a native (Kotlin `AutoSilent` + AlarmManager) change kept out
+of the bridge PR to protect flagship reliability; it must be verified on-device.
+The native consumer will call the same `evaluatePrayerAwareSilence` contract, so
+JS, native, and tests share one source of truth. See `src/lib/geofencing/NOTES.md`.
+
 ## Versioning (per release)
 
 Two numbers ship with every Android build:
