@@ -231,6 +231,38 @@ time is changed. Different-every-day content requires the server-push path.
 `expo-notifications` + `datetimepicker` are native modules, so rebuild the dev
 client after install (see the prebuild note under Native modules).
 
+## Prayer reminders (F-05.4)
+
+Optional local notifications at each prayer time, configured in the Prayer times
+screen (`src/lib/prayerNotifications.ts`): a master toggle, a sound on/off
+toggle, and a per-prayer switch for the five prayers. Off by default; enabling
+requests OS notification permission and surfaces a denial.
+
+**D-8 decision — local scheduling, rolling window.** Prayer times shift slightly
+day to day, so a single repeating trigger (what the daily reminder uses) would
+drift. Instead we schedule one-shot `SchedulableTriggerInputTypes.DATE`
+notifications for every enabled prayer across a rolling **7-day window**, and
+re-schedule whenever the screen is opened or any setting/config changes
+(cancel-then-schedule, so it's idempotent). That's ≤ 35 pending notifications —
+well under the OS limits — and works fully offline, computed on-device from the
+saved method/Asr config. Settings persist in AsyncStorage
+(`sakina.prayer_notifications`); a cross-device mirror is **EPIC-07**.
+
+**D-9 decision — standard reminder, not Adhan audio (yet).** v1 fires a standard
+reminder notification on a **HIGH-importance** Android channel with the default
+notification tone, plus a per-user sound on/off toggle. Because Android pins
+sound at the channel level, the toggle is implemented as two channels
+(`prayer-reminders` / `prayer-reminders-silent`). Playing a full **Adhan audio**
+clip — a bundled sound asset on a dedicated channel with foreground playback — is
+deferred; it's a larger media concern beyond "schedule a reminder per prayer."
+
+**Coexisting schedulers.** With two local schedulers now (daily reminder +
+prayer reminders), the old "cancel *all* scheduled notifications and reschedule"
+approach would wipe the other feature. `src/lib/notifications.ts` is the shared
+plumbing: each scheduler tags its notifications with a `source` and cancels only
+its own (`cancelScheduledBySource`). EPIC-09 (Notifications Hub) will own this
+centrally. No native rebuild is needed — the new channels are created at runtime.
+
 ## Versioning (per release)
 
 Two numbers ship with every Android build:
