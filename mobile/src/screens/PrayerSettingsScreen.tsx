@@ -7,19 +7,31 @@
  * the current location recomputes whenever the method or Asr changes, so the
  * effect of a choice is immediate and visible (the "recompute on change"
  * acceptance criterion); the real home-screen countdown is F-05.3.
+ *
+ * It also hosts the per-prayer reminder controls (F-05.4): a master toggle, a
+ * sound on/off toggle, and a switch per prayer. Toggling any of these — or
+ * opening the screen — (re)schedules the rolling window of local notifications
+ * via [[prayerNotifications]], using the location and config already on screen.
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from 'react-native';
 
 import { getHighAccuracyFix } from '../lib/location';
+import {
+  applyPrayerNotificationSettings,
+  ensureNotificationPermission,
+  usePrayerNotificationSettings,
+} from '../lib/prayerNotifications';
 import {
   ASR_METHODS,
   CALCULATION_METHODS,
@@ -29,11 +41,14 @@ import {
   computeDailyPrayerTimes,
   formatTimeOfDay,
   PRAYER_LABELS,
+  PRAYER_NAMES,
+  type PrayerName,
 } from '../lib/prayerTimes';
 import type { LatLng } from '../lib/geofencing/types';
 
 export function PrayerSettingsScreen() {
   const [config, setConfig] = usePrayerTimesConfig();
+  const [notifications, setNotifications] = usePrayerNotificationSettings();
   const [location, setLocation] = useState<LatLng | null>(null);
   const [locationError, setLocationError] = useState(false);
 
@@ -60,6 +75,39 @@ export function PrayerSettingsScreen() {
     () => (location ? computeDailyPrayerTimes(location, new Date(), config) : null),
     [location, config],
   );
+
+  // (Re)schedule the rolling window whenever the reminder settings, the config
+  // (times shift) or the location change — and on mount, which tops the window
+  // up. Idempotent (cancel-then-schedule) and a no-op until location resolves.
+  useEffect(() => {
+    void applyPrayerNotificationSettings(notifications, location, config);
+  }, [notifications, location, config]);
+
+  const handleToggleEnabled = async (value: boolean) => {
+    if (!value) {
+      setNotifications({ ...notifications, enabled: false });
+      return;
+    }
+    const granted = await ensureNotificationPermission();
+    if (!granted) {
+      Alert.alert(
+        'Notifications off',
+        'Enable notifications for Sakina in your system settings to get prayer reminders.',
+      );
+      return;
+    }
+    setNotifications({ ...notifications, enabled: true });
+  };
+
+  const togglePrayer = (name: PrayerName) => {
+    setNotifications({
+      ...notifications,
+      prayers: {
+        ...notifications.prayers,
+        [name]: !notifications.prayers[name],
+      },
+    });
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -133,9 +181,62 @@ export function PrayerSettingsScreen() {
         })}
       </View>
 
+      <Text style={styles.sectionTitle}>Reminders</Text>
+      <View style={styles.group}>
+        <View style={styles.switchRow}>
+          <View style={styles.switchText}>
+            <Text style={styles.switchLabel}>Prayer reminders</Text>
+            <Text style={styles.switchSub}>
+              A notification at each prayer time.
+            </Text>
+          </View>
+          <Switch
+            value={notifications.enabled}
+            onValueChange={(value) => void handleToggleEnabled(value)}
+          />
+        </View>
+
+        <View style={[styles.switchRow, styles.switchRowBordered]}>
+          <Text
+            style={[
+              styles.switchLabel,
+              !notifications.enabled && styles.disabledText,
+            ]}
+          >
+            Play sound
+          </Text>
+          <Switch
+            value={notifications.sound}
+            disabled={!notifications.enabled}
+            onValueChange={(value) =>
+              setNotifications({ ...notifications, sound: value })
+            }
+          />
+        </View>
+
+        {PRAYER_NAMES.map((name) => (
+          <View key={name} style={[styles.switchRow, styles.switchRowBordered]}>
+            <Text
+              style={[
+                styles.switchLabel,
+                !notifications.enabled && styles.disabledText,
+              ]}
+            >
+              {PRAYER_LABELS[name]}
+            </Text>
+            <Switch
+              value={notifications.prayers[name]}
+              disabled={!notifications.enabled}
+              onValueChange={() => togglePrayer(name)}
+            />
+          </View>
+        ))}
+      </View>
+
       <Text style={styles.note}>
         Prayer times are computed on your device from your location — no account
-        needed, and they work offline.
+        needed, and they work offline. Reminders are scheduled locally and play
+        the default notification sound.
       </Text>
     </ScrollView>
   );
@@ -231,6 +332,33 @@ const styles = StyleSheet.create({
   segmentLabelSelected: {
     color: '#FFF',
     fontWeight: '700',
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  switchRowBordered: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#DDD',
+  },
+  switchText: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  switchLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  switchSub: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginTop: 2,
+  },
+  disabledText: {
+    opacity: 0.4,
   },
   note: {
     fontSize: 12,
