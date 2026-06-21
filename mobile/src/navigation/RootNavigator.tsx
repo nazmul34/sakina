@@ -1,11 +1,14 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { ActivityScreen } from '../screens/ActivityScreen';
+import { DailyMessageScreen } from '../screens/DailyMessageScreen';
+import { DailyReminderScreen } from '../screens/DailyReminderScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { NearbyMosquesScreen } from '../screens/NearbyMosquesScreen';
 import { PermissionsScreen } from '../screens/PermissionsScreen';
 import { PinEditorScreen } from '../screens/PinEditorScreen';
 import { PinnedLocationsScreen } from '../screens/PinnedLocationsScreen';
+import { SavedMessagesScreen } from '../screens/SavedMessagesScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -46,6 +49,21 @@ export function RootNavigator() {
         name="PinEditor"
         component={PinEditorScreen}
         options={{ title: 'Pin a location' }}
+      />
+      <Stack.Screen
+        name="DailyMessage"
+        component={DailyMessageScreen}
+        options={{ title: 'Daily message' }}
+      />
+      <Stack.Screen
+        name="SavedMessages"
+        component={SavedMessagesScreen}
+        options={{ title: 'Saved messages' }}
+      />
+      <Stack.Screen
+        name="DailyReminder"
+        component={DailyReminderScreen}
+        options={{ title: 'Daily reminder' }}
       />
     </Stack.Navigator>
   );

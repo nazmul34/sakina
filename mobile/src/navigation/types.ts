@@ -11,6 +11,9 @@ export type RootStackParamList = {
   PinnedLocations: undefined;
   // `pinId` edits an existing pin; absent (or `{}`) drops a new one.
   PinEditor: { pinId?: string } | undefined;
+  DailyMessage: undefined;
+  SavedMessages: undefined;
+  DailyReminder: undefined;
 };
 
 declare global {

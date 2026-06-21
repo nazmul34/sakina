@@ -1,0 +1,162 @@
+[
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000001",
+    "fields": {
+      "text": "And He is with you wherever you are. And Allah, of what you do, is Seeing.",
+      "source_label": "Qur'an 57:4",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000002",
+    "fields": {
+      "text": "So remember Me; I will remember you. And be grateful to Me and do not deny Me.",
+      "source_label": "Qur'an 2:152",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000003",
+    "fields": {
+      "text": "Verily, with hardship comes ease.",
+      "source_label": "Qur'an 94:6",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000004",
+    "fields": {
+      "text": "And whoever relies upon Allah — then He is sufficient for him. Indeed, Allah will accomplish His purpose.",
+      "source_label": "Qur'an 65:3",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000005",
+    "fields": {
+      "text": "Indeed, Allah is with the patient.",
+      "source_label": "Qur'an 2:153",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000006",
+    "fields": {
+      "text": "The strong person is not the one who can overpower others; rather, the strong person is the one who controls himself when he gets angry.",
+      "source_label": "Sahih al-Bukhari 6114",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000007",
+    "fields": {
+      "text": "None of you truly believes until he loves for his brother what he loves for himself.",
+      "source_label": "Sahih al-Bukhari 13",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000008",
+    "fields": {
+      "text": "Make things easy and do not make them difficult; give glad tidings and do not repel people.",
+      "source_label": "Sahih al-Bukhari 69",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000009",
+    "fields": {
+      "text": "The best of people are those who are most beneficial to people.",
+      "source_label": "Al-Mu'jam al-Awsat 5937 (al-Tabarani)",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000010",
+    "fields": {
+      "text": "Smiling at your brother is an act of charity.",
+      "source_label": "Jami' al-Tirmidhi 1956",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000011",
+    "fields": {
+      "text": "Allahumma inni as'aluka al-'afwa wa al-'afiyah fi al-dunya wa al-akhirah. (O Allah, I ask You for pardon and well-being in this life and the next.)",
+      "source_label": "Sunan Ibn Majah 3871",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000012",
+    "fields": {
+      "text": "Rabbana atina fi al-dunya hasanatan wa fi al-akhirati hasanatan wa qina 'adhab al-nar. (Our Lord, give us good in this world and good in the next, and protect us from the punishment of the Fire.)",
+      "source_label": "Qur'an 2:201",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000013",
+    "fields": {
+      "text": "Hasbunallahu wa ni'mal-wakil. (Allah is sufficient for us, and He is the best Disposer of affairs.)",
+      "source_label": "Qur'an 3:173",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000014",
+    "fields": {
+      "text": "Take care of your prayers — they are your direct connection with Allah.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000015",
+    "fields": {
+      "text": "A kind word is also a form of charity.",
+      "source_label": "Sahih al-Bukhari 2989",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000016",
+    "fields": {
+      "text": "Begin each task with Bismillah and you invite blessing into your effort.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  }
+]

@@ -161,6 +161,76 @@ min SDK (API 24+), so no version guards are needed.
 > `npx expo prebuild --platform android --clean` and rebuild the dev client
 > (`npm run android`). A JS-only reload won't pick up native changes.
 
+## Share image card (F-04.4)
+
+The Daily message screen can share a message two ways: as plain text (F-04.3)
+and as a rendered **image card** for WhatsApp/Instagram stories & status
+(F-04.4).
+
+**Rendering lib — `react-native-view-shot`.** The card
+(`src/components/MessageShareCard.tsx`) is rendered off-screen (laid out but
+`opacity: 0`, non-interactive) and captured to a PNG with `captureRef`. The card
+has fixed logical dimensions (360×640, a 9:16 portrait ratio) so the export is
+crisp and consistent across devices — it's captured at the device pixel ratio,
+yielding roughly 1080×1920 on a 3× screen.
+
+**Sharing the file — `expo-sharing`.** `Sharing.shareAsync(uri, …)` hands the
+PNG to the OS share sheet via a content URI, which is what Android share targets
+expect. (React Native's `Share.share({ url })` only shares local image files
+reliably on iOS, so it's kept for the text path only.) `expo-sharing` adds a
+config plugin — rebuild the dev client after install (see the prebuild note
+above).
+
+**Template / branding decision.** Sakina-green field (`#1A6B3C`); a small
+uppercase "Daily reminder" kicker; the message centred in a large semibold
+weight under a decorative quote mark; an italic source label; and a **"Sakina"
+wordmark + "Find your calm" tagline** footer so a re-shared card always carries
+attribution back to the app. Long messages are not auto-fitted in v1 — the seed
+content is short enough to fit; revisit with `adjustsFontSizeToFit` if longer
+content lands.
+
+## Saved messages (F-04.5)
+
+Users can favorite a daily message (the heart on the Daily message screen) and
+review their saved messages on a dedicated screen, **offline**.
+
+**Storage decision — local-only (AsyncStorage).** Favorites are persisted on the
+device (`src/lib/favorites.ts`, key `sakina.favorites`), storing the *whole*
+message object — text, source label, category — not just its id. That keeps the
+saved list fully renderable offline with no follow-up fetch, consistent with the
+app's other on-device caches (e.g. the nearby-mosque last-known cache).
+
+A server-synced favorites list (e.g. `GET /messages/saved`) was **deferred to
+EPIC-07**, where cross-device sync is designed holistically (the same place the
+pin sync lives). Until then this is a per-device list. The store is a small
+reactive wrapper (`useFavorites()` over `useSyncExternalStore`) so the heart
+toggle and the saved-list screen stay in sync without re-reading storage on
+every focus.
+
+## Daily reminder (F-04.6)
+
+An optional daily notification that delivers a message at a user-chosen time.
+The Daily reminder screen (reached from Home) has an enable/disable switch and a
+time picker (`@react-native-community/datetimepicker`).
+
+**D-7 decision — local on-device scheduling.** Per the PRD's recommendation
+(cheapest option), reminders are scheduled locally with `expo-notifications`
+(`src/lib/dailyReminder.ts`): a repeating `SchedulableTriggerInputTypes.DAILY`
+trigger at the chosen hour/minute, on an Android `daily-reminder` channel. No
+backend, no push tokens — it works offline once scheduled, and settings persist
+in AsyncStorage (`sakina.daily_reminder`). Enabling requests OS notification
+permission; a denial is surfaced and leaves the toggle off.
+
+A **server-push** path (fresh content pushed daily, richer targeting/analytics)
+is deferred to the **EPIC-09 Notifications Hub**, which will own scheduling
+app-wide. Until then, note the local-scheduling caveat: a repeating local
+notification reuses the same body each day, so the embedded message is refreshed
+when the reminder is (re)scheduled — when the reminder screen is opened or the
+time is changed. Different-every-day content requires the server-push path.
+
+`expo-notifications` + `datetimepicker` are native modules, so rebuild the dev
+client after install (see the prebuild note under Native modules).
+
 ## Versioning (per release)
 
 Two numbers ship with every Android build:
