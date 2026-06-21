@@ -27,18 +27,10 @@ import {
 } from '../lib/prayerSettings';
 import {
   computeDailyPrayerTimes,
+  formatTimeOfDay,
   PRAYER_LABELS,
 } from '../lib/prayerTimes';
 import type { LatLng } from '../lib/geofencing/types';
-
-/** Format a prayer instant as a 12-hour clock label, e.g. "5:14 AM". */
-function formatTime(date: Date): string {
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
-  const period = hours < 12 ? 'AM' : 'PM';
-  const h12 = hours % 12 === 0 ? 12 : hours % 12;
-  return `${h12}:${minutes.toString().padStart(2, '0')} ${period}`;
-}
 
 export function PrayerSettingsScreen() {
   const [config, setConfig] = usePrayerTimesConfig();
@@ -77,7 +69,7 @@ export function PrayerSettingsScreen() {
           prayerTimes.times.map(({ name, time }) => (
             <View key={name} style={styles.previewRow}>
               <Text style={styles.previewName}>{PRAYER_LABELS[name]}</Text>
-              <Text style={styles.previewTime}>{formatTime(time)}</Text>
+              <Text style={styles.previewTime}>{formatTimeOfDay(time)}</Text>
             </View>
           ))
         ) : locationError ? (

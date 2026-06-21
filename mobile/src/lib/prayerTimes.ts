@@ -7,13 +7,14 @@
  * for F-05.1, and the reason the PRD §6.1 picked an on-device library over a
  * backend endpoint).
  *
- * This module is deliberately the *computation layer only*. It accepts the
- * calculation method and Asr juristic method as a parameter and falls back to a
- * documented default; wiring those choices to a settings UI and persisting them
- * in DeviceSettings is F-05.2, and the home-screen countdown that consumes the
- * output is F-05.3. Keeping the math isolated and side-effect-free lets those
- * layers — and the Prayer-aware silent mode (F-05.5) — build on a single source
- * of truth without re-deriving times.
+ * This module is the shared computation layer (plus small pure helpers for the
+ * next prayer and time formatting). It accepts the calculation method and Asr
+ * juristic method as a parameter and falls back to a documented default; wiring
+ * those choices to a settings UI and persisting them in DeviceSettings is F-05.2,
+ * and the home-screen countdown that consumes the output is F-05.3. Keeping the
+ * math isolated and side-effect-free lets those layers — and the Prayer-aware
+ * silent mode (F-05.5) — build on a single source of truth without re-deriving
+ * times.
  */
 
 import {
@@ -148,4 +149,47 @@ export function computeDailyPrayerTimes(
   const times = PRAYER_NAMES.map((name) => ({ name, time: byName[name] }));
 
   return { date, location, config, times, byName };
+}
+
+/** The next upcoming prayer, with whether it falls on the following day. */
+export interface NextPrayer extends PrayerTime {
+  /** True when every prayer today has passed, so this is tomorrow's Fajr. */
+  readonly isTomorrow: boolean;
+}
+
+/**
+ * Find the next upcoming prayer relative to `now` (FR-5.3).
+ *
+ * Returns the first of today's five times that is still in the future. Once all
+ * of today's prayers have passed (i.e. after Isha), it rolls over to **tomorrow's
+ * Fajr** — computed from tomorrow's date, since prayer times shift day to day —
+ * so the home-screen countdown never stalls or shows a negative value at night.
+ * Pure and offline like {@link computeDailyPrayerTimes}.
+ */
+export function getNextPrayer(
+  location: LatLng,
+  now: Date = new Date(),
+  config: PrayerTimesConfig = DEFAULT_PRAYER_TIMES_CONFIG,
+): NextPrayer {
+  const today = computeDailyPrayerTimes(location, now, config);
+  const upcoming = today.times.find(
+    ({ time }) => time.getTime() > now.getTime(),
+  );
+  if (upcoming) {
+    return { ...upcoming, isTomorrow: false };
+  }
+
+  const tomorrowDate = new Date(now);
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrow = computeDailyPrayerTimes(location, tomorrowDate, config);
+  return { name: 'fajr', time: tomorrow.byName.fajr, isTomorrow: true };
+}
+
+/** Format a prayer instant as a 12-hour clock label in local time, e.g. "5:14 AM". */
+export function formatTimeOfDay(date: Date): string {
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const period = hours < 12 ? 'AM' : 'PM';
+  const h12 = hours % 12 === 0 ? 12 : hours % 12;
+  return `${h12}:${minutes.toString().padStart(2, '0')} ${period}`;
 }
