@@ -32,6 +32,15 @@ export const PRAYER_NAMES = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const
 /** One of the five daily prayers. Sunrise is computed by `adhan` but isn't a prayer. */
 export type PrayerName = (typeof PRAYER_NAMES)[number];
 
+/** Human-readable prayer names for display (the canonical transliterations). */
+export const PRAYER_LABELS: Readonly<Record<PrayerName, string>> = {
+  fajr: 'Fajr',
+  dhuhr: 'Dhuhr',
+  asr: 'Asr',
+  maghrib: 'Maghrib',
+  isha: 'Isha',
+};
+
 /**
  * Supported calculation methods, keyed to the `adhan` presets the PRD §6.1
  * lists (Muslim World League, Umm al-Qura, Karachi, …). F-05.2 exposes these as

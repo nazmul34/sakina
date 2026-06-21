@@ -66,6 +66,13 @@ export function HomeScreen() {
       </Pressable>
       <Pressable
         style={styles.permissionsLink}
+        onPress={() => navigation.navigate('PrayerSettings')}
+        accessibilityRole="button"
+      >
+        <Text style={styles.permissionsLinkText}>Prayer times</Text>
+      </Pressable>
+      <Pressable
+        style={styles.permissionsLink}
         onPress={() => navigation.navigate('DailyMessage')}
         accessibilityRole="button"
       >
