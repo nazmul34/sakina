@@ -2,10 +2,50 @@
 
 A living, on-device QA checklist. Each epic gets a section; tick the boxes as you
 verify a build, and update the **Status** line when an epic is completed or its
-behaviour changes. Covers **EPIC-0**, **EPIC-1**, **EPIC-2**, and **EPIC-3** today
+behaviour changes. Covers **EPIC-0** through **EPIC-4** today
 (F-01.10 is deferred — see issue #26). Add new epics as they land.
 
 > Legend: 🟢 done · 🟡 in progress · ⚪ not started · ⏸️ deferred
+
+---
+
+## Before you start (read this first — plain-English guide)
+
+**Who this is for.** You do **not** need to be a developer to run most of these
+tests. Each ☐ box tells you something to do in the app and what you should see.
+If it matches, tick the box; if not, write down what happened instead.
+
+**What you need.**
+- A **phone (or emulator)** with the Sakina app installed. A developer can hand
+  you the app file (an `.apk`) — copy it to the phone and tap it to install, or
+  ask them to install it for you. (The *"How to build & install"* section below
+  is only for whoever **builds** that file.)
+- For most tests the phone should be **online** (Wi‑Fi or mobile data). A few
+  tests ask you to turn on **Airplane mode** on purpose, to check the app still
+  behaves when offline.
+- Some tests (mainly EPIC‑1 auto‑silent) use an on‑screen **dev panel** and
+  system permissions — just follow the steps as written.
+
+**Words you'll see (quick glossary).**
+- **Ringer · silent / vibrate / normal** — your phone's sound mode.
+- **DND** — "Do Not Disturb", the Android setting that silences calls and alerts.
+  The app needs permission to change it.
+- **Geofence / zone** — an invisible circle on the map around a mosque or a saved
+  pin. "Entering a zone" means moving inside that circle.
+- **Dwell (45 s)** — after you enter a zone the app waits 45 seconds before
+  silencing, so just passing by doesn't trigger it. **Exit‑buffer (20 s)** — after
+  you leave, it waits 20 seconds before turning the sound back on.
+- **Dev panel** — the *"RingerControl (dev)"* box on the Home screen with test
+  buttons (e.g. **Enter zone / Exit zone**) that let you test silencing without
+  actually travelling.
+- **API URL** — the address of the server the app talks to, shown on the Home
+  screen.
+- **Share sheet / share menu** — the standard menu Android pops up to send
+  something to another app (WhatsApp, Messages, etc.).
+- **Chip** — a small rounded button (the message category filters are chips).
+
+**How to tick.** Do the action in each ☐ box, compare with the "you should see"
+part, and tick ☐ → ☑ when it matches.
 
 ---
 
@@ -295,6 +335,87 @@ manual zone triggers needed.
       the radius, and move the pin before **Save pin** — nothing is locked.
 - [ ] **Editing only, hidden:** open an **existing** pin (tap it in the list) → the
       Suggested row is **not** shown (presets are for new pins only).
+
+---
+
+## EPIC-4 — Daily Islamic Message Sharing
+
+**Status:** 🟢 done (pending device QA)
+
+Everything here is done **inside the app by tapping** — no computer or special
+tools needed (except the one optional developer check in F‑04.1). Keep the phone
+**online** the first time you open the Daily message screen, because the messages
+are downloaded from the internet. After that, **Saved messages** and the
+**Daily reminder** keep working offline.
+
+**Where to start:** from the Home screen, tap **Daily message**.
+
+### F-04.1 — Messages come from the server
+- [ ] Open **Home → Daily message** while connected to the internet. **You should
+      see:** a short Islamic message, and under it where it comes from (e.g.
+      *Qur'an 2:201* or *Sahih al-Bukhari 13*). Any real message showing here means
+      the server is working.
+- [ ] _(Optional — for a developer.)_ Open `http://<API URL>/messages/random` in a
+      browser. **You should see:** a small block of text (JSON) with `text`,
+      `source_label`, and `category`. Adding `?category=quran` returns only Qur'an
+      messages; a made-up value like `?category=foo` returns an error message.
+
+### F-04.2 — Reading messages and filtering by type
+- [ ] At the top there's a row of rounded buttons (chips): **All · Qur'an · Hadith
+      · Du'a · Reminder**. Tap **Qur'an**. **You should see:** the button turns
+      green and the message switches to a Qur'an verse. Try each type.
+- [ ] Tap **Next message**. **You should see:** a different message of the same
+      type appears. (A small spinner may flash while it loads — that's normal.)
+- [ ] **Offline behaviour:** turn on **Airplane mode**, then tap **Next message**.
+      **You should see:** a friendly *"Couldn't load a message"* note with a **Try
+      again** button — **not** a crash. Turn Airplane mode off, tap **Try again** →
+      a message loads.
+
+### F-04.3 — Share a message as text
+- [ ] With a message on screen, tap **Share text**. **You should see:** the phone's
+      normal share menu slides up, and the text being shared is the **message plus
+      its source** (the words, then a new line like "— Qur'an 2:201").
+- [ ] Pick any app, or just close the menu — closing it should cause no error.
+
+### F-04.4 — Share a message as a picture (for stories/status)
+- [ ] Tap **Share as image**. **You should see:** the button briefly reads
+      *"Preparing image…"*, then the share menu opens showing a **green picture
+      card** containing the message, its source, and the **Sakina** name at the
+      bottom.
+- [ ] The card is tall (story-shaped), so it fits a WhatsApp/Instagram status.
+
+### F-04.5 — Save favourite messages (works offline)
+- [ ] On a message you like, tap the **heart (♡)** in the **top-right corner of the
+      card**. **You should see:** it fills in **red (♥)**.
+- [ ] Go **back to Home → Saved messages**. **You should see:** the message you
+      hearted is in the list, with its type, text, and source.
+- [ ] Each saved item has **Share** (opens the text share menu) and **Remove**. Tap
+      **Remove** → that item disappears from the list straight away.
+- [ ] **Offline check:** save a message, turn on **Airplane mode**, then open
+      **Saved messages**. **You should see:** your saved messages still appear (they
+      live on the phone). Fully close and reopen the app while still offline → they
+      are still there.
+- [ ] With nothing saved, the **Saved messages** screen shows a friendly "no saved
+      messages" note.
+
+### F-04.6 — Optional daily reminder notification
+> This sends one message as a phone notification at a time you pick. It's set up on
+> the phone itself, so no internet is needed once it's scheduled. Be **online when
+> you turn it on** so it can grab a real message to show.
+
+- [ ] Open **Home → Daily reminder**. **You should see:** an on/off switch (off to
+      start with) and a **Time** (8:00 AM by default).
+- [ ] Turn the switch **on**. If the phone asks permission to send notifications,
+      tap **Allow**. _(If you tap "Don't allow", the app shows a short note and
+      leaves the switch off — that's the expected behaviour.)_
+- [ ] Tap the **Time** row → a clock appears → choose a time and tap **OK**. **You
+      should see:** the Time row updates to your chosen time.
+- [ ] **Check it really fires (quick test):** set the time to about **2 minutes from
+      now**, leave the switch on, and lock the phone or leave the app. **You should
+      see:** at that time a **Sakina** notification appears showing a message — even
+      if the app is closed.
+- [ ] Turn the switch **off** → no more daily notification appears (the next day's
+      reminder is cancelled).
 
 ---
 
