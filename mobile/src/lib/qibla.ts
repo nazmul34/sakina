@@ -119,3 +119,24 @@ export function isFieldStrengthReliable(
 export function qiblaRotation(bearing: number, heading: number): number {
   return ((bearing - heading) % 360 + 360) % 360;
 }
+
+/** The 8 compass points, clockwise from north. */
+const COMPASS_POINTS = [
+  'N',
+  'NE',
+  'E',
+  'SE',
+  'S',
+  'SW',
+  'W',
+  'NW',
+] as const;
+
+/**
+ * The nearest of the 8 compass points to a bearing in degrees (0 = N), e.g.
+ * `200` → `'SW'`. Used to spell out a direction in words — for the
+ * no-magnetometer fallback (F-06.3), where there's no live needle to follow.
+ */
+export function compassPointName(bearing: number): string {
+  return COMPASS_POINTS[Math.round(bearing / 45) % 8];
+}
