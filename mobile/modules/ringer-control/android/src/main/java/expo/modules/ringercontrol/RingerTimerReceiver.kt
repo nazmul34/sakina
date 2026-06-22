@@ -19,6 +19,11 @@ import android.content.Intent
  */
 class RingerTimerReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
+    // The prayer-window boundary is session-global and carries no zone id.
+    if (intent.action == RingerHysteresis.ACTION_COMMIT_WINDOW) {
+      RingerSilenceController.commitWindowBoundary(context)
+      return
+    }
     val regionId = intent.getStringExtra(RingerHysteresis.EXTRA_REGION_ID) ?: return
     when (intent.action) {
       RingerHysteresis.ACTION_COMMIT_ENTER -> RingerSilenceController.commitEnter(context, regionId)

@@ -280,20 +280,30 @@ offset**: `[adhan + jamaatOffset − preMinutes, adhan + jamaatOffset + salahMin
 (`src/lib/prayerWindows.ts`, defaults 10/5/20 min). When prayer times or location
 are unknown the feature degrades gracefully to plain geofence presence.
 
-**What ships here (the FR-5.5 bridge).** The prayer windows are *exposed to the
-auto-silent logic* as a pure, total decision:
-`evaluatePrayerAwareSilence(settings, location, config, now)` in
-`src/lib/prayerAwareSilent.ts` returns the window that should be silenced right
-now, or `null`. The opt-in setting (AsyncStorage `sakina.prayer_aware_silent`,
-cross-device mirror = EPIC-07) and a live "Active now" indicator are in the
-Prayer times screen.
+**The JS bridge (FR-5.5).** The prayer windows are *exposed to the auto-silent
+logic* as a pure, total decision: `evaluatePrayerAwareSilence(settings, location,
+config, now)` in `src/lib/prayerAwareSilent.ts` returns the window that should be
+silenced right now, or `null`. The opt-in setting (AsyncStorage
+`sakina.prayer_aware_silent`, cross-device mirror = EPIC-07) and a live "Active
+now" indicator are in the Prayer times screen.
 
-**Remaining step (tracked under F-01.10 / #26).** *Acting* on that decision in
-the background — scheduling the native ringer change at window boundaries while
-inside a zone — is a native (Kotlin `AutoSilent` + AlarmManager) change kept out
-of the bridge PR to protect flagship reliability; it must be verified on-device.
-The native consumer will call the same `evaluatePrayerAwareSilence` contract, so
-JS, native, and tests share one source of truth. See `src/lib/geofencing/NOTES.md`.
+**Native acting on it (F-01.10).** Silencing is native (`RingerControl` state
+machine + AlarmManager grace), and native can't compute prayer times — `adhan` is
+JS-only. So JS precomputes a **rolling list of window boundaries** and pushes them
+to native (`RingerControl.setPrayerWindows(starts, ends)` + `setPrayerAware`) when
+arming and on any toggle; `pushPrayerWindowsToNative` does this. Native stores them
+(`PrayerWindowStore`) and **gates** the state machine: while inside a zone it is
+silent only when the gate permits (`allowedNow`), scheduling a session-global
+**window-boundary alarm** (`ACTION_COMMIT_WINDOW`) to silence at a window's start
+and restore at its end — re-silencing for the next window — all reusing the
+existing capture/restore, manual-override (FR-1.5) and boot-reconcile machinery.
+A new `silencing` flag decouples "currently silent" from "in a zone" so a
+window gap can pause silence without ending the session.
+
+When prayer-aware is **off** the gate is permissive (`allowedNow` always true,
+no boundary alarms), so the presence-only path is byte-for-byte unchanged.
+Degrades gracefully — unknown windows/location ⇒ the gate yields nothing ⇒ plain
+geofence presence. See `src/lib/geofencing/NOTES.md` for the state-machine notes.
 
 ## Versioning (per release)
 

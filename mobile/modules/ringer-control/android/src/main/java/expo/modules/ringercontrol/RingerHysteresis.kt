@@ -55,6 +55,15 @@ internal object RingerHysteresis {
 
   const val ACTION_COMMIT_ENTER = "expo.modules.ringercontrol.COMMIT_ENTER"
   const val ACTION_COMMIT_EXIT = "expo.modules.ringercontrol.COMMIT_EXIT"
+
+  /**
+   * Prayer-window boundary timer (F-01.10). Unlike the per-zone dwell/exit timers
+   * this is session-global — there is one "next boundary" at a time — so it uses a
+   * fixed region key.
+   */
+  const val ACTION_COMMIT_WINDOW = "expo.modules.ringercontrol.COMMIT_WINDOW"
+  private const val WINDOW_REGION_KEY = "prayer-window"
+
   const val EXTRA_REGION_ID = "regionId"
 
   /** Schedule the dwell timer for [regionId]; fires [ACTION_COMMIT_ENTER]. */
@@ -72,6 +81,21 @@ internal object RingerHysteresis {
   /** Cancel a pending exit-buffer timer (e.g. a jitter re-entry within the window). */
   fun cancelExitBuffer(context: Context, regionId: String) =
     cancel(context, ACTION_COMMIT_EXIT, regionId)
+
+  /**
+   * Schedule the next prayer-window boundary at absolute epoch time [atMs]; fires
+   * [ACTION_COMMIT_WINDOW]. The boundary is a wall-clock instant, so we convert it
+   * to an elapsed-realtime delay (clamped to ≥ 0 — a boundary already due fires
+   * promptly). Replaces any previously scheduled boundary (same PendingIntent).
+   */
+  fun scheduleWindowBoundary(context: Context, atMs: Long) {
+    val delayMs = (atMs - System.currentTimeMillis()).coerceAtLeast(0L)
+    schedule(context, ACTION_COMMIT_WINDOW, WINDOW_REGION_KEY, delayMs)
+  }
+
+  /** Cancel a pending prayer-window boundary timer (e.g. on the last zone exit). */
+  fun cancelWindowBoundary(context: Context) =
+    cancel(context, ACTION_COMMIT_WINDOW, WINDOW_REGION_KEY)
 
   private fun schedule(context: Context, action: String, regionId: String, delayMs: Long) {
     alarmManager(context).setAndAllowWhileIdle(
