@@ -1,4 +1,8 @@
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  DarkTheme,
+  DefaultTheme,
+  NavigationContainer,
+} from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
@@ -8,9 +12,18 @@ import { armGeofencing } from './src/lib/geofencing';
 import { isAutoSilentEnabled } from './src/lib/autoSilentSettings';
 import { trySyncDeviceSettings } from './src/lib/deviceSettingsSync';
 import { trySyncPins } from './src/lib/pinsSync';
+import { hydrateTheme, useResolvedScheme } from './src/lib/theme';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
 export default function App() {
+  const scheme = useResolvedScheme();
+
+  useEffect(() => {
+    // Load the saved theme preference into memory on launch so the app chrome
+    // reflects the user's choice rather than flashing the OS default (F-07.3).
+    void hydrateTheme();
+  }, []);
+
   useEffect(() => {
     // Re-arm geofences on launch if auto-silent is on. Geofences persist across
     // app-kill/reboot on their own, but re-selecting on launch keeps the set
@@ -40,10 +53,12 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
+      <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme}>
         <RootNavigator />
       </NavigationContainer>
-      <StatusBar style="auto" />
+      {/* Pin the status-bar contrast to the resolved scheme (not 'auto') so a
+          user-pinned theme that differs from the OS still reads correctly. */}
+      <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
     </SafeAreaProvider>
   );
 }

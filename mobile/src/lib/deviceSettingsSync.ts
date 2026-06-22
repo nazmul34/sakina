@@ -7,14 +7,14 @@
  * push is safe to repeat: a stale local edit can't clobber fresher server state,
  * and re-pushing unchanged settings is a no-op.
  *
- * Scope: this currently syncs only the AsyncStorage-backed settings — the prayer
- * calculation method and Asr method ({@link ./prayerSettings}). The native
- * auto-silent toggle has its own boot-time-readable native store and is mirrored
- * separately in a later slice; the partial `PUT` here leaves the server's other
- * fields (theme, radius, auto_silent) untouched.
+ * Scope: this syncs the AsyncStorage-backed settings — the prayer calculation
+ * method and Asr method ({@link ./prayerSettings}) and the app theme
+ * ({@link ./theme}). The native auto-silent toggle has its own boot-time-readable
+ * native store and is mirrored separately in a later slice; the partial `PUT`
+ * here leaves the server's other fields (radius, auto_silent) untouched.
  *
  * The flow each sync:
- *   1. PUT the local prayer settings tagged with the local sync clock;
+ *   1. PUT the local settings bundle tagged with the local sync clock;
  *   2. the server applies last-write-wins and returns the merged state;
  *   3. if the server's state is strictly newer than our clock, adopt it locally
  *      (and advance the clock to the server's), otherwise keep what we have.
@@ -36,15 +36,15 @@ import {
   getPrayerTimesConfig,
 } from './prayerSettings';
 import type { PrayerTimesConfig } from './prayerTimes';
+import { adoptThemePreference, type AppTheme, getStoredTheme } from './theme';
 
-let inFlight: Promise<PrayerTimesConfig> | null = null;
+let inFlight: Promise<void> | null = null;
 
 /**
- * Reconcile local settings with the server and return the resulting prayer
- * config. Coalesces concurrent calls into one round-trip. Rejects (leaving local
- * state intact) if the network is unavailable.
+ * Reconcile local settings with the server. Coalesces concurrent calls into one
+ * round-trip. Rejects (leaving local state intact) if the network is unavailable.
  */
-export function syncDeviceSettings(): Promise<PrayerTimesConfig> {
+export function syncDeviceSettings(): Promise<void> {
   if (!inFlight) {
     inFlight = reconcile().finally(() => {
       inFlight = null;
@@ -53,52 +53,58 @@ export function syncDeviceSettings(): Promise<PrayerTimesConfig> {
   return inFlight;
 }
 
-async function reconcile(): Promise<PrayerTimesConfig> {
-  const [local, localUpdatedAt] = await Promise.all([
+async function reconcile(): Promise<void> {
+  const [prayer, theme, localUpdatedAt] = await Promise.all([
     getPrayerTimesConfig(),
+    getStoredTheme(),
     getLocalUpdatedAt(),
   ]);
 
   // Push our state tagged with the local clock; the server reconciles by LWW and
   // returns the winning row (which may be newer, e.g. an edit from another device).
   const server = await putServerSettings({
-    prayerMethod: local.method,
-    asrMethod: local.asr,
+    prayerMethod: prayer.method,
+    asrMethod: prayer.asr,
+    theme,
     updatedAt: localUpdatedAt,
   });
 
-  return adopt(server, localUpdatedAt, local);
+  await adopt(server, localUpdatedAt);
 }
 
 async function adopt(
   server: ServerDeviceSettings,
   localUpdatedAt: number,
-  local: PrayerTimesConfig,
-): Promise<PrayerTimesConfig> {
+): Promise<void> {
   const serverUpdatedAt = Date.parse(server.updated_at);
   // Strictly-newer server state wins; equal/older means our push already carried
   // the truth, so there's nothing to adopt.
   if (!Number.isFinite(serverUpdatedAt) || serverUpdatedAt <= localUpdatedAt) {
-    return local;
+    return;
   }
-  const pulled: PrayerTimesConfig = {
-    method: server.prayer_method as PrayerTimesConfig['method'],
-    asr: server.asr_method as PrayerTimesConfig['asr'],
-  };
-  await adoptPrayerTimesConfig(pulled, serverUpdatedAt);
-  return pulled;
+  // Adopt the whole synced bundle together (they share the one local clock). Each
+  // adopt validates its input and ignores anything malformed.
+  await Promise.all([
+    adoptPrayerTimesConfig(
+      {
+        method: server.prayer_method as PrayerTimesConfig['method'],
+        asr: server.asr_method as PrayerTimesConfig['asr'],
+      },
+      serverUpdatedAt,
+    ),
+    adoptThemePreference(server.theme as AppTheme, serverUpdatedAt),
+  ]);
 }
 
 /**
  * Fire-and-forget sync that never rejects — for app-foreground / launch triggers
- * where a failed sync should be invisible. Returns the synced prayer config on
- * success, or `null` if it couldn't reach the server (the caller keeps showing
- * local state).
+ * where a failed sync should be invisible. Swallows errors (the caller keeps
+ * showing local state).
  */
-export async function trySyncDeviceSettings(): Promise<PrayerTimesConfig | null> {
+export async function trySyncDeviceSettings(): Promise<void> {
   try {
-    return await syncDeviceSettings();
+    await syncDeviceSettings();
   } catch {
-    return null;
+    // best-effort
   }
 }
