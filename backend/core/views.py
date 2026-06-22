@@ -358,10 +358,6 @@ def _parse_settings_body(data: dict) -> dict:
 
     if "radius_m" in data:
         fields["radius_m"] = _parse_positive_int(data["radius_m"], "radius_m")
-    if "poll_interval_s" in data:
-        fields["poll_interval_s"] = _parse_positive_int(
-            data["poll_interval_s"], "poll_interval_s"
-        )
 
     _parse_choice(data, "theme", DeviceSettings.Theme, fields)
     _parse_choice(data, "prayer_method", DeviceSettings.PrayerMethod, fields)
@@ -403,7 +399,6 @@ def _serialize_settings(row: DeviceSettings) -> dict:
         "device_id": str(row.device_id),
         "auto_silent_enabled": row.auto_silent_enabled,
         "radius_m": row.radius_m,
-        "poll_interval_s": row.poll_interval_s,
         "theme": row.theme,
         "prayer_method": row.prayer_method,
         "asr_method": row.asr_method,

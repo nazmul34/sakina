@@ -10,9 +10,14 @@ class DeviceSettings(models.Model):
     A single row per :class:`~core.models.Device` (the device *is* the primary
     key, so the relationship is 1:1 and ``GET/PUT /devices/{id}/settings`` map
     straight onto it). It holds the knobs the PRD lists — auto-silent on/off,
-    the geofence radius, the location poll interval, the chosen theme, and the
-    prayer-time calculation/Asr methods — so a reinstall or a second device can
-    recover the user's configuration from the server.
+    the geofence radius, the chosen theme, and the prayer-time calculation/Asr
+    methods — so a reinstall or a second device can recover the user's
+    configuration from the server.
+
+    The PRD's ``poll_interval_s`` is deliberately omitted: auto-silent is
+    event-driven geofencing, not polling (see the mobile ``geofencing/NOTES.md``),
+    so there's no interval to persist. It can be added back if a polling fallback
+    is ever introduced.
 
     ``updated_at`` is **client-authoritative** (the logical mutation time the
     client supplies, not a server ``auto_now`` stamp), matching the
@@ -52,7 +57,6 @@ class DeviceSettings(models.Model):
     )
     auto_silent_enabled = models.BooleanField(default=True)
     radius_m = models.PositiveIntegerField(default=150)
-    poll_interval_s = models.PositiveIntegerField(default=300)
     theme = models.CharField(
         max_length=10,
         choices=Theme.choices,

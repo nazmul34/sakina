@@ -23,7 +23,6 @@ class DeviceSettingsAdmin(admin.ModelAdmin):
         "device",
         "auto_silent_enabled",
         "radius_m",
-        "poll_interval_s",
         "theme",
         "prayer_method",
         "asr_method",

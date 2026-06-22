@@ -51,7 +51,6 @@ class DeviceSettingsApiTests(APITestCase):
             {
                 "auto_silent_enabled": False,
                 "radius_m": 250,
-                "poll_interval_s": 120,
                 "theme": "dark",
                 "prayer_method": "NorthAmerica",
                 "asr_method": "hanafi",
@@ -63,7 +62,6 @@ class DeviceSettingsApiTests(APITestCase):
         body = self.client.get(self.url).json()
         self.assertFalse(body["auto_silent_enabled"])
         self.assertEqual(body["radius_m"], 250)
-        self.assertEqual(body["poll_interval_s"], 120)
         self.assertEqual(body["theme"], "dark")
         self.assertEqual(body["prayer_method"], "NorthAmerica")
         self.assertEqual(body["asr_method"], "hanafi")
@@ -97,7 +95,6 @@ class DeviceSettingsApiTests(APITestCase):
             {"asr_method": "maliki"},
             {"radius_m": 0},
             {"radius_m": "wide"},
-            {"poll_interval_s": -5},
             {"auto_silent_enabled": "yes"},
             {"updated_at": "not-a-date"},
         ):
