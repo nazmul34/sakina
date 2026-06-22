@@ -101,6 +101,25 @@ class RingerControlModule : Module() {
       RingerSilenceController.activeZoneCount(context)
     }
 
+    // --- Prayer-aware silent gate (F-01.10) ---------------------------------
+    // JS owns prayer-time computation (adhan is JS-only), so it pushes the opt-in
+    // flag and the upcoming window boundaries here; the silence state machine
+    // gates on them. Both re-evaluate any active session immediately so a change
+    // (toggle, or a freshly armed window list) takes effect without waiting.
+
+    Function("setPrayerAware") { enabled: Boolean ->
+      PrayerWindowStore(context).enabled = enabled
+      RingerSilenceController.onGateChanged(context)
+    }
+
+    Function("setPrayerWindows") { starts: List<Double>, ends: List<Double> ->
+      PrayerWindowStore(context).setWindows(
+        starts.map { it.toLong() },
+        ends.map { it.toLong() },
+      )
+      RingerSilenceController.onGateChanged(context)
+    }
+
     // --- Activity log (F-01.8) ----------------------------------------------
     // Read/clear the device-local silence/restore trail. The events are written
     // natively by the state machine; these expose the persisted log to the UI.

@@ -187,20 +187,32 @@ fixture below until EPIC-02 lands.
 
 ---
 
-## Prayer-aware silent integration seam (F-05.5 ✅ bridge / F-01.10 🟡 native step)
+## Prayer-aware silent (F-05.5 ✅ bridge / F-01.10 ✅ native gate)
 
 The prayer-windows bridge is built and **off by default** (D-2: opt-in). Prayer
-windows are exposed to this layer as a pure decision —
+windows are exposed to the JS auto-silent layer as a pure decision —
 `evaluatePrayerAwareSilence(settings, location, config, now)` in
-`src/lib/prayerAwareSilent.ts` — returning the window to silence right now, or
-`null` (fall back to plain geofence presence).
+`src/lib/prayerAwareSilent.ts` (used for the screen's "Active now" indicator).
 
-🟡 **Remaining native step.** Silencing is owned by the native `AutoSilent` /
-ringer state machine on geofence enter/exit (+ AlarmManager grace). To *act* on
-the prayer window in the background, the native side must, while a zone is
-entered and the setting is on, schedule the ringer change at the window's
-`start`/`end` (AlarmManager) instead of holding silent for the whole presence —
-falling back to current behaviour when the window is unknown. It should consult
-the **same** `evaluatePrayerAwareSilence` contract (bridge the setting + a
-last-known location into native) so JS, native, and tests don't diverge. Verify
-on-device before enabling; keep it gated behind the opt-in flag.
+✅ **Native gate (implemented).** Native can't compute prayer times (`adhan` is
+JS-only), so JS precomputes a rolling list of window boundaries and pushes them to
+native via `RingerControl.setPrayerWindows(starts, ends)` + `setPrayerAware`
+(`pushPrayerWindowsToNative`, called on arm and on any toggle). Native stores them
+in `PrayerWindowStore` and gates `RingerSilenceController`:
+
+- The single `setSilenced(silent)` is now the only place that touches the ringer;
+  `applyDesiredSilence` makes the call iff a zone is active **and**
+  `PrayerWindowStore.allowedNow()` (permissive when prayer-aware is off).
+- On the first committed zone we capture the snapshot and `applyDesiredSilence`;
+  if outside a window we stay un-silenced and a **window-boundary alarm**
+  (`RingerHysteresis.scheduleWindowBoundary`, action `ACTION_COMMIT_WINDOW`) fires
+  at the next start/end to flip us. `commitWindowBoundary` re-applies + reschedules.
+- A new `silencing` flag (in `RingerSnapshotStore`) decouples "currently silent"
+  from "in a zone", so a window gap restores without ending the session and the
+  next window re-silences. Manual override (FR-1.5) and the snapshot/restore
+  safety net are reused unchanged; `reconcileAfterBoot` re-evaluates + reschedules
+  the boundary for an active prayer-aware session (gated on `enabled`, so the
+  presence-only boot path is unchanged).
+
+OFF path is byte-for-byte the prior presence-only behaviour (gate permissive, no
+boundary alarms, one silence on entry / one restore on exit).

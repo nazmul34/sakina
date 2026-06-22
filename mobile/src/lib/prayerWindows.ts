@@ -93,3 +93,31 @@ export function currentPrayerWindow(
     windows.find((w) => t >= w.start.getTime() && t <= w.end.getTime()) ?? null
   );
 }
+
+/**
+ * All prayer windows whose end is still in the future, across the next `days`
+ * days, in chronological order. This is what the native scheduler needs: JS owns
+ * the (adhan-based) computation, so it precomputes a rolling list of window
+ * boundaries that native can schedule ringer changes against without ever
+ * computing prayer times itself (it has no `adhan`). Pure and offline.
+ */
+export function upcomingPrayerWindows(
+  location: LatLng,
+  now: Date = new Date(),
+  config: PrayerTimesConfig = DEFAULT_PRAYER_TIMES_CONFIG,
+  windowConfig: PrayerWindowConfig = DEFAULT_PRAYER_WINDOW_CONFIG,
+  days = 7,
+): readonly PrayerWindow[] {
+  const result: PrayerWindow[] = [];
+  const nowMs = now.getTime();
+  for (let dayOffset = 0; dayOffset < days; dayOffset += 1) {
+    const day = new Date(now);
+    day.setDate(day.getDate() + dayOffset);
+    for (const w of computePrayerWindows(location, day, config, windowConfig)) {
+      if (w.end.getTime() > nowMs) {
+        result.push(w);
+      }
+    }
+  }
+  return result;
+}

@@ -29,6 +29,7 @@ import {
 import { getHighAccuracyFix } from '../lib/location';
 import {
   evaluatePrayerAwareSilence,
+  pushPrayerWindowsToNative,
   usePrayerAwareSilentSettings,
 } from '../lib/prayerAwareSilent';
 import {
@@ -111,6 +112,13 @@ export function PrayerSettingsScreen() {
     () => evaluatePrayerAwareSilence(prayerAware, location, config),
     [prayerAware, location, config],
   );
+
+  // Push the opt-in flag + freshly computed windows to the native gate whenever
+  // the setting, location or config changes, so a toggle takes effect right away
+  // (and re-arming is not required to see it). Best-effort.
+  useEffect(() => {
+    void pushPrayerWindowsToNative(prayerAware, location, config);
+  }, [prayerAware, location, config]);
 
   const togglePrayer = (name: PrayerName) => {
     setNotifications({

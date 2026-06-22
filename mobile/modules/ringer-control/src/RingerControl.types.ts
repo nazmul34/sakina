@@ -118,6 +118,24 @@ export declare class RingerControlModule extends NativeModule {
   activeZoneCount(): number;
 
   /**
+   * Enable or disable prayer-aware silent (F-01.10) — the opt-in gate that, while
+   * inside a zone, tightens silencing to the prayer windows pushed via
+   * {@link setPrayerWindows} instead of the whole presence. Off by default; takes
+   * effect immediately for any active session. When off, the gate is permissive
+   * and the presence-only behaviour is unchanged.
+   */
+  setPrayerAware(enabled: boolean): void;
+
+  /**
+   * Push the upcoming prayer-window boundaries for the gate to schedule against.
+   * `starts[i]`..`ends[i]` is one window in epoch milliseconds; the arrays are
+   * parallel and expected pre-sorted and future-trimmed. Native can't compute
+   * prayer times (`adhan` is JS-only), so JS precomputes a rolling list and
+   * re-pushes it when arming. Pass empty arrays to clear.
+   */
+  setPrayerWindows(starts: number[], ends: number[]): void;
+
+  /**
    * The auto-silent activity log (FR-1.8): silence/restore events recorded
    * device-locally by the state machine, newest first, capped at the most recent
    * 100. Synchronous — it's a single SharedPreferences read.
