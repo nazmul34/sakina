@@ -75,6 +75,13 @@ export function HomeScreen() {
       </Pressable>
       <Pressable
         style={styles.permissionsLink}
+        onPress={() => navigation.navigate('Qibla')}
+        accessibilityRole="button"
+      >
+        <Text style={styles.permissionsLinkText}>Qibla direction</Text>
+      </Pressable>
+      <Pressable
+        style={styles.permissionsLink}
         onPress={() => navigation.navigate('DailyMessage')}
         accessibilityRole="button"
       >
