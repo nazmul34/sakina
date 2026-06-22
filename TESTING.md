@@ -2,8 +2,8 @@
 
 A living, on-device QA checklist. Each epic gets a section; tick the boxes as you
 verify a build, and update the **Status** line when an epic is completed or its
-behaviour changes. Covers **EPIC-0** through **EPIC-4** today
-(F-01.10 is deferred — see issue #26). Add new epics as they land.
+behaviour changes. Covers **EPIC-0** through **EPIC-5** today
+(prayer times + prayer-aware silent, F-01.10). Add new epics as they land.
 
 > Legend: 🟢 done · 🟡 in progress · ⚪ not started · ⏸️ deferred
 
@@ -164,8 +164,26 @@ warning notifications are suppressed on Android 13+.
       (≤ 1 per type per 24 h). Re-grant DND + a successful silence clears the throttle.
 
 ### F-01.10 — Prayer-aware silent
-- [ ] ⏸️ **Deferred** (issue #26) — depends on EPIC-05 (prayer times) and the open
-      decision D-2. Not in this build.
+> Opt-in (default **off**) tightening: near a mosque, silence **only** around each
+> prayer (just before jamaat to the end of salah) instead of the whole time you're
+> in the zone. The toggle lives on **Home → Prayer times → "Tighten around prayer"**.
+> Needs **DND access** granted and works on the **manual zone triggers** (see the
+> Release-build caveat above) since live mosque geofences await EPIC-02. Setup
+> details and the "Active now" indicator are tested under **F-05.5**.
+- [ ] **Off by default:** with the toggle **off**, behaviour is unchanged — entering
+      a zone silences for the **whole** presence; leaving restores. (This is the
+      EPIC-1 F-01.2/F-01.3 behaviour — confirm it still passes.)
+- [ ] **Gated when on (inside a window):** turn the toggle **on**; enter a zone
+      while the current time **is** within a prayer window (the screen's *Active
+      now* shows the prayer). Wait the 45 s dwell → **phone silences**.
+- [ ] **Gated when on (outside a window):** with the toggle on, enter a zone when
+      *Active now* shows **"No prayer window"**. Wait past the dwell → **phone is
+      NOT silenced**. When the next window's start time arrives → it **silences**;
+      at the window's end → it **restores** (while you remain in the zone).
+- [ ] **Exit & override still hold:** leaving the zone restores as normal; if you
+      change the ringer yourself mid-zone, your choice is honoured (F-01.5).
+- [ ] **Graceful fallback:** with the toggle on but **location/prayer times
+      unknown**, silencing falls back to plain zone presence (never stuck silent).
 
 ---
 
@@ -416,6 +434,81 @@ are downloaded from the internet. After that, **Saved messages** and the
       if the app is closed.
 - [ ] Turn the switch **off** → no more daily notification appears (the next day's
       reminder is cancelled).
+
+---
+
+## EPIC-5 — Prayer Times (on-device)
+
+**Status:** 🟢 done (pending device QA)
+
+All prayer times are worked out **on the phone** from your location — no internet
+needed once the app has your location. **Keep location permission granted** (the
+permissions checklist, F-01.6, covers it). Times use your selected calculation
+method; the defaults are **Muslim World League** and **Standard (Shafiʿi)** Asr.
+
+**Where to start:** from the Home screen, tap **Prayer times**.
+
+### F-05.1 — Five daily times, computed offline
+- [ ] Open **Home → Prayer times**. Under **TODAY'S TIMES** **you should see:**
+      **Fajr, Dhuhr, Asr, Maghrib, Isha** with a clock time next to each.
+- [ ] **Offline check:** turn on **Airplane mode**, fully close and reopen the app,
+      open **Prayer times** again. **You should see:** the same five times still
+      appear (they're computed on the phone, not downloaded).
+- [ ] _(Sanity)_ The times look right for your city/date (e.g. Maghrib is around
+      sunset).
+- [ ] If location was **never granted**, the times area shows a friendly *"Grant
+      location…"* hint instead of crashing.
+
+### F-05.2 — Calculation method + Asr selection
+- [ ] Under **CALCULATION METHOD**, tap a different method (e.g. **Umm al-Qura** or
+      **Karachi**). **You should see:** a green tick on the chosen one and the
+      **TODAY'S TIMES** above **update immediately**.
+- [ ] Under **ASR CALCULATION**, switch between **Standard (Shafiʿi)** and
+      **Hanafi**. **You should see:** the **Asr** time changes (Hanafi is later);
+      the others stay the same.
+- [ ] **Persists:** fully close and reopen the app → your method and Asr choice are
+      still selected.
+
+### F-05.3 — Next-prayer countdown on Home
+- [ ] On the **Home** screen **you should see:** a green **"Next prayer"** card
+      naming the upcoming prayer, its time, and a live **H:MM:SS** countdown ticking
+      down each second.
+- [ ] **Roll-over:** when a prayer time passes (or check late at night), the card
+      moves to the next prayer; after **Isha** it shows tomorrow's **Fajr** (labelled
+      *tomorrow*) — it never shows a negative countdown.
+- [ ] With **location off**, the card invites you to enable location rather than
+      showing nothing.
+
+### F-05.4 — Per-prayer reminder notifications
+> Local notifications at each prayer time — set up on the phone, so they fire
+> offline once scheduled. Off by default. Be **online when you first enable** so the
+> times are fresh, and grant notification permission when asked.
+
+- [ ] On **Prayer times**, under **REMINDERS**, turn **Prayer reminders** on. If
+      asked, **Allow** notifications. _(Tapping "Don't allow" shows a note and leaves
+      it off — expected.)_
+- [ ] **You should see:** a **Play sound** switch and a switch per prayer (Fajr…Isha),
+      all on by default; toggle a couple off to pick which prayers remind you.
+- [ ] **Check it fires:** the easiest live check is to set Asr/your method so the
+      next prayer is a **couple of minutes away** (or just wait for the next prayer),
+      lock the phone, and confirm a **Sakina** notification appears at that time —
+      even with the app closed.
+- [ ] Turn **Prayer reminders** off → upcoming prayer notifications stop.
+- [ ] **Coexists with the daily reminder (F-04.6):** with **both** the daily
+      reminder and prayer reminders on, opening the **Daily reminder** screen does
+      **not** wipe the prayer reminders (and vice-versa).
+
+### F-05.5 — Prayer-aware silent (feeds the flagship)
+> This is the setting that powers **F-01.10** (test the silencing behaviour there).
+
+- [ ] Under **PRAYER-AWARE SILENT**, **"Tighten around prayer"** is **off by
+      default**.
+- [ ] Turn it **on** (location granted). **You should see:** an **Active now** row
+      reading either the current prayer and its end time (if you're within a window)
+      or **"No prayer window"**.
+- [ ] **Persists:** close/reopen the app → the toggle keeps its state.
+- [ ] See **F-01.10** for the actual silence/restore behaviour around windows near a
+      zone.
 
 ---
 
