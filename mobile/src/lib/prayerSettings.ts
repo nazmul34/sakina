@@ -17,6 +17,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useState } from 'react';
 
+import { setLocalUpdatedAt } from './deviceSettings';
 import {
   type AsrMethod,
   type CalculationMethodKey,
@@ -68,7 +69,10 @@ export function asrMethodLabel(key: AsrMethod): string {
   return ASR_METHODS.find((m) => m.key === key)?.label ?? key;
 }
 
-function isValid(value: unknown): value is PrayerTimesConfig {
+/** Type guard for a well-formed {@link PrayerTimesConfig} (e.g. from storage or the server). */
+export function isValidPrayerTimesConfig(
+  value: unknown,
+): value is PrayerTimesConfig {
   const c = value as Partial<PrayerTimesConfig> | null;
   return (
     c !== null &&
@@ -85,7 +89,7 @@ export async function getPrayerTimesConfig(): Promise<PrayerTimesConfig> {
     const raw = await AsyncStorage.getItem(SETTINGS_KEY);
     if (raw !== null) {
       const parsed: unknown = JSON.parse(raw);
-      if (isValid(parsed)) {
+      if (isValidPrayerTimesConfig(parsed)) {
         return parsed;
       }
     }
@@ -95,15 +99,41 @@ export async function getPrayerTimesConfig(): Promise<PrayerTimesConfig> {
   return DEFAULT_PRAYER_TIMES_CONFIG;
 }
 
-/** Persist the config. Best-effort: a write failure leaves the in-memory state. */
-export async function savePrayerTimesConfig(
-  config: PrayerTimesConfig,
-): Promise<void> {
+async function writeConfig(config: PrayerTimesConfig): Promise<void> {
   try {
     await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(config));
   } catch {
     // best-effort
   }
+}
+
+/**
+ * Persist a user-chosen config. Best-effort: a write failure leaves the
+ * in-memory state. Stamps the device-settings sync clock with "now" so the
+ * change wins last-write-wins against older server state on the next sync
+ * (EPIC-07, F-07.2 — see {@link ./deviceSettingsSync}).
+ */
+export async function savePrayerTimesConfig(
+  config: PrayerTimesConfig,
+): Promise<void> {
+  await writeConfig(config);
+  await setLocalUpdatedAt(Date.now());
+}
+
+/**
+ * Adopt a config pulled from the server during sync, stamping the local clock
+ * with the server's `updatedAt` (not "now") so it doesn't masquerade as a fresh
+ * local edit. Invalid input is ignored. Used only by {@link ./deviceSettingsSync}.
+ */
+export async function adoptPrayerTimesConfig(
+  config: PrayerTimesConfig,
+  updatedAt: number,
+): Promise<void> {
+  if (!isValidPrayerTimesConfig(config)) {
+    return;
+  }
+  await writeConfig(config);
+  await setLocalUpdatedAt(updatedAt);
 }
 
 /**
