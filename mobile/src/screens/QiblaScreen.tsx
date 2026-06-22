@@ -25,7 +25,7 @@ import {
 import { useDeviceHeading } from '../hooks/useDeviceHeading';
 import type { LatLng } from '../lib/geofencing/types';
 import { getHighAccuracyFix, LocationPermissionError } from '../lib/location';
-import { qiblaBearing, qiblaRotation } from '../lib/qibla';
+import { compassPointName, qiblaBearing, qiblaRotation } from '../lib/qibla';
 
 type LocationState =
   | { status: 'loading' }
@@ -105,18 +105,41 @@ export function QiblaScreen() {
   }
 
   const bearing = qiblaBearing(locationState.location);
+  const point = compassPointName(bearing);
 
-  // No magnetometer: show the absolute bearing as a number so the feature is
-  // still useful. The full graceful-degradation experience is F-06.3.
+  // No magnetometer (F-06.3): the needle can't track the device, so show a
+  // static North-up dial with the Qibla fixed at its true bearing, plus the
+  // direction in words. Still useful — the user lines it up against north
+  // themselves — and we say plainly why it isn't live.
   if (isAvailable === false) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.centeredTitle}>No compass sensor</Text>
-        <Text style={styles.centeredBody}>
-          This device has no magnetometer, so the live compass isn&apos;t
-          available. The Qibla is{' '}
-          <Text style={styles.bold}>{Math.round(bearing)}°</Text> from north.
+      <View style={styles.container}>
+        <Text style={styles.heading}>Qibla</Text>
+        <Text style={styles.subtitle}>
+          Face <Text style={styles.bold}>{point}</Text> —{' '}
+          {Math.round(bearing)}° from north.
         </Text>
+
+        <View style={styles.dial}>
+          <Text style={[styles.cardinal, styles.north]}>N</Text>
+          <Text style={[styles.cardinal, styles.east]}>E</Text>
+          <Text style={[styles.cardinal, styles.south]}>S</Text>
+          <Text style={[styles.cardinal, styles.west]}>W</Text>
+          <View
+            style={[styles.needle, { transform: [{ rotate: `${bearing}deg` }] }]}
+            accessibilityLabel={`Qibla is ${Math.round(bearing)} degrees from north, to the ${point}`}
+          >
+            <Text style={styles.needleArrow}>↑</Text>
+          </View>
+        </View>
+
+        <View style={styles.calibrationBanner}>
+          <Text style={styles.calibrationTitle}>No live compass</Text>
+          <Text style={styles.calibrationBody}>
+            This device has no magnetometer, so the arrow can&apos;t turn as you
+            move. Orient yourself to north, then face the arrow.
+          </Text>
+        </View>
       </View>
     );
   }
