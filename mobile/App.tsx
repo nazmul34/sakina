@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { armGeofencing } from './src/lib/geofencing';
 import { isAutoSilentEnabled } from './src/lib/autoSilentSettings';
+import { trySyncDeviceSettings } from './src/lib/deviceSettingsSync';
 import { trySyncPins } from './src/lib/pinsSync';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
@@ -20,13 +21,18 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Reconcile pinned zones on launch and whenever the app returns to the
-    // foreground (F-03.2). Best-effort and offline-safe — failures are swallowed
-    // and local edits simply sync on the next opportunity.
-    void trySyncPins();
+    // Reconcile pinned zones (F-03.2) and device settings (F-07.2) on launch and
+    // whenever the app returns to the foreground. Both are best-effort and
+    // offline-safe — failures are swallowed and local edits sync on the next
+    // opportunity.
+    const syncAll = () => {
+      void trySyncPins();
+      void trySyncDeviceSettings();
+    };
+    syncAll();
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
-        void trySyncPins();
+        syncAll();
       }
     });
     return () => sub.remove();

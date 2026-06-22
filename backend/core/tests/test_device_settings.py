@@ -1,6 +1,7 @@
-"""Tests for the per-device settings GET/PUT API (F-07.1)."""
+"""Tests for the per-device settings GET/PUT API (F-07.1, F-07.2)."""
 
 import uuid
+from datetime import timedelta
 
 from django.utils import timezone
 from rest_framework import status
@@ -85,6 +86,78 @@ class DeviceSettingsApiTests(APITestCase):
         before = timezone.now()
         self.client.put(self.url, {"theme": "dark"}, format="json")
         self.assertGreaterEqual(DeviceSettings.objects.get().updated_at, before)
+
+    # --- last-write-wins (F-07.2) -------------------------------------------
+
+    def test_put_with_stale_timestamp_is_ignored(self):
+        current = timezone.now()
+        self.client.put(
+            self.url,
+            {"theme": "dark", "updated_at": current.isoformat()},
+            format="json",
+        )
+        # An older edit must not clobber the fresher stored state...
+        stale = self.client.put(
+            self.url,
+            {
+                "theme": "light",
+                "updated_at": (current - timedelta(minutes=5)).isoformat(),
+            },
+            format="json",
+        )
+        # ...but the server echoes the winning state so the client can converge.
+        self.assertEqual(stale.status_code, status.HTTP_200_OK)
+        self.assertEqual(stale.json()["theme"], "dark")
+        self.assertEqual(DeviceSettings.objects.get().theme, "dark")
+
+    def test_put_with_newer_timestamp_wins(self):
+        current = timezone.now()
+        self.client.put(
+            self.url,
+            {"theme": "dark", "updated_at": current.isoformat()},
+            format="json",
+        )
+        newer = self.client.put(
+            self.url,
+            {
+                "theme": "light",
+                "updated_at": (current + timedelta(minutes=5)).isoformat(),
+            },
+            format="json",
+        )
+        self.assertEqual(newer.json()["theme"], "light")
+        self.assertEqual(DeviceSettings.objects.get().theme, "light")
+
+    def test_put_with_equal_timestamp_is_a_noop(self):
+        when = timezone.now()
+        self.client.put(
+            self.url, {"theme": "dark", "updated_at": when.isoformat()}, format="json"
+        )
+        retry = self.client.put(
+            self.url, {"theme": "light", "updated_at": when.isoformat()}, format="json"
+        )
+        # Equal clock → not strictly newer → ignored (idempotent retry).
+        self.assertEqual(retry.json()["theme"], "dark")
+
+    def test_first_put_lands_even_with_an_old_clock(self):
+        # First contact is this PUT (no prior GET), so it creates the row and
+        # always lands — an edit made offline before the row existed must win.
+        old = timezone.now() - timedelta(days=1)
+        response = self.client.put(
+            self.url, {"theme": "dark", "updated_at": old.isoformat()}, format="json"
+        )
+        self.assertEqual(response.json()["theme"], "dark")
+        self.assertEqual(DeviceSettings.objects.get().updated_at, old)
+
+    def test_stale_put_loses_once_the_row_exists(self):
+        # A GET auto-creates the row stamped ~now; a later PUT carrying an older
+        # clock is then a normal LWW loser (not exempt — the row already exists).
+        self.client.get(self.url)
+        old = timezone.now() - timedelta(days=1)
+        response = self.client.put(
+            self.url, {"theme": "dark", "updated_at": old.isoformat()}, format="json"
+        )
+        self.assertEqual(response.json()["theme"], "system")
 
     # --- validation ----------------------------------------------------------
 

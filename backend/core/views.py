@@ -167,11 +167,14 @@ def device_settings(request: Request, device_id: uuid.UUID) -> Response:
     device resolved from the ``X-Device-Id`` header, so a device can only touch
     its own settings (a mismatch is ``403``, consistent with the can't-spoof rule
     the rest of the app follows). ``GET`` returns the stored bundle, materialising
-    server defaults on first read so the response is never empty. ``PUT`` upserts:
-    any provided field is validated and stored, unspecified fields keep their
-    current value, and ``updated_at`` is stamped from the client's value or
-    ``now()``. The last-write-wins reconciliation across offline edits is F-07.2;
-    here a ``PUT`` simply lands.
+    server defaults on first read so the response is never empty.
+
+    ``PUT`` upserts under **last-write-wins on ``updated_at``** (FR-8.2): a write
+    lands only if its ``updated_at`` is strictly newer than the stored one (or this
+    is the row's first write), so a stale offline edit can't clobber fresher server
+    state and a retry is a no-op. Any provided field is validated and stored;
+    unspecified fields keep their value. The response always carries the winning
+    state so an offline client can converge on the next sync.
     """
     if request.device is None:
         return _device_required()
@@ -181,7 +184,7 @@ def device_settings(request: Request, device_id: uuid.UUID) -> Response:
             status=status.HTTP_403_FORBIDDEN,
         )
 
-    row, _ = DeviceSettings.objects.get_or_create(device=request.device)
+    row, created = DeviceSettings.objects.get_or_create(device=request.device)
 
     if request.method == "GET":
         return Response(_serialize_settings(row))
@@ -191,10 +194,15 @@ def device_settings(request: Request, device_id: uuid.UUID) -> Response:
     except ValueError as exc:
         return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
-    for name, value in fields.items():
-        setattr(row, name, value)
-    row.updated_at = fields.get("updated_at") or timezone.now()
-    row.save()
+    # Last-write-wins: apply only a strictly-newer edit. The first write to a
+    # just-created row always lands (its incoming clock may predate the row's
+    # auto-stamped default — e.g. an edit made offline before the row existed).
+    incoming = fields.get("updated_at") or timezone.now()
+    if created or incoming > row.updated_at:
+        for name, value in fields.items():
+            setattr(row, name, value)
+        row.updated_at = incoming
+        row.save()
     return Response(_serialize_settings(row))
 
 
