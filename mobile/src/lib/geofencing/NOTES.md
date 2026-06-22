@@ -184,3 +184,35 @@ fixture below until EPIC-02 lands.
   of home/work needed).
 - **Dwell-driven prefetch:** cache envelopes around stationary clusters; keep
   inference on-device.
+
+---
+
+## Prayer-aware silent (F-05.5 ✅ bridge / F-01.10 ✅ native gate)
+
+The prayer-windows bridge is built and **off by default** (D-2: opt-in). Prayer
+windows are exposed to the JS auto-silent layer as a pure decision —
+`evaluatePrayerAwareSilence(settings, location, config, now)` in
+`src/lib/prayerAwareSilent.ts` (used for the screen's "Active now" indicator).
+
+✅ **Native gate (implemented).** Native can't compute prayer times (`adhan` is
+JS-only), so JS precomputes a rolling list of window boundaries and pushes them to
+native via `RingerControl.setPrayerWindows(starts, ends)` + `setPrayerAware`
+(`pushPrayerWindowsToNative`, called on arm and on any toggle). Native stores them
+in `PrayerWindowStore` and gates `RingerSilenceController`:
+
+- The single `setSilenced(silent)` is now the only place that touches the ringer;
+  `applyDesiredSilence` makes the call iff a zone is active **and**
+  `PrayerWindowStore.allowedNow()` (permissive when prayer-aware is off).
+- On the first committed zone we capture the snapshot and `applyDesiredSilence`;
+  if outside a window we stay un-silenced and a **window-boundary alarm**
+  (`RingerHysteresis.scheduleWindowBoundary`, action `ACTION_COMMIT_WINDOW`) fires
+  at the next start/end to flip us. `commitWindowBoundary` re-applies + reschedules.
+- A new `silencing` flag (in `RingerSnapshotStore`) decouples "currently silent"
+  from "in a zone", so a window gap restores without ending the session and the
+  next window re-silences. Manual override (FR-1.5) and the snapshot/restore
+  safety net are reused unchanged; `reconcileAfterBoot` re-evaluates + reschedules
+  the boundary for an active prayer-aware session (gated on `enabled`, so the
+  presence-only boot path is unchanged).
+
+OFF path is byte-for-byte the prior presence-only behaviour (gate permissive, no
+boundary alarms, one silence on entry / one restore on exit).

@@ -231,6 +231,80 @@ time is changed. Different-every-day content requires the server-push path.
 `expo-notifications` + `datetimepicker` are native modules, so rebuild the dev
 client after install (see the prebuild note under Native modules).
 
+## Prayer reminders (F-05.4)
+
+Optional local notifications at each prayer time, configured in the Prayer times
+screen (`src/lib/prayerNotifications.ts`): a master toggle, a sound on/off
+toggle, and a per-prayer switch for the five prayers. Off by default; enabling
+requests OS notification permission and surfaces a denial.
+
+**D-8 decision — local scheduling, rolling window.** Prayer times shift slightly
+day to day, so a single repeating trigger (what the daily reminder uses) would
+drift. Instead we schedule one-shot `SchedulableTriggerInputTypes.DATE`
+notifications for every enabled prayer across a rolling **7-day window**, and
+re-schedule whenever the screen is opened or any setting/config changes
+(cancel-then-schedule, so it's idempotent). That's ≤ 35 pending notifications —
+well under the OS limits — and works fully offline, computed on-device from the
+saved method/Asr config. Settings persist in AsyncStorage
+(`sakina.prayer_notifications`); a cross-device mirror is **EPIC-07**.
+
+**D-9 decision — standard reminder, not Adhan audio (yet).** v1 fires a standard
+reminder notification on a **HIGH-importance** Android channel with the default
+notification tone, plus a per-user sound on/off toggle. Because Android pins
+sound at the channel level, the toggle is implemented as two channels
+(`prayer-reminders` / `prayer-reminders-silent`). Playing a full **Adhan audio**
+clip — a bundled sound asset on a dedicated channel with foreground playback — is
+deferred; it's a larger media concern beyond "schedule a reminder per prayer."
+
+**Coexisting schedulers.** With two local schedulers now (daily reminder +
+prayer reminders), the old "cancel *all* scheduled notifications and reschedule"
+approach would wipe the other feature. `src/lib/notifications.ts` is the shared
+plumbing: each scheduler tags its notifications with a `source` and cancels only
+its own (`cancelScheduledBySource`). EPIC-09 (Notifications Hub) will own this
+centrally. No native rebuild is needed — the new channels are created at runtime.
+
+## Prayer-aware silent (F-05.5 → F-01.10)
+
+The synergy between prayer times and the flagship: near a mosque, *tighten*
+silencing to the prayer window (just before jamaat to the end of salah) instead
+of the whole time you're inside the geofence.
+
+**D-2 decision (EPIC-13) — Phase 2 lean, opt-in, default off.** Per the PRD, v1
+stays focused on reliable geofence-based silencing, so prayer-aware silent ships
+as an **opt-in** toggle that is **off by default**. The flagship's runtime path
+is unchanged unless a user turns it on.
+
+**Window source.** Jamaat times aren't known precisely without crowdsourced data
+(**EPIC-08**), so a window is derived from the **computed adhan time + a jamaat
+offset**: `[adhan + jamaatOffset − preMinutes, adhan + jamaatOffset + salahMinutes]`
+(`src/lib/prayerWindows.ts`, defaults 10/5/20 min). When prayer times or location
+are unknown the feature degrades gracefully to plain geofence presence.
+
+**The JS bridge (FR-5.5).** The prayer windows are *exposed to the auto-silent
+logic* as a pure, total decision: `evaluatePrayerAwareSilence(settings, location,
+config, now)` in `src/lib/prayerAwareSilent.ts` returns the window that should be
+silenced right now, or `null`. The opt-in setting (AsyncStorage
+`sakina.prayer_aware_silent`, cross-device mirror = EPIC-07) and a live "Active
+now" indicator are in the Prayer times screen.
+
+**Native acting on it (F-01.10).** Silencing is native (`RingerControl` state
+machine + AlarmManager grace), and native can't compute prayer times — `adhan` is
+JS-only. So JS precomputes a **rolling list of window boundaries** and pushes them
+to native (`RingerControl.setPrayerWindows(starts, ends)` + `setPrayerAware`) when
+arming and on any toggle; `pushPrayerWindowsToNative` does this. Native stores them
+(`PrayerWindowStore`) and **gates** the state machine: while inside a zone it is
+silent only when the gate permits (`allowedNow`), scheduling a session-global
+**window-boundary alarm** (`ACTION_COMMIT_WINDOW`) to silence at a window's start
+and restore at its end — re-silencing for the next window — all reusing the
+existing capture/restore, manual-override (FR-1.5) and boot-reconcile machinery.
+A new `silencing` flag decouples "currently silent" from "in a zone" so a
+window gap can pause silence without ending the session.
+
+When prayer-aware is **off** the gate is permissive (`allowedNow` always true,
+no boundary alarms), so the presence-only path is byte-for-byte unchanged.
+Degrades gracefully — unknown windows/location ⇒ the gate yields nothing ⇒ plain
+geofence presence. See `src/lib/geofencing/NOTES.md` for the state-machine notes.
+
 ## Versioning (per release)
 
 Two numbers ship with every Android build:

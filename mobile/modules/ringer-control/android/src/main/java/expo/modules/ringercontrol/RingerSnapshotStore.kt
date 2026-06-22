@@ -82,6 +82,20 @@ internal class RingerSnapshotStore(context: Context) {
     }
 
   /**
+   * Whether we are *currently* holding the phone silent within the active session.
+   * With presence-only auto-silent this tracks `activeZones` being non-empty
+   * one-to-one, but prayer-aware silent (F-01.10) decouples them: inside a zone we
+   * may pause (restore) outside a prayer window and re-silence when the next one
+   * opens, so this records the actual ringer state we're imposing. `false` between
+   * sessions and during a prayer-window gap.
+   */
+  var silencing: Boolean
+    get() = prefs.getBoolean(KEY_SILENCING, false)
+    set(value) {
+      prefs.edit().putBoolean(KEY_SILENCING, value).apply()
+    }
+
+  /**
    * The geofence region id of the zone that *started* the current session — the
    * first committed entry. Recorded so the activity log's restore event (FR-1.8)
    * can name the place even though the restore fires on the last exit, possibly
@@ -112,5 +126,6 @@ internal class RingerSnapshotStore(context: Context) {
     const val KEY_LAST_SET_MODE = "last_set_mode"
     const val KEY_OVERRIDDEN = "overridden"
     const val KEY_SESSION_ZONE = "session_zone"
+    const val KEY_SILENCING = "silencing"
   }
 }
