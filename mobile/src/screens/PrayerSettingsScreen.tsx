@@ -28,6 +28,10 @@ import {
 
 import { getHighAccuracyFix } from '../lib/location';
 import {
+  evaluatePrayerAwareSilence,
+  usePrayerAwareSilentSettings,
+} from '../lib/prayerAwareSilent';
+import {
   applyPrayerNotificationSettings,
   ensureNotificationPermission,
   usePrayerNotificationSettings,
@@ -49,6 +53,7 @@ import type { LatLng } from '../lib/geofencing/types';
 export function PrayerSettingsScreen() {
   const [config, setConfig] = usePrayerTimesConfig();
   const [notifications, setNotifications] = usePrayerNotificationSettings();
+  const [prayerAware, setPrayerAware] = usePrayerAwareSilentSettings();
   const [location, setLocation] = useState<LatLng | null>(null);
   const [locationError, setLocationError] = useState(false);
 
@@ -98,6 +103,14 @@ export function PrayerSettingsScreen() {
     }
     setNotifications({ ...notifications, enabled: true });
   };
+
+  // The prayer window active right now, if the feature is on — shown so the user
+  // can see what "prayer-aware silent" would currently do. The native scheduler
+  // that acts on this in the background is the remaining F-01.10 step.
+  const activeWindow = useMemo(
+    () => evaluatePrayerAwareSilence(prayerAware, location, config),
+    [prayerAware, location, config],
+  );
 
   const togglePrayer = (name: PrayerName) => {
     setNotifications({
@@ -233,10 +246,42 @@ export function PrayerSettingsScreen() {
         ))}
       </View>
 
+      <Text style={styles.sectionTitle}>Prayer-aware silent</Text>
+      <View style={styles.group}>
+        <View style={styles.switchRow}>
+          <View style={styles.switchText}>
+            <Text style={styles.switchLabel}>Tighten around prayer</Text>
+            <Text style={styles.switchSub}>
+              Near a mosque, silence around each prayer (from just before jamaat
+              to the end of salah) rather than the whole time you’re nearby.
+            </Text>
+          </View>
+          <Switch
+            value={prayerAware.enabled}
+            onValueChange={(value) =>
+              setPrayerAware({ ...prayerAware, enabled: value })
+            }
+          />
+        </View>
+        {prayerAware.enabled && (
+          <View style={[styles.switchRow, styles.switchRowBordered]}>
+            <Text style={styles.switchLabel}>Active now</Text>
+            <Text style={styles.previewTime}>
+              {activeWindow
+                ? `${PRAYER_LABELS[activeWindow.name]} · until ${formatTimeOfDay(
+                    activeWindow.end,
+                  )}`
+                : 'No prayer window'}
+            </Text>
+          </View>
+        )}
+      </View>
+
       <Text style={styles.note}>
         Prayer times are computed on your device from your location — no account
         needed, and they work offline. Reminders are scheduled locally and play
-        the default notification sound.
+        the default notification sound. Prayer-aware silent is optional and off
+        by default.
       </Text>
     </ScrollView>
   );
