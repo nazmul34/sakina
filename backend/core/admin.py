@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from .models import Device, FetchedTile, IslamicMessage, Mosque, Pin
+from .models import Device, DeviceSettings, FetchedTile, IslamicMessage, Mosque, Pin
 
 
 @admin.register(Device)
@@ -15,6 +15,23 @@ class DeviceAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         # Surface soft-deleted devices in the admin too, not just live ones.
         return Device.all_objects.all()
+
+
+@admin.register(DeviceSettings)
+class DeviceSettingsAdmin(admin.ModelAdmin):
+    list_display = (
+        "device",
+        "auto_silent_enabled",
+        "radius_m",
+        "poll_interval_s",
+        "theme",
+        "prayer_method",
+        "asr_method",
+        "updated_at",
+    )
+    list_filter = ("theme", "auto_silent_enabled", "prayer_method", "asr_method")
+    search_fields = ("device__device_id",)
+    readonly_fields = ("device", "created_at")
 
 
 @admin.register(Mosque)

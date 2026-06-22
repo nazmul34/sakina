@@ -15,6 +15,7 @@ from .base import (
     UUIDModel,
 )
 from .device import Device
+from .device_settings import DeviceSettings
 from .fetched_tile import FetchedTile
 from .islamic_message import IslamicMessage
 from .mosque import Mosque
@@ -27,6 +28,7 @@ __all__ = [
     "SoftDeleteManager",
     "SoftDeleteQuerySet",
     "Device",
+    "DeviceSettings",
     "IslamicMessage",
     "Mosque",
     "FetchedTile",
