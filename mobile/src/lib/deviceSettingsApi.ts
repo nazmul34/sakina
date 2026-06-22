@@ -27,6 +27,7 @@ export interface ServerDeviceSettings {
 export interface SettingsPatch {
   readonly prayerMethod: string;
   readonly asrMethod: string;
+  readonly theme: string;
   /** Local sync clock in epoch ms. */
   readonly updatedAt: number;
 }
@@ -51,8 +52,8 @@ export async function getServerSettings(): Promise<ServerDeviceSettings> {
 /**
  * Upsert the synced settings under last-write-wins. Sends only the fields this
  * client owns (a partial patch, so it never clobbers settings owned elsewhere,
- * e.g. a theme set on another device). Returns the server's reconciled state,
- * which may be newer than what we sent.
+ * e.g. auto_silent or radius). Returns the server's reconciled state, which may
+ * be newer than what we sent.
  */
 export async function putServerSettings(
   patch: SettingsPatch,
@@ -64,6 +65,7 @@ export async function putServerSettings(
       body: JSON.stringify({
         prayer_method: patch.prayerMethod,
         asr_method: patch.asrMethod,
+        theme: patch.theme,
         updated_at: new Date(patch.updatedAt).toISOString(),
       }),
     }),
