@@ -38,7 +38,7 @@ export function QiblaScreen() {
   const [locationState, setLocationState] = useState<LocationState>({
     status: 'loading',
   });
-  const { heading, isAvailable } = useDeviceHeading();
+  const { heading, isAvailable, needsCalibration } = useDeviceHeading();
 
   useEffect(() => {
     let active = true;
@@ -129,6 +129,21 @@ export function QiblaScreen() {
       <Text style={styles.heading}>Qibla</Text>
       <Text style={styles.subtitle}>Turn until the arrow points up.</Text>
 
+      {needsCalibration === true && (
+        <View
+          style={styles.calibrationBanner}
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+        >
+          <Text style={styles.calibrationTitle}>Compass needs calibrating</Text>
+          <Text style={styles.calibrationBody}>
+            Readings look off — move away from metal or magnets and wave your
+            phone in a figure-8 a few times. This message clears once the
+            compass settles.
+          </Text>
+        </View>
+      )}
+
       <View style={styles.dial}>
         <Text style={[styles.cardinal, styles.north]}>N</Text>
         <Text style={[styles.cardinal, styles.east]}>E</Text>
@@ -197,6 +212,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     opacity: 0.8,
+  },
+  calibrationBanner: {
+    alignSelf: 'stretch',
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: '#FFF8E1',
+    gap: 4,
+  },
+  calibrationTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#8A6D00',
+  },
+  calibrationBody: {
+    fontSize: 13,
+    color: '#8A6D00',
   },
   centered: {
     flex: 1,

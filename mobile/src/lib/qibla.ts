@@ -55,6 +55,59 @@ export function headingFromMagnetometer(reading: {
 }
 
 /**
+ * Plausible band for Earth's magnetic field strength at the surface, in
+ * microteslas. A reading well outside this range means local magnetic
+ * interference or an uncalibrated sensor, so the heading can't be trusted —
+ * our cue to prompt for calibration (FR-6.2).
+ *
+ * `expo-sensors` doesn't surface the OS sensor-accuracy flag, so the total
+ * field magnitude is the best proxy we have: a healthy reading sits in roughly
+ * 25–65 μT regardless of orientation.
+ */
+export const FIELD_STRENGTH_MIN_UT = 25;
+export const FIELD_STRENGTH_MAX_UT = 65;
+
+/**
+ * Hysteresis margin (μT) applied when recovering. Once we've flagged the sensor
+ * unreliable, the field must return *well* inside the band before we clear the
+ * prompt, so it doesn't flicker on readings that hover at a threshold.
+ */
+const FIELD_STRENGTH_RECOVERY_MARGIN_UT = 3;
+
+/** Total magnetic field strength of a reading, in microteslas. */
+export function magneticFieldStrength(reading: {
+  x: number;
+  y: number;
+  z: number;
+}): number {
+  return Math.hypot(reading.x, reading.y, reading.z);
+}
+
+/**
+ * Decide whether the magnetometer reading is reliable, given the previous
+ * verdict, using field strength as a proxy for accuracy (FR-6.2).
+ *
+ * Asymmetric by design: we flag *unreliable* the moment strength leaves the
+ * plausible band, but only call it reliable again once it's back inside the
+ * band by {@link FIELD_STRENGTH_RECOVERY_MARGIN_UT}. That hysteresis keeps the
+ * calibration prompt from blinking on and off near the edges.
+ */
+export function isFieldStrengthReliable(
+  strengthUT: number,
+  wasReliable: boolean,
+): boolean {
+  if (wasReliable) {
+    return (
+      strengthUT >= FIELD_STRENGTH_MIN_UT && strengthUT <= FIELD_STRENGTH_MAX_UT
+    );
+  }
+  return (
+    strengthUT >= FIELD_STRENGTH_MIN_UT + FIELD_STRENGTH_RECOVERY_MARGIN_UT &&
+    strengthUT <= FIELD_STRENGTH_MAX_UT - FIELD_STRENGTH_RECOVERY_MARGIN_UT
+  );
+}
+
+/**
  * How far to rotate a fixed "points at Qibla" indicator given the absolute
  * Qibla bearing and the device's current heading, in degrees clockwise,
  * normalised to [0, 360).
