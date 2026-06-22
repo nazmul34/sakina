@@ -9,6 +9,7 @@ import { PermissionsScreen } from '../screens/PermissionsScreen';
 import { PinEditorScreen } from '../screens/PinEditorScreen';
 import { PinnedLocationsScreen } from '../screens/PinnedLocationsScreen';
 import { PrayerSettingsScreen } from '../screens/PrayerSettingsScreen';
+import { QiblaScreen } from '../screens/QiblaScreen';
 import { SavedMessagesScreen } from '../screens/SavedMessagesScreen';
 import type { RootStackParamList } from './types';
 
@@ -70,6 +71,11 @@ export function RootNavigator() {
         name="PrayerSettings"
         component={PrayerSettingsScreen}
         options={{ title: 'Prayer times' }}
+      />
+      <Stack.Screen
+        name="Qibla"
+        component={QiblaScreen}
+        options={{ title: 'Qibla' }}
       />
     </Stack.Navigator>
   );
