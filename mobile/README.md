@@ -231,6 +231,70 @@ time is changed. Different-every-day content requires the server-push path.
 `expo-notifications` + `datetimepicker` are native modules, so rebuild the dev
 client after install (see the prebuild note under Native modules).
 
+## Prayer reminders (F-05.4)
+
+Optional local notifications at each prayer time, configured in the Prayer times
+screen (`src/lib/prayerNotifications.ts`): a master toggle, a sound on/off
+toggle, and a per-prayer switch for the five prayers. Off by default; enabling
+requests OS notification permission and surfaces a denial.
+
+**D-8 decision — local scheduling, rolling window.** Prayer times shift slightly
+day to day, so a single repeating trigger (what the daily reminder uses) would
+drift. Instead we schedule one-shot `SchedulableTriggerInputTypes.DATE`
+notifications for every enabled prayer across a rolling **7-day window**, and
+re-schedule whenever the screen is opened or any setting/config changes
+(cancel-then-schedule, so it's idempotent). That's ≤ 35 pending notifications —
+well under the OS limits — and works fully offline, computed on-device from the
+saved method/Asr config. Settings persist in AsyncStorage
+(`sakina.prayer_notifications`); a cross-device mirror is **EPIC-07**.
+
+**D-9 decision — standard reminder, not Adhan audio (yet).** v1 fires a standard
+reminder notification on a **HIGH-importance** Android channel with the default
+notification tone, plus a per-user sound on/off toggle. Because Android pins
+sound at the channel level, the toggle is implemented as two channels
+(`prayer-reminders` / `prayer-reminders-silent`). Playing a full **Adhan audio**
+clip — a bundled sound asset on a dedicated channel with foreground playback — is
+deferred; it's a larger media concern beyond "schedule a reminder per prayer."
+
+**Coexisting schedulers.** With two local schedulers now (daily reminder +
+prayer reminders), the old "cancel *all* scheduled notifications and reschedule"
+approach would wipe the other feature. `src/lib/notifications.ts` is the shared
+plumbing: each scheduler tags its notifications with a `source` and cancels only
+its own (`cancelScheduledBySource`). EPIC-09 (Notifications Hub) will own this
+centrally. No native rebuild is needed — the new channels are created at runtime.
+
+## Prayer-aware silent (F-05.5 → F-01.10)
+
+The synergy between prayer times and the flagship: near a mosque, *tighten*
+silencing to the prayer window (just before jamaat to the end of salah) instead
+of the whole time you're inside the geofence.
+
+**D-2 decision (EPIC-13) — Phase 2 lean, opt-in, default off.** Per the PRD, v1
+stays focused on reliable geofence-based silencing, so prayer-aware silent ships
+as an **opt-in** toggle that is **off by default**. The flagship's runtime path
+is unchanged unless a user turns it on.
+
+**Window source.** Jamaat times aren't known precisely without crowdsourced data
+(**EPIC-08**), so a window is derived from the **computed adhan time + a jamaat
+offset**: `[adhan + jamaatOffset − preMinutes, adhan + jamaatOffset + salahMinutes]`
+(`src/lib/prayerWindows.ts`, defaults 10/5/20 min). When prayer times or location
+are unknown the feature degrades gracefully to plain geofence presence.
+
+**What ships here (the FR-5.5 bridge).** The prayer windows are *exposed to the
+auto-silent logic* as a pure, total decision:
+`evaluatePrayerAwareSilence(settings, location, config, now)` in
+`src/lib/prayerAwareSilent.ts` returns the window that should be silenced right
+now, or `null`. The opt-in setting (AsyncStorage `sakina.prayer_aware_silent`,
+cross-device mirror = EPIC-07) and a live "Active now" indicator are in the
+Prayer times screen.
+
+**Remaining step (tracked under F-01.10 / #26).** *Acting* on that decision in
+the background — scheduling the native ringer change at window boundaries while
+inside a zone — is a native (Kotlin `AutoSilent` + AlarmManager) change kept out
+of the bridge PR to protect flagship reliability; it must be verified on-device.
+The native consumer will call the same `evaluatePrayerAwareSilence` contract, so
+JS, native, and tests share one source of truth. See `src/lib/geofencing/NOTES.md`.
+
 ## Versioning (per release)
 
 Two numbers ship with every Android build:

@@ -14,6 +14,7 @@ export type RootStackParamList = {
   DailyMessage: undefined;
   SavedMessages: undefined;
   DailyReminder: undefined;
+  PrayerSettings: undefined;
 };
 
 declare global {

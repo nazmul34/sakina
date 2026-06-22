@@ -8,6 +8,7 @@ import { NearbyMosquesScreen } from '../screens/NearbyMosquesScreen';
 import { PermissionsScreen } from '../screens/PermissionsScreen';
 import { PinEditorScreen } from '../screens/PinEditorScreen';
 import { PinnedLocationsScreen } from '../screens/PinnedLocationsScreen';
+import { PrayerSettingsScreen } from '../screens/PrayerSettingsScreen';
 import { SavedMessagesScreen } from '../screens/SavedMessagesScreen';
 import type { RootStackParamList } from './types';
 
@@ -64,6 +65,11 @@ export function RootNavigator() {
         name="DailyReminder"
         component={DailyReminderScreen}
         options={{ title: 'Daily reminder' }}
+      />
+      <Stack.Screen
+        name="PrayerSettings"
+        component={PrayerSettingsScreen}
+        options={{ title: 'Prayer times' }}
       />
     </Stack.Navigator>
   );

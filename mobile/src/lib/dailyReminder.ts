@@ -20,6 +20,14 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { composeShareText, fetchRandomMessage } from './messagesApi';
+import {
+  cancelScheduledBySource,
+  type NotificationSourceData,
+} from './notifications';
+
+// Notification permission helper now lives in the shared notifications module so
+// the prayer-reminder scheduler can use it too; re-exported here for the screen.
+export { ensureNotificationPermission } from './notifications';
 
 const SETTINGS_KEY = 'sakina.daily_reminder';
 const ANDROID_CHANNEL_ID = 'daily-reminder';
@@ -37,16 +45,6 @@ export const DEFAULT_REMINDER: ReminderSettings = {
   hour: 8,
   minute: 0,
 };
-
-// Show a banner if a reminder happens to fire while the app is foregrounded.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
 
 function isValid(value: unknown): value is ReminderSettings {
   const s = value as Partial<ReminderSettings> | null;
@@ -83,19 +81,6 @@ async function saveReminderSettings(settings: ReminderSettings): Promise<void> {
   }
 }
 
-/**
- * Ensure notification permission. Returns whether it is granted (requesting it
- * if not already decided).
- */
-export async function ensureNotificationPermission(): Promise<boolean> {
-  const current = await Notifications.getPermissionsAsync();
-  if (current.granted) {
-    return true;
-  }
-  const requested = await Notifications.requestPermissionsAsync();
-  return requested.granted;
-}
-
 async function ensureAndroidChannel(): Promise<void> {
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
@@ -106,22 +91,27 @@ async function ensureAndroidChannel(): Promise<void> {
 }
 
 /** Notification title + body, from a freshly fetched message (offline-safe). */
-async function buildContent(): Promise<{ title: string; body: string }> {
+async function buildContent(): Promise<{
+  title: string;
+  body: string;
+  data: NotificationSourceData;
+}> {
+  const data: NotificationSourceData = { source: 'daily-reminder' };
   try {
     const message = await fetchRandomMessage();
-    return { title: 'Daily reminder', body: composeShareText(message) };
+    return { title: 'Daily reminder', body: composeShareText(message), data };
   } catch {
     return {
       title: 'Daily reminder',
       body: "Open Sakina for today's reminder.",
+      data,
     };
   }
 }
 
-/** Cancel any scheduled reminder. */
+/** Cancel any scheduled daily reminder (leaving other features' notifications). */
 export async function cancelDailyReminder(): Promise<void> {
-  // This feature is the only scheduler today; EPIC-09 will track ids per source.
-  await Notifications.cancelAllScheduledNotificationsAsync();
+  await cancelScheduledBySource('daily-reminder');
 }
 
 /** (Re)schedule the repeating daily reminder at the given local time. */
