@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AutoSilentToggle } from '../components/AutoSilentToggle';
+import { LocationHeader } from '../components/LocationHeader';
 import { NextPrayerCountdown } from '../components/NextPrayerCountdown';
 import { apiFetch } from '../lib/api';
 import { colors } from '../lib/colors';
@@ -36,6 +37,7 @@ export function HomeScreen() {
       >
         <View style={styles.hero}>
           <Text style={styles.greeting}>Assalamu alaikum</Text>
+          <LocationHeader />
           <Text style={styles.tagline}>
             Your phone, respectful around mosques and during prayer.
           </Text>
