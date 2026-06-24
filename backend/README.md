@@ -106,4 +106,5 @@ python manage.py test
 |---|---|---|
 | `GET` | `/health` | Liveness probe → `{"status": "ok"}` |
 | `GET` | `/mosques?lat=&lng=` | Nearby mosques sorted by haversine distance. Served from a per-tile DB cache (F-02.8), refreshed from the provider (Geoapify primary, Overpass fallback) only on a tile miss/stale. Radius is fixed server-side via `MOSQUE_SEARCH_RADIUS_M` (default 5000 m); not client-controlled. |
+| `GET`/`PUT` | `/devices/{id}/settings` | Read or upsert this device's settings (F-07.1). `{id}` must match the `X-Device-Id` header. `GET` materialises server defaults on first read; `PUT` is a partial upsert. |
 | | `/admin/` | Django admin |

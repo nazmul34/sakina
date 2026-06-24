@@ -2,8 +2,8 @@
 
 A living, on-device QA checklist. Each epic gets a section; tick the boxes as you
 verify a build, and update the **Status** line when an epic is completed or its
-behaviour changes. Covers **EPIC-0** through **EPIC-4** today
-(F-01.10 is deferred — see issue #26). Add new epics as they land.
+behaviour changes. Covers **EPIC-0** through **EPIC-5**, plus **EPIC-07**
+(settings persistence & sync). Add new epics as they land.
 
 > Legend: 🟢 done · 🟡 in progress · ⚪ not started · ⏸️ deferred
 
@@ -164,8 +164,26 @@ warning notifications are suppressed on Android 13+.
       (≤ 1 per type per 24 h). Re-grant DND + a successful silence clears the throttle.
 
 ### F-01.10 — Prayer-aware silent
-- [ ] ⏸️ **Deferred** (issue #26) — depends on EPIC-05 (prayer times) and the open
-      decision D-2. Not in this build.
+> Opt-in (default **off**) tightening: near a mosque, silence **only** around each
+> prayer (just before jamaat to the end of salah) instead of the whole time you're
+> in the zone. The toggle lives on **Home → Prayer times → "Tighten around prayer"**.
+> Needs **DND access** granted and works on the **manual zone triggers** (see the
+> Release-build caveat above) since live mosque geofences await EPIC-02. Setup
+> details and the "Active now" indicator are tested under **F-05.5**.
+- [ ] **Off by default:** with the toggle **off**, behaviour is unchanged — entering
+      a zone silences for the **whole** presence; leaving restores. (This is the
+      EPIC-1 F-01.2/F-01.3 behaviour — confirm it still passes.)
+- [ ] **Gated when on (inside a window):** turn the toggle **on**; enter a zone
+      while the current time **is** within a prayer window (the screen's *Active
+      now* shows the prayer). Wait the 45 s dwell → **phone silences**.
+- [ ] **Gated when on (outside a window):** with the toggle on, enter a zone when
+      *Active now* shows **"No prayer window"**. Wait past the dwell → **phone is
+      NOT silenced**. When the next window's start time arrives → it **silences**;
+      at the window's end → it **restores** (while you remain in the zone).
+- [ ] **Exit & override still hold:** leaving the zone restores as normal; if you
+      change the ringer yourself mid-zone, your choice is honoured (F-01.5).
+- [ ] **Graceful fallback:** with the toggle on but **location/prayer times
+      unknown**, silencing falls back to plain zone presence (never stuck silent).
 
 ---
 
@@ -416,6 +434,145 @@ are downloaded from the internet. After that, **Saved messages** and the
       if the app is closed.
 - [ ] Turn the switch **off** → no more daily notification appears (the next day's
       reminder is cancelled).
+
+---
+
+## EPIC-5 — Prayer Times (on-device)
+
+**Status:** 🟢 done (pending device QA)
+
+All prayer times are worked out **on the phone** from your location — no internet
+needed once the app has your location. **Keep location permission granted** (the
+permissions checklist, F-01.6, covers it). Times use your selected calculation
+method; the defaults are **Muslim World League** and **Standard (Shafiʿi)** Asr.
+
+**Where to start:** from the Home screen, tap **Prayer times**.
+
+### F-05.1 — Five daily times, computed offline
+- [ ] Open **Home → Prayer times**. Under **TODAY'S TIMES** **you should see:**
+      **Fajr, Dhuhr, Asr, Maghrib, Isha** with a clock time next to each.
+- [ ] **Offline check:** turn on **Airplane mode**, fully close and reopen the app,
+      open **Prayer times** again. **You should see:** the same five times still
+      appear (they're computed on the phone, not downloaded).
+- [ ] _(Sanity)_ The times look right for your city/date (e.g. Maghrib is around
+      sunset).
+- [ ] If location was **never granted**, the times area shows a friendly *"Grant
+      location…"* hint instead of crashing.
+
+### F-05.2 — Calculation method + Asr selection
+- [ ] Under **CALCULATION METHOD**, tap a different method (e.g. **Umm al-Qura** or
+      **Karachi**). **You should see:** a green tick on the chosen one and the
+      **TODAY'S TIMES** above **update immediately**.
+- [ ] Under **ASR CALCULATION**, switch between **Standard (Shafiʿi)** and
+      **Hanafi**. **You should see:** the **Asr** time changes (Hanafi is later);
+      the others stay the same.
+- [ ] **Persists:** fully close and reopen the app → your method and Asr choice are
+      still selected.
+
+### F-05.3 — Next-prayer countdown on Home
+- [ ] On the **Home** screen **you should see:** a green **"Next prayer"** card
+      naming the upcoming prayer, its time, and a live **H:MM:SS** countdown ticking
+      down each second.
+- [ ] **Roll-over:** when a prayer time passes (or check late at night), the card
+      moves to the next prayer; after **Isha** it shows tomorrow's **Fajr** (labelled
+      *tomorrow*) — it never shows a negative countdown.
+- [ ] With **location off**, the card invites you to enable location rather than
+      showing nothing.
+
+### F-05.4 — Per-prayer reminder notifications
+> Local notifications at each prayer time — set up on the phone, so they fire
+> offline once scheduled. Off by default. Be **online when you first enable** so the
+> times are fresh, and grant notification permission when asked.
+
+- [ ] On **Prayer times**, under **REMINDERS**, turn **Prayer reminders** on. If
+      asked, **Allow** notifications. _(Tapping "Don't allow" shows a note and leaves
+      it off — expected.)_
+- [ ] **You should see:** a **Play sound** switch and a switch per prayer (Fajr…Isha),
+      all on by default; toggle a couple off to pick which prayers remind you.
+- [ ] **Check it fires:** the easiest live check is to set Asr/your method so the
+      next prayer is a **couple of minutes away** (or just wait for the next prayer),
+      lock the phone, and confirm a **Sakina** notification appears at that time —
+      even with the app closed.
+- [ ] Turn **Prayer reminders** off → upcoming prayer notifications stop.
+- [ ] **Coexists with the daily reminder (F-04.6):** with **both** the daily
+      reminder and prayer reminders on, opening the **Daily reminder** screen does
+      **not** wipe the prayer reminders (and vice-versa).
+
+### F-05.5 — Prayer-aware silent (feeds the flagship)
+> This is the setting that powers **F-01.10** (test the silencing behaviour there).
+
+- [ ] Under **PRAYER-AWARE SILENT**, **"Tighten around prayer"** is **off by
+      default**.
+- [ ] Turn it **on** (location granted). **You should see:** an **Active now** row
+      reading either the current prayer and its end time (if you're within a window)
+      or **"No prayer window"**.
+- [ ] **Persists:** close/reopen the app → the toggle keeps its state.
+- [ ] See **F-01.10** for the actual silence/restore behaviour around windows near a
+      zone.
+
+---
+
+## EPIC-7 — Settings Persistence & Sync
+
+**Status:** 🟢 done (pending device QA)
+
+Your settings — app **theme**, prayer **calculation method/Asr**, and the **location
+label** in the header — are saved on the phone (so they work offline) and mirrored
+to the backend, **keyed by the device ID** (`X-Device-Id` header). Sync is
+offline-first and **last-write-wins** on an `updated_at` clock, and runs on app
+**launch / foreground** (not on every keystroke).
+
+> Backend check (optional): open **Django admin → Device settings**, or
+> `GET /devices/{your-device-id}/settings` with the `X-Device-Id` header, to see
+> the synced row. The device ID is shown on the **Home** screen.
+
+### F-07.1 — Settings stored on the backend _(backend-side)_
+- [ ] **First read makes defaults:** for a device with no settings yet,
+      `GET /devices/{id}/settings` returns a row with sensible defaults
+      (auto-silent on, theme `system`, method `MuslimWorldLeague`, Asr `standard`)
+      rather than a 404.
+- [ ] **Upsert:** `PUT /devices/{id}/settings` with a changed field (e.g.
+      `{"theme":"dark"}`) returns the updated row; a follow-up `GET` shows it stuck.
+- [ ] **Scoped to the device:** a `GET`/`PUT` where the `{id}` in the path does
+      **not** match the `X-Device-Id` header is rejected (**403**) — a device can
+      only touch its own settings.
+
+### F-07.2 — Offline-first sync + last-write-wins
+- [ ] **Push on change:** change a synced setting (switch **theme**, or the prayer
+      **method**) → bring the app to the **foreground** (or relaunch) → the server
+      row reflects the new value (admin / `GET`).
+- [ ] **Offline-first:** turn the backend off (or airplane mode), change settings →
+      the UI updates **instantly** with no error. Restore connectivity, reopen the
+      app → the change is pushed and the server catches up.
+- [ ] **Last-write-wins:** with a value already on the server, a `PUT` carrying an
+      **older** `updated_at` is **ignored** (server state wins and is echoed back); a
+      **newer** one applies. An identical/equal clock is a no-op (safe to retry).
+- [ ] **Trigger is foreground only:** changing a setting and staying in the app
+      doesn't spam the server every keystroke; the push happens on the next
+      foreground/launch.
+
+### F-07.3 — Theme: Light / Dark / System
+- [ ] From **Home → Appearance**, pick **Dark**. **You should see:** the app chrome
+      (screen headers and backgrounds) switch to dark **immediately**. Pick **Light**
+      → back to light.
+- [ ] Pick **System**. **You should see:** the app follows the **phone's** light/dark
+      setting — change the system dark-mode toggle and the app flips to match.
+- [ ] **Persists:** fully close and reopen the app → your theme choice is retained
+      (no flash back to System).
+- [ ] _(Sanity)_ The current effective mode is named on the Appearance screen
+      ("…currently light/dark").
+
+### F-07.4 — Location name in the header
+- [ ] On **Home**, under the title, **you should see:** a 📍 place name for where you
+      are (e.g. **"London, England"**). Keep **location permission granted**.
+- [ ] **Offline isn't empty:** with the label showing, turn on **Airplane mode**,
+      fully close and reopen the app → the **last** place name still appears (it's
+      cached), not a blank header.
+- [ ] **No location, no clutter:** with location permission **denied**, the header
+      simply shows **nothing** (no empty pin, no crash).
+- [ ] _(Privacy note)_ The name is resolved **on-device** (no API key, coordinates
+      never leave the phone); the first lookup may need network, later ones use the
+      cache.
 
 ---
 

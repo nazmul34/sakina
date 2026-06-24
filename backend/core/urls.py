@@ -10,4 +10,9 @@ urlpatterns = [
     path("messages/random", views.random_message, name="messages-random"),
     path("pins", views.pins, name="pins"),
     path("pins/<uuid:pin_id>", views.pin_detail, name="pin-detail"),
+    path(
+        "devices/<uuid:device_id>/settings",
+        views.device_settings,
+        name="device-settings",
+    ),
 ]

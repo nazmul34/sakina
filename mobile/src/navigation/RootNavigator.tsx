@@ -9,7 +9,9 @@ import { PermissionsScreen } from '../screens/PermissionsScreen';
 import { PinEditorScreen } from '../screens/PinEditorScreen';
 import { PinnedLocationsScreen } from '../screens/PinnedLocationsScreen';
 import { PrayerSettingsScreen } from '../screens/PrayerSettingsScreen';
+import { QiblaScreen } from '../screens/QiblaScreen';
 import { SavedMessagesScreen } from '../screens/SavedMessagesScreen';
+import { ThemeSettingsScreen } from '../screens/ThemeSettingsScreen';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -70,6 +72,16 @@ export function RootNavigator() {
         name="PrayerSettings"
         component={PrayerSettingsScreen}
         options={{ title: 'Prayer times' }}
+      />
+      <Stack.Screen
+        name="Qibla"
+        component={QiblaScreen}
+        options={{ title: 'Qibla' }}
+      />
+      <Stack.Screen
+        name="ThemeSettings"
+        component={ThemeSettingsScreen}
+        options={{ title: 'Appearance' }}
       />
     </Stack.Navigator>
   );

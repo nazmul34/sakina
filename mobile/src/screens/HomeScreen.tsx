@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AutoSilentToggle } from '../components/AutoSilentToggle';
+import { LocationHeader } from '../components/LocationHeader';
 import { NextPrayerCountdown } from '../components/NextPrayerCountdown';
 import { RingerControlPanel } from '../components/RingerControlPanel';
 import { API_BASE_URL } from '../config/env';
@@ -38,6 +39,7 @@ export function HomeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Sakina</Text>
+      <LocationHeader />
       <Text style={styles.subtitle}>
         Your phone, respectful around mosques and during prayer.
       </Text>
@@ -75,6 +77,13 @@ export function HomeScreen() {
       </Pressable>
       <Pressable
         style={styles.permissionsLink}
+        onPress={() => navigation.navigate('Qibla')}
+        accessibilityRole="button"
+      >
+        <Text style={styles.permissionsLinkText}>Qibla direction</Text>
+      </Pressable>
+      <Pressable
+        style={styles.permissionsLink}
         onPress={() => navigation.navigate('DailyMessage')}
         accessibilityRole="button"
       >
@@ -100,6 +109,13 @@ export function HomeScreen() {
         accessibilityRole="button"
       >
         <Text style={styles.permissionsLinkText}>Activity log</Text>
+      </Pressable>
+      <Pressable
+        style={styles.permissionsLink}
+        onPress={() => navigation.navigate('ThemeSettings')}
+        accessibilityRole="button"
+      >
+        <Text style={styles.permissionsLinkText}>Appearance</Text>
       </Pressable>
       <RingerControlPanel />
     </View>

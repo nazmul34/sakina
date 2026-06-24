@@ -15,7 +15,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .geo import GeoProviderError, Mosque, find_nearby_mosques
-from .models import IslamicMessage, Pin
+from .models import DeviceSettings, IslamicMessage, Pin
 
 
 @api_view(["GET"])
@@ -158,6 +158,54 @@ def pin_detail(request: Request, pin_id: uuid.UUID) -> Response:
     return Response(_serialize_pin(pin))
 
 
+@api_view(["GET", "PUT"])
+@permission_classes([AllowAny])
+def device_settings(request: Request, device_id: uuid.UUID) -> Response:
+    """``GET`` / ``PUT /devices/{id}/settings`` — read or upsert device settings (FR-8.1).
+
+    Settings are keyed by device ID. The ``{id}`` in the path must match the
+    device resolved from the ``X-Device-Id`` header, so a device can only touch
+    its own settings (a mismatch is ``403``, consistent with the can't-spoof rule
+    the rest of the app follows). ``GET`` returns the stored bundle, materialising
+    server defaults on first read so the response is never empty.
+
+    ``PUT`` upserts under **last-write-wins on ``updated_at``** (FR-8.2): a write
+    lands only if its ``updated_at`` is strictly newer than the stored one (or this
+    is the row's first write), so a stale offline edit can't clobber fresher server
+    state and a retry is a no-op. Any provided field is validated and stored;
+    unspecified fields keep their value. The response always carries the winning
+    state so an offline client can converge on the next sync.
+    """
+    if request.device is None:
+        return _device_required()
+    if request.device.device_id != device_id:
+        return Response(
+            {"detail": "Device id does not match the X-Device-Id header."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    row, created = DeviceSettings.objects.get_or_create(device=request.device)
+
+    if request.method == "GET":
+        return Response(_serialize_settings(row))
+
+    try:
+        fields = _parse_settings_body(request.data)
+    except ValueError as exc:
+        return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Last-write-wins: apply only a strictly-newer edit. The first write to a
+    # just-created row always lands (its incoming clock may predate the row's
+    # auto-stamped default — e.g. an edit made offline before the row existed).
+    incoming = fields.get("updated_at") or timezone.now()
+    if created or incoming > row.updated_at:
+        for name, value in fields.items():
+            setattr(row, name, value)
+        row.updated_at = incoming
+        row.save()
+    return Response(_serialize_settings(row))
+
+
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def random_message(request: Request) -> Response:
@@ -295,6 +343,74 @@ def _serialize_pin(pin: Pin) -> dict:
         "radius_m": pin.radius_m,
         "updated_at": pin.updated_at,
         "is_deleted": pin.is_deleted,
+    }
+
+
+def _parse_settings_body(data: dict) -> dict:
+    """Validate a settings ``PUT`` body into a dict of fields to store.
+
+    Every field is optional — only keys present in the body are validated and
+    returned, so a partial ``PUT`` patches just those and leaves the rest. Choice
+    fields are checked against the model's enums and the two interval/radius
+    fields must be positive integers. ``updated_at``, when given, must be an
+    ISO-8601 datetime (the caller defaults a missing one to ``now()``). Raises
+    ``ValueError`` with a client-facing message on any bad field.
+    """
+    fields: dict = {}
+
+    if "auto_silent_enabled" in data:
+        value = data["auto_silent_enabled"]
+        if not isinstance(value, bool):
+            raise ValueError("auto_silent_enabled must be a boolean")
+        fields["auto_silent_enabled"] = value
+
+    if "radius_m" in data:
+        fields["radius_m"] = _parse_positive_int(data["radius_m"], "radius_m")
+
+    _parse_choice(data, "theme", DeviceSettings.Theme, fields)
+    _parse_choice(data, "prayer_method", DeviceSettings.PrayerMethod, fields)
+    _parse_choice(data, "asr_method", DeviceSettings.AsrMethod, fields)
+
+    if "updated_at" in data:
+        parsed = _parse_updated_at(data["updated_at"])
+        if parsed is not None:
+            fields["updated_at"] = parsed
+
+    return fields
+
+
+def _parse_positive_int(raw: object, name: str) -> int:
+    """Parse a strictly-positive integer field, raising ``ValueError`` if not."""
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        raise ValueError(f"{name} must be an integer") from None
+    if value <= 0:
+        raise ValueError(f"{name} must be a positive integer")
+    return value
+
+
+def _parse_choice(data: dict, name: str, choices, fields: dict) -> None:
+    """Validate an optional choice field against ``choices`` and add it to ``fields``."""
+    if name not in data:
+        return
+    value = data[name]
+    valid = {c.value for c in choices}
+    if value not in valid:
+        raise ValueError(f"{name} must be one of: {', '.join(sorted(valid))}")
+    fields[name] = value
+
+
+def _serialize_settings(row: DeviceSettings) -> dict:
+    """Shape a :class:`DeviceSettings` row for the JSON response."""
+    return {
+        "device_id": str(row.device_id),
+        "auto_silent_enabled": row.auto_silent_enabled,
+        "radius_m": row.radius_m,
+        "theme": row.theme,
+        "prayer_method": row.prayer_method,
+        "asr_method": row.asr_method,
+        "updated_at": row.updated_at,
     }
 
 

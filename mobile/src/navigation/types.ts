@@ -15,6 +15,8 @@ export type RootStackParamList = {
   SavedMessages: undefined;
   DailyReminder: undefined;
   PrayerSettings: undefined;
+  Qibla: undefined;
+  ThemeSettings: undefined;
 };
 
 declare global {
