@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AutoSilentToggle } from '../components/AutoSilentToggle';
+import { LocationHeader } from '../components/LocationHeader';
 import { NextPrayerCountdown } from '../components/NextPrayerCountdown';
 import { RingerControlPanel } from '../components/RingerControlPanel';
 import { API_BASE_URL } from '../config/env';
@@ -38,6 +39,7 @@ export function HomeScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Sakina</Text>
+      <LocationHeader />
       <Text style={styles.subtitle}>
         Your phone, respectful around mosques and during prayer.
       </Text>
