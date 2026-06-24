@@ -2,8 +2,8 @@
 
 A living, on-device QA checklist. Each epic gets a section; tick the boxes as you
 verify a build, and update the **Status** line when an epic is completed or its
-behaviour changes. Covers **EPIC-0** through **EPIC-5** today
-(prayer times + prayer-aware silent, F-01.10). Add new epics as they land.
+behaviour changes. Covers **EPIC-0** through **EPIC-5**, plus **EPIC-07**
+(settings persistence & sync). Add new epics as they land.
 
 > Legend: 🟢 done · 🟡 in progress · ⚪ not started · ⏸️ deferred
 
@@ -509,6 +509,70 @@ method; the defaults are **Muslim World League** and **Standard (Shafiʿi)** Asr
 - [ ] **Persists:** close/reopen the app → the toggle keeps its state.
 - [ ] See **F-01.10** for the actual silence/restore behaviour around windows near a
       zone.
+
+---
+
+## EPIC-7 — Settings Persistence & Sync
+
+**Status:** 🟢 done (pending device QA)
+
+Your settings — app **theme**, prayer **calculation method/Asr**, and the **location
+label** in the header — are saved on the phone (so they work offline) and mirrored
+to the backend, **keyed by the device ID** (`X-Device-Id` header). Sync is
+offline-first and **last-write-wins** on an `updated_at` clock, and runs on app
+**launch / foreground** (not on every keystroke).
+
+> Backend check (optional): open **Django admin → Device settings**, or
+> `GET /devices/{your-device-id}/settings` with the `X-Device-Id` header, to see
+> the synced row. The device ID is shown on the **Home** screen.
+
+### F-07.1 — Settings stored on the backend _(backend-side)_
+- [ ] **First read makes defaults:** for a device with no settings yet,
+      `GET /devices/{id}/settings` returns a row with sensible defaults
+      (auto-silent on, theme `system`, method `MuslimWorldLeague`, Asr `standard`)
+      rather than a 404.
+- [ ] **Upsert:** `PUT /devices/{id}/settings` with a changed field (e.g.
+      `{"theme":"dark"}`) returns the updated row; a follow-up `GET` shows it stuck.
+- [ ] **Scoped to the device:** a `GET`/`PUT` where the `{id}` in the path does
+      **not** match the `X-Device-Id` header is rejected (**403**) — a device can
+      only touch its own settings.
+
+### F-07.2 — Offline-first sync + last-write-wins
+- [ ] **Push on change:** change a synced setting (switch **theme**, or the prayer
+      **method**) → bring the app to the **foreground** (or relaunch) → the server
+      row reflects the new value (admin / `GET`).
+- [ ] **Offline-first:** turn the backend off (or airplane mode), change settings →
+      the UI updates **instantly** with no error. Restore connectivity, reopen the
+      app → the change is pushed and the server catches up.
+- [ ] **Last-write-wins:** with a value already on the server, a `PUT` carrying an
+      **older** `updated_at` is **ignored** (server state wins and is echoed back); a
+      **newer** one applies. An identical/equal clock is a no-op (safe to retry).
+- [ ] **Trigger is foreground only:** changing a setting and staying in the app
+      doesn't spam the server every keystroke; the push happens on the next
+      foreground/launch.
+
+### F-07.3 — Theme: Light / Dark / System
+- [ ] From **Home → Appearance**, pick **Dark**. **You should see:** the app chrome
+      (screen headers and backgrounds) switch to dark **immediately**. Pick **Light**
+      → back to light.
+- [ ] Pick **System**. **You should see:** the app follows the **phone's** light/dark
+      setting — change the system dark-mode toggle and the app flips to match.
+- [ ] **Persists:** fully close and reopen the app → your theme choice is retained
+      (no flash back to System).
+- [ ] _(Sanity)_ The current effective mode is named on the Appearance screen
+      ("…currently light/dark").
+
+### F-07.4 — Location name in the header
+- [ ] On **Home**, under the title, **you should see:** a 📍 place name for where you
+      are (e.g. **"London, England"**). Keep **location permission granted**.
+- [ ] **Offline isn't empty:** with the label showing, turn on **Airplane mode**,
+      fully close and reopen the app → the **last** place name still appears (it's
+      cached), not a blank header.
+- [ ] **No location, no clutter:** with location permission **denied**, the header
+      simply shows **nothing** (no empty pin, no crash).
+- [ ] _(Privacy note)_ The name is resolved **on-device** (no API key, coordinates
+      never leave the phone); the first lookup may need network, later ones use the
+      cache.
 
 ---
 
