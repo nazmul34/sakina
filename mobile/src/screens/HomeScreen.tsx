@@ -1,156 +1,163 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AutoSilentToggle } from '../components/AutoSilentToggle';
 import { NextPrayerCountdown } from '../components/NextPrayerCountdown';
-import { RingerControlPanel } from '../components/RingerControlPanel';
-import { API_BASE_URL } from '../config/env';
 import { apiFetch } from '../lib/api';
-import { getDeviceId } from '../lib/deviceId';
+import { colors } from '../lib/colors';
 
 /**
- * Placeholder home screen for the scaffold. Real feature UI (prayer times,
- * nearby mosques, auto-silent status, etc.) replaces this later.
+ * Home dashboard — the app's landing tab.
+ *
+ * Replaces the old single-page link list: the day's essentials sit up top (next
+ * prayer + the auto-silent master switch), with the rest of the app reached
+ * through a tidy quick-action grid and the bottom tab bar. The header is hidden
+ * for this tab (see {@link ../navigation/MainTabs}) so the greeting hero reads as
+ * the screen title.
  */
 export function HomeScreen() {
   const navigation = useNavigation();
-  const [deviceId, setDeviceId] = useState<string | null>(null);
 
   useEffect(() => {
-    let active = true;
-
-    // Resolve the device ID for display and ping the backend so the server
-    // upserts a Device row on first contact (F-00.4). The X-Device-Id header
-    // is attached by apiFetch; failures are non-fatal (e.g. backend offline).
-    getDeviceId().then((id) => {
-      if (active) {
-        setDeviceId(id);
-      }
-    });
+    // Ping the backend on first paint so the server upserts a Device row on
+    // first contact (F-00.4). The X-Device-Id header is attached by apiFetch;
+    // failures are non-fatal (e.g. backend offline).
     apiFetch('/health').catch(() => {});
-
-    return () => {
-      active = false;
-    };
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sakina</Text>
-      <Text style={styles.subtitle}>
-        Your phone, respectful around mosques and during prayer.
-      </Text>
-      <Text style={styles.meta}>API: {API_BASE_URL}</Text>
-      <Text style={styles.meta}>Device: {deviceId ?? '…'}</Text>
-      <NextPrayerCountdown />
-      <AutoSilentToggle />
-      <Pressable
-        style={styles.permissionsLink}
-        onPress={() => navigation.navigate('NearbyMosques')}
-        accessibilityRole="button"
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.permissionsLinkText}>Nearby mosques</Text>
-      </Pressable>
-      <Pressable
-        style={styles.permissionsLink}
-        onPress={() => navigation.navigate('PinnedLocations')}
-        accessibilityRole="button"
-      >
-        <Text style={styles.permissionsLinkText}>Pinned zones</Text>
-      </Pressable>
-      <Pressable
-        style={styles.permissionsLink}
-        onPress={() => navigation.navigate('Permissions')}
-        accessibilityRole="button"
-      >
-        <Text style={styles.permissionsLinkText}>Set up permissions</Text>
-      </Pressable>
-      <Pressable
-        style={styles.permissionsLink}
-        onPress={() => navigation.navigate('PrayerSettings')}
-        accessibilityRole="button"
-      >
-        <Text style={styles.permissionsLinkText}>Prayer times</Text>
-      </Pressable>
-      <Pressable
-        style={styles.permissionsLink}
-        onPress={() => navigation.navigate('Qibla')}
-        accessibilityRole="button"
-      >
-        <Text style={styles.permissionsLinkText}>Qibla direction</Text>
-      </Pressable>
-      <Pressable
-        style={styles.permissionsLink}
-        onPress={() => navigation.navigate('DailyMessage')}
-        accessibilityRole="button"
-      >
-        <Text style={styles.permissionsLinkText}>Daily message</Text>
-      </Pressable>
-      <Pressable
-        style={styles.permissionsLink}
-        onPress={() => navigation.navigate('SavedMessages')}
-        accessibilityRole="button"
-      >
-        <Text style={styles.permissionsLinkText}>Saved messages</Text>
-      </Pressable>
-      <Pressable
-        style={styles.permissionsLink}
-        onPress={() => navigation.navigate('DailyReminder')}
-        accessibilityRole="button"
-      >
-        <Text style={styles.permissionsLinkText}>Daily reminder</Text>
-      </Pressable>
-      <Pressable
-        style={styles.permissionsLink}
-        onPress={() => navigation.navigate('Activity')}
-        accessibilityRole="button"
-      >
-        <Text style={styles.permissionsLinkText}>Activity log</Text>
-      </Pressable>
-      <Pressable
-        style={styles.permissionsLink}
-        onPress={() => navigation.navigate('ThemeSettings')}
-        accessibilityRole="button"
-      >
-        <Text style={styles.permissionsLinkText}>Appearance</Text>
-      </Pressable>
-      <RingerControlPanel />
-    </View>
+        <View style={styles.hero}>
+          <Text style={styles.greeting}>Assalamu alaikum</Text>
+          <Text style={styles.tagline}>
+            Your phone, respectful around mosques and during prayer.
+          </Text>
+        </View>
+
+        <NextPrayerCountdown />
+        <AutoSilentToggle />
+
+        <Text style={styles.sectionTitle}>Quick actions</Text>
+        <View style={styles.grid}>
+          <QuickAction
+            icon="location-outline"
+            label="Nearby mosques"
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Mosques' })}
+          />
+          <QuickAction
+            icon="compass-outline"
+            label="Qibla direction"
+            onPress={() => navigation.navigate('Qibla')}
+          />
+          <QuickAction
+            icon="book-outline"
+            label="Daily message"
+            onPress={() => navigation.navigate('MainTabs', { screen: 'Messages' })}
+          />
+          <QuickAction
+            icon="time-outline"
+            label="Prayer times"
+            onPress={() => navigation.navigate('PrayerSettings')}
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+function QuickAction({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <View style={styles.actionIcon}>
+        <Ionicons name={icon} size={22} color={colors.brand} />
+      </View>
+      <Text style={styles.actionLabel}>{label}</Text>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safe: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
+    backgroundColor: colors.background,
+  },
+  container: {
+    padding: 20,
+    paddingBottom: 32,
+  },
+  hero: {
+    marginBottom: 20,
+    gap: 6,
+  },
+  greeting: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.text,
+  },
+  tagline: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textMuted,
+  },
+  sectionTitle: {
+    marginTop: 28,
+    marginBottom: 14,
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    color: colors.textMuted,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
+  action: {
+    // Two per row: half the width minus the gap.
+    width: '47.5%',
+    flexGrow: 1,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    padding: 16,
+    gap: 12,
   },
-  subtitle: {
-    fontSize: 16,
-    textAlign: 'center',
-    opacity: 0.7,
+  actionPressed: {
+    backgroundColor: colors.brandTint,
   },
-  meta: {
-    fontSize: 12,
-    opacity: 0.5,
-  },
-  permissionsLink: {
-    alignSelf: 'stretch',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+  actionIcon: {
+    width: 44,
+    height: 44,
     borderRadius: 12,
-    backgroundColor: '#E6F4FE',
+    backgroundColor: colors.brandTint,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  permissionsLinkText: {
+  actionLabel: {
     fontSize: 15,
     fontWeight: '700',
+    color: colors.text,
   },
 });
