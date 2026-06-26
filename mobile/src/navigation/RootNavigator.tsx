@@ -1,10 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { ActivityScreen } from '../screens/ActivityScreen';
-import { DailyMessageScreen } from '../screens/DailyMessageScreen';
 import { DailyReminderScreen } from '../screens/DailyReminderScreen';
-import { HomeScreen } from '../screens/HomeScreen';
-import { NearbyMosquesScreen } from '../screens/NearbyMosquesScreen';
 import { PermissionsScreen } from '../screens/PermissionsScreen';
 import { PinEditorScreen } from '../screens/PinEditorScreen';
 import { PinnedLocationsScreen } from '../screens/PinnedLocationsScreen';
@@ -12,21 +9,24 @@ import { PrayerSettingsScreen } from '../screens/PrayerSettingsScreen';
 import { QiblaScreen } from '../screens/QiblaScreen';
 import { SavedMessagesScreen } from '../screens/SavedMessagesScreen';
 import { ThemeSettingsScreen } from '../screens/ThemeSettingsScreen';
+import { MainTabs } from './MainTabs';
 import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 /**
- * Root navigation stack. Currently a single placeholder Home screen;
- * feature screens get added here as they land.
+ * Root navigation stack. `MainTabs` is the home host (bottom tab bar); every
+ * other screen is a focused detail flow that pushes over the tabs with a back
+ * button. Sharing one stack means cross-tab links (`navigate('Qibla')`, etc.)
+ * resolve from anywhere.
  */
 export function RootNavigator() {
   return (
     <Stack.Navigator>
       <Stack.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{ title: 'Sakina' }}
+        name="MainTabs"
+        component={MainTabs}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Permissions"
@@ -39,11 +39,6 @@ export function RootNavigator() {
         options={{ title: 'Activity' }}
       />
       <Stack.Screen
-        name="NearbyMosques"
-        component={NearbyMosquesScreen}
-        options={{ title: 'Nearby mosques' }}
-      />
-      <Stack.Screen
         name="PinnedLocations"
         component={PinnedLocationsScreen}
         options={{ title: 'Pinned zones' }}
@@ -52,11 +47,6 @@ export function RootNavigator() {
         name="PinEditor"
         component={PinEditorScreen}
         options={{ title: 'Pin a location' }}
-      />
-      <Stack.Screen
-        name="DailyMessage"
-        component={DailyMessageScreen}
-        options={{ title: 'Daily message' }}
       />
       <Stack.Screen
         name="SavedMessages"
