@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { Pressable } from 'react-native';
 
-import { colors } from '../lib/colors';
+import { useColors } from '../lib/colors';
 import { DailyMessageScreen } from '../screens/DailyMessageScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { NearbyMosquesScreen } from '../screens/NearbyMosquesScreen';
@@ -28,6 +28,7 @@ function HeaderIconButton({
   route: keyof RootStackParamList;
 }) {
   const navigation = useNavigation();
+  const c = useColors();
   return (
     <Pressable
       onPress={() => navigation.navigate(route)}
@@ -36,7 +37,7 @@ function HeaderIconButton({
       hitSlop={12}
       style={{ paddingHorizontal: 16 }}
     >
-      <Ionicons name={icon} size={22} color={colors.brand} />
+      <Ionicons name={icon} size={22} color={c.brand} />
     </Pressable>
   );
 }
@@ -60,11 +61,12 @@ const ICONS: Record<
  * other tabs use the standard themed header.
  */
 export function MainTabs() {
+  const c = useColors();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarActiveTintColor: colors.brand,
-        tabBarInactiveTintColor: colors.muted,
+        tabBarActiveTintColor: c.brand,
+        tabBarInactiveTintColor: c.muted,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         tabBarIcon: ({ color, size, focused }) => {
           const icon = ICONS[route.name];

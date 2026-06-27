@@ -14,6 +14,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import type { LatLng } from '../lib/geofencing/types';
 import { getHighAccuracyFix } from '../lib/location';
 import { usePrayerTimesConfig } from '../lib/prayerSettings';
@@ -36,6 +37,7 @@ function formatCountdown(ms: number): string {
 }
 
 export function NextPrayerCountdown() {
+  const styles = useThemedStyles(makeStyles);
   const [config] = usePrayerTimesConfig();
   const [location, setLocation] = useState<LatLng | null>(null);
   const [locationError, setLocationError] = useState(false);
@@ -105,11 +107,15 @@ export function NextPrayerCountdown() {
   );
 }
 
-const styles = StyleSheet.create({
+// A light green for secondary text on the always-deep-green card — reads well in
+// both schemes since the card stays `brandSolid` regardless of theme.
+const ON_CARD_MUTED = '#CDEBD8';
+
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   card: {
     alignSelf: 'stretch',
     borderRadius: 12,
-    backgroundColor: '#1A6B3C',
+    backgroundColor: c.brandSolid,
     padding: 16,
     gap: 6,
     minHeight: 96,
@@ -120,7 +126,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    color: '#CDEBD8',
+    color: ON_CARD_MUTED,
   },
   row: {
     flexDirection: 'row',
@@ -130,22 +136,22 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#FFF',
+    color: c.onBrand,
   },
   at: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#CDEBD8',
+    color: ON_CARD_MUTED,
   },
   countdown: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#FFF',
+    color: c.onBrand,
     fontVariant: ['tabular-nums'],
   },
   hint: {
     fontSize: 13,
-    color: '#CDEBD8',
+    color: ON_CARD_MUTED,
     lineHeight: 18,
   },
 });

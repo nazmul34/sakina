@@ -22,6 +22,7 @@ import {
   View,
 } from 'react-native';
 
+import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import { useDeviceHeading } from '../hooks/useDeviceHeading';
 import type { LatLng } from '../lib/geofencing/types';
 import { getHighAccuracyFix, LocationPermissionError } from '../lib/location';
@@ -35,6 +36,7 @@ type LocationState =
 
 export function QiblaScreen() {
   const navigation = useNavigation();
+  const styles = useThemedStyles(makeStyles);
   const [locationState, setLocationState] = useState<LocationState>({
     status: 'loading',
   });
@@ -147,29 +149,31 @@ export function QiblaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
     gap: 16,
+    backgroundColor: colors.background,
   },
   heading: {
     fontSize: 28,
     fontWeight: '700',
+    color: colors.text,
   },
   subtitle: {
     fontSize: 15,
     textAlign: 'center',
-    opacity: 0.7,
+    color: colors.textMuted,
   },
   dial: {
     width: 260,
     height: 260,
     borderRadius: 130,
     borderWidth: 2,
-    borderColor: '#C7D2DB',
+    borderColor: colors.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 8,
@@ -178,7 +182,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     fontSize: 15,
     fontWeight: '700',
-    opacity: 0.5,
+    color: colors.textMuted,
   },
   north: { top: 10 },
   south: { bottom: 10 },
@@ -191,12 +195,12 @@ const styles = StyleSheet.create({
   needleArrow: {
     fontSize: 120,
     lineHeight: 130,
-    color: '#1E7A46',
+    color: colors.brand,
   },
   readout: {
     fontSize: 16,
     fontWeight: '600',
-    opacity: 0.8,
+    color: colors.text,
   },
   centered: {
     flex: 1,
@@ -204,29 +208,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 32,
     gap: 10,
+    backgroundColor: colors.background,
   },
   centeredTitle: {
     fontSize: 18,
     fontWeight: '700',
+    color: colors.text,
   },
   centeredBody: {
     fontSize: 14,
     textAlign: 'center',
-    opacity: 0.7,
+    color: colors.textMuted,
   },
   bold: {
     fontWeight: '700',
-    opacity: 1,
+    color: colors.text,
   },
   primaryButton: {
     marginTop: 8,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 12,
-    backgroundColor: '#E6F4FE',
+    backgroundColor: colors.accentBlue,
   },
   primaryButtonText: {
     fontSize: 15,
     fontWeight: '700',
+    color: colors.info,
   },
 });

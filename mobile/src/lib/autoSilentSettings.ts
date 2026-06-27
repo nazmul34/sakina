@@ -13,6 +13,7 @@
 import { useCallback, useState } from 'react';
 
 import AutoSilent from '../../modules/auto-silent';
+import RingerControl, { type SilenceMode } from '../../modules/ringer-control';
 import { armGeofencing, disarmGeofencing } from './geofencing';
 
 /** Whether the auto-silent master toggle is currently on. */
@@ -49,4 +50,38 @@ export function useAutoSilentEnabled(): readonly [
   }, []);
 
   return [enabled, toggle] as const;
+}
+
+/**
+ * The mode auto-silent switches the phone into while active — full `silent` or
+ * `vibrate` (FR-1.3). Lives natively (in the ringer-control module) alongside
+ * the state machine that consumes it, so it survives app-kill/reboot the same
+ * way the master toggle does. Defaults to `silent`.
+ */
+export function getSilenceMode(): SilenceMode {
+  return RingerControl.getSilenceMode();
+}
+
+/** Persist the silence mode; native re-applies it to any active session. */
+export function setSilenceMode(mode: SilenceMode): void {
+  RingerControl.setSilenceMode(mode);
+}
+
+/**
+ * React state bound to the silence mode, mirroring {@link useAutoSilentEnabled}:
+ * the native getter is synchronous, so we seed lazily and re-read after each
+ * write to stay in lockstep with what native persisted.
+ */
+export function useSilenceMode(): readonly [
+  SilenceMode,
+  (mode: SilenceMode) => void,
+] {
+  const [mode, setMode] = useState<SilenceMode>(() => getSilenceMode());
+
+  const update = useCallback((next: SilenceMode) => {
+    setSilenceMode(next);
+    setMode(getSilenceMode());
+  }, []);
+
+  return [mode, update] as const;
 }

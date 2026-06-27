@@ -85,6 +85,20 @@ class RingerControlModule : Module() {
       RingerIO.setRingerMode(context, mode)
     }
 
+    // --- Silence mode (FR-1.3) ----------------------------------------------
+    // What auto-silent switches the phone into while inside a zone / prayer
+    // window: full "silent" or "vibrate". Distinct from the master on/off
+    // toggle. Changing it re-applies to any active in-zone session immediately.
+
+    Function("getSilenceMode") {
+      SilenceModeStore(context).mode
+    }
+
+    Function("setSilenceMode") { mode: String ->
+      SilenceModeStore(context).mode = mode
+      RingerSilenceController.onSilenceModeChanged(context)
+    }
+
     // --- Auto-silent zone hand-off (F-01.3) ---------------------------------
     // Called by the geofencing task on enter/exit, passing the geofence region
     // identifier. Return the active-zone count for debugging/observability.

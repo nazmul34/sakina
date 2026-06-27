@@ -7,6 +7,13 @@ import type { NativeModule } from 'expo';
 export type RingerMode = 'silent' | 'vibrate' | 'normal';
 
 /**
+ * What auto-silent switches the phone into while inside a zone or prayer window
+ * (FR-1.3): full `silent`, or `vibrate`. The user's choice via {@link
+ * RingerControlModule.setSilenceMode}; defaults to `silent`.
+ */
+export type SilenceMode = 'silent' | 'vibrate';
+
+/**
  * An auto-silent activity-log event (FR-1.8): the phone was switched to silent on
  * entering a zone, or restored to its prior mode on leaving the last one.
  */
@@ -87,6 +94,20 @@ export declare class RingerControlModule extends NativeModule {
    * unknown mode.
    */
   setRingerMode(mode: RingerMode): void;
+
+  /**
+   * The mode auto-silent switches the phone into while a zone / prayer window is
+   * active (FR-1.3) — `silent` or `vibrate`. Defaults to `silent`.
+   */
+  getSilenceMode(): SilenceMode;
+
+  /**
+   * Choose whether auto-silent fully silences the phone or drops it to vibrate
+   * (FR-1.3). Persisted device-locally (survives app-kill/reboot) and applied
+   * immediately to any active in-zone session, so flipping it while parked at a
+   * mosque takes effect at once.
+   */
+  setSilenceMode(mode: SilenceMode): void;
 
   /**
    * Records entry into a geofenced zone (F-01.3), identified by its geofence

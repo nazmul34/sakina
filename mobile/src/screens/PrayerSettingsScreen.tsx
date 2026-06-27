@@ -26,6 +26,7 @@ import {
   View,
 } from 'react-native';
 
+import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import { getHighAccuracyFix } from '../lib/location';
 import {
   evaluatePrayerAwareSilence,
@@ -52,6 +53,7 @@ import {
 import type { LatLng } from '../lib/geofencing/types';
 
 export function PrayerSettingsScreen() {
+  const styles = useThemedStyles(makeStyles);
   const [config, setConfig] = usePrayerTimesConfig();
   const [notifications, setNotifications] = usePrayerNotificationSettings();
   const [prayerAware, setPrayerAware] = usePrayerAwareSilentSettings();
@@ -131,7 +133,7 @@ export function PrayerSettingsScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <Text style={styles.sectionTitle}>Today’s times</Text>
       <View style={styles.previewCard}>
         {prayerTimes ? (
@@ -295,7 +297,10 @@ export function PrayerSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: {
+    backgroundColor: colors.background,
+  },
   container: {
     padding: 20,
     gap: 12,
@@ -304,12 +309,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     textTransform: 'uppercase',
-    opacity: 0.55,
+    color: colors.textMuted,
     marginTop: 8,
   },
   previewCard: {
     borderRadius: 12,
-    backgroundColor: '#E6F4FE',
+    backgroundColor: colors.accentBlue,
     padding: 16,
     gap: 8,
     minHeight: 48,
@@ -323,21 +328,23 @@ const styles = StyleSheet.create({
   previewName: {
     fontSize: 15,
     fontWeight: '600',
+    color: colors.text,
   },
   previewTime: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1A6B3C',
+    color: colors.brand,
   },
   hint: {
     fontSize: 13,
-    opacity: 0.7,
+    color: colors.textMuted,
     lineHeight: 18,
   },
   group: {
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#999',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     overflow: 'hidden',
   },
   option: {
@@ -347,13 +354,14 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#DDD',
+    borderBottomColor: colors.border,
   },
   optionSelected: {
-    backgroundColor: '#E6F4FE',
+    backgroundColor: colors.brandTint,
   },
   optionLabel: {
     fontSize: 15,
+    color: colors.text,
   },
   optionLabelSelected: {
     fontWeight: '700',
@@ -361,13 +369,14 @@ const styles = StyleSheet.create({
   check: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1A6B3C',
+    color: colors.brand,
   },
   segmented: {
     flexDirection: 'row',
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#999',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     overflow: 'hidden',
   },
   segment: {
@@ -376,14 +385,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   segmentSelected: {
-    backgroundColor: '#1A6B3C',
+    backgroundColor: colors.brandSolid,
   },
   segmentLabel: {
     fontSize: 15,
     fontWeight: '600',
+    color: colors.text,
   },
   segmentLabelSelected: {
-    color: '#FFF',
+    color: colors.onBrand,
     fontWeight: '700',
   },
   switchRow: {
@@ -395,7 +405,7 @@ const styles = StyleSheet.create({
   },
   switchRowBordered: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#DDD',
+    borderTopColor: colors.border,
   },
   switchText: {
     flex: 1,
@@ -404,10 +414,11 @@ const styles = StyleSheet.create({
   switchLabel: {
     fontSize: 15,
     fontWeight: '600',
+    color: colors.text,
   },
   switchSub: {
     fontSize: 12,
-    opacity: 0.6,
+    color: colors.textMuted,
     marginTop: 2,
   },
   disabledText: {
@@ -415,7 +426,7 @@ const styles = StyleSheet.create({
   },
   note: {
     fontSize: 12,
-    opacity: 0.55,
+    color: colors.textMuted,
     lineHeight: 18,
     marginTop: 8,
   },

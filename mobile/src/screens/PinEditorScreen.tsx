@@ -25,6 +25,7 @@ import {
 
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PinMap } from '../components/PinMap';
+import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
 import { armGeofencing } from '../lib/geofencing';
 import type { LatLng } from '../lib/geofencing/types';
 import { getHighAccuracyFix } from '../lib/location';
@@ -46,6 +47,8 @@ const FALLBACK_CENTER: LatLng = { latitude: 21.4225, longitude: 39.8262 }; // Ka
 
 export function PinEditorScreen() {
   const navigation = useNavigation();
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
   const { params } = useRoute<RouteProp<RootStackParamList, 'PinEditor'>>();
   const pinId = params?.pinId;
 
@@ -187,6 +190,7 @@ export function PinEditorScreen() {
           value={label}
           onChangeText={setLabel}
           placeholder="e.g. My local masjid"
+          placeholderTextColor={c.muted}
           returnKeyType="done"
           maxLength={60}
         />
@@ -259,9 +263,10 @@ function formatRadius(meters: number): string {
   return `${meters / 1000} km`;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   mapWrap: {
     flex: 1,
@@ -270,7 +275,8 @@ const styles = StyleSheet.create({
   panel: {
     maxHeight: '52%',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#999',
+    borderTopColor: colors.border,
+    backgroundColor: colors.background,
   },
   panelContent: {
     padding: 16,
@@ -278,21 +284,23 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: 13,
-    opacity: 0.6,
+    color: colors.textMuted,
     marginBottom: 4,
   },
   fieldLabel: {
     fontSize: 13,
     fontWeight: '700',
-    opacity: 0.7,
+    color: colors.textMuted,
   },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#999',
+    borderColor: colors.borderStrong,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 15,
+    color: colors.text,
+    backgroundColor: colors.surface,
   },
   presets: {
     flexDirection: 'row',
@@ -304,26 +312,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#999',
+    borderColor: colors.borderStrong,
   },
   presetSelected: {
-    backgroundColor: '#E6F4FE',
-    borderColor: '#0B6FB8',
+    backgroundColor: colors.accentBlue,
+    borderColor: colors.info,
   },
   presetText: {
     fontSize: 14,
     fontWeight: '600',
-    opacity: 0.7,
+    color: colors.textMuted,
   },
   presetTextSelected: {
-    opacity: 1,
-    color: '#0B6FB8',
+    color: colors.info,
   },
   saveButton: {
     marginTop: 8,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#E6F4FE',
+    backgroundColor: colors.accentBlue,
     alignItems: 'center',
   },
   saveButtonDisabled: {
@@ -332,7 +339,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0B6FB8',
+    color: colors.info,
   },
   deleteButton: {
     paddingVertical: 12,
@@ -342,7 +349,7 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#B3261E',
+    color: colors.danger,
   },
   centered: {
     flex: 1,
@@ -354,6 +361,6 @@ const styles = StyleSheet.create({
   centeredBody: {
     fontSize: 14,
     textAlign: 'center',
-    opacity: 0.7,
+    color: colors.textMuted,
   },
 });

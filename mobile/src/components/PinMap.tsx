@@ -17,6 +17,7 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 
+import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import type { LatLng } from '../lib/geofencing/types';
 
 interface PinMapProps {
@@ -89,6 +90,7 @@ function buildHtml(center: LatLng, radiusM: number): string {
 }
 
 export function PinMap({ center, radiusM, onMove }: PinMapProps) {
+  const styles = useThemedStyles(makeStyles);
   const webRef = useRef<WebView>(null);
   // Freeze the initial document so prop changes don't reload the map (which would
   // reset zoom/pan). The marker starts at `center`; later updates are injected.
@@ -132,13 +134,13 @@ export function PinMap({ center, radiusM, onMove }: PinMapProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     overflow: 'hidden',
   },
   web: {
     flex: 1,
-    backgroundColor: '#e6f4fe',
+    backgroundColor: colors.surfaceAlt,
   },
 });

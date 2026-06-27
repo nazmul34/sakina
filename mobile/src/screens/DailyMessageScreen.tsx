@@ -23,6 +23,7 @@ import {
 import { captureRef } from 'react-native-view-shot';
 
 import { MessageShareCard } from '../components/MessageShareCard';
+import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import { useFavorites } from '../lib/favorites';
 import {
   composeShareText,
@@ -47,6 +48,7 @@ const CHIPS: CategoryChip[] = [
 type Status = 'loading' | 'success' | 'empty' | 'error';
 
 export function DailyMessageScreen() {
+  const styles = useThemedStyles(makeStyles);
   const [category, setCategory] = useState<MessageCategory | undefined>(
     undefined,
   );
@@ -276,11 +278,12 @@ export function DailyMessageScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
     gap: 16,
+    backgroundColor: colors.background,
   },
   chips: {
     flexDirection: 'row',
@@ -291,25 +294,25 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 14,
     borderRadius: 20,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: colors.surfaceAlt,
   },
   chipSelected: {
-    backgroundColor: '#1A6B3C',
+    backgroundColor: colors.brandSolid,
   },
   chipText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
   },
   chipTextSelected: {
-    color: '#fff',
+    color: colors.onBrand,
   },
   card: {
     minHeight: 200,
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#D0D0D0',
-    backgroundColor: '#FAFAFA',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     padding: 24,
     justifyContent: 'center',
   },
@@ -325,65 +328,67 @@ const styles = StyleSheet.create({
   },
   heartIcon: {
     fontSize: 26,
-    color: '#B0B0B0',
+    color: colors.muted,
   },
   heartIconOn: {
-    color: '#B3261E',
+    color: colors.danger,
   },
   messageText: {
     fontSize: 18,
     lineHeight: 28,
     fontWeight: '500',
-    color: '#111',
+    color: colors.text,
   },
   sourceLabel: {
     marginTop: 16,
     fontSize: 13,
-    opacity: 0.55,
+    color: colors.textMuted,
     fontStyle: 'italic',
   },
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
+    color: colors.text,
   },
   emptyBody: {
     fontSize: 14,
-    opacity: 0.6,
+    color: colors.textMuted,
     textAlign: 'center',
   },
   errorTitle: {
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
+    color: colors.text,
   },
   errorBody: {
     fontSize: 14,
-    opacity: 0.6,
+    color: colors.textMuted,
     textAlign: 'center',
   },
   shareButton: {
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#1A6B3C',
+    backgroundColor: colors.brandSolid,
     alignItems: 'center',
   },
   shareButtonText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.onBrand,
   },
   shareImageButton: {
     paddingVertical: 14,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#1A6B3C',
+    borderColor: colors.brand,
     alignItems: 'center',
   },
   shareImageButtonText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1A6B3C',
+    color: colors.brand,
   },
   // Parked off-screen and fully transparent: laid out (so the capture has real
   // pixels) but never visible or interactive to the user.
@@ -396,7 +401,7 @@ const styles = StyleSheet.create({
   nextButton: {
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#E6F4FE',
+    backgroundColor: colors.accentBlue,
     alignItems: 'center',
   },
   nextButtonDisabled: {
@@ -405,5 +410,6 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontSize: 15,
     fontWeight: '700',
+    color: colors.info,
   },
 });
