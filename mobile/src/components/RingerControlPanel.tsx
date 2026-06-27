@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import RingerControl, { type RingerMode } from '../../modules/ringer-control';
+import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import { ConfirmDialog } from './ConfirmDialog';
 
 const MODES: RingerMode[] = ['silent', 'vibrate', 'normal'];
@@ -22,6 +23,7 @@ const TEST_ZONE = 'test-zone';
  * demand instead of from GPS.
  */
 export function RingerControlPanel() {
+  const styles = useThemedStyles(makeStyles);
   // The native getters are synchronous, so we can seed state lazily on first
   // render rather than syncing it from an effect.
   const [deviceId, setDeviceId] = useState(() => RingerControl.getDeviceId());
@@ -127,24 +129,26 @@ export function RingerControlPanel() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   panel: {
     alignSelf: 'stretch',
     marginTop: 24,
     padding: 16,
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#999',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     gap: 6,
   },
   heading: {
     fontSize: 14,
     fontWeight: '700',
     marginBottom: 4,
+    color: colors.text,
   },
   row: {
     fontSize: 13,
-    opacity: 0.8,
+    color: colors.textMuted,
   },
   buttons: {
     flexDirection: 'row',
@@ -156,10 +160,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: '#E6F4FE',
+    backgroundColor: colors.accentBlue,
   },
   buttonText: {
     fontSize: 13,
     fontWeight: '600',
+    color: colors.info,
   },
 });

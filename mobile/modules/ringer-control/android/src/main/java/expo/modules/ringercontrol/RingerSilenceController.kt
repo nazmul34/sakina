@@ -187,6 +187,35 @@ internal object RingerSilenceController {
   }
 
   /**
+   * The user changed the silence mode (silent ↔ vibrate) while a session may be
+   * active (FR-1.3). If we're currently holding the phone silenced — and the user
+   * hasn't taken manual control (FR-1.5) — switch it to the newly chosen mode now
+   * so the change is felt immediately (e.g. flipping to vibrate while parked at a
+   * mosque). No-op otherwise: when no session is silencing, the next silence picks
+   * up the new mode from [SilenceModeStore] on its own. Deliberately doesn't log
+   * an activity event — this is an adjustment of an ongoing silence, not a new
+   * silence/restore.
+   */
+  fun onSilenceModeChanged(context: Context) {
+    synchronized(lock) {
+      val store = RingerSnapshotStore(context)
+      if (store.activeZones.isEmpty()) return
+      refreshOverride(context, store)
+      if (store.overridden || !store.silencing) return
+
+      val mode = SilenceModeStore(context).mode
+      try {
+        RingerIO.setRingerMode(context, mode)
+        AutoSilentWarnings.clear(context, WarningType.DND_ACCESS)
+      } catch (e: Exception) {
+        Log.w(TAG, "onSilenceModeChanged: could not switch to '$mode'", e)
+        AutoSilentWarnings.report(context, WarningType.DND_ACCESS)
+      }
+      store.lastSetMode = RingerIO.getRingerMode(context)
+    }
+  }
+
+  /**
    * The exit buffer elapsed for [regionId] (fired by [RingerTimerReceiver]) with
    * no re-entry. Drop the zone; on the last active zone, restore the prior mode.
    */
@@ -324,7 +353,8 @@ internal object RingerSilenceController {
       // Persist intent before touching the ringer so a kill mid-call still restores.
       store.silencing = true
       try {
-        RingerIO.setRingerMode(context, "silent")
+        // "silent" or "vibrate" per the user's choice (FR-1.3); defaults to silent.
+        RingerIO.setRingerMode(context, SilenceModeStore(context).mode)
         // Worked — clear any standing DND warning so a future failure warns again (FR-1.9).
         AutoSilentWarnings.clear(context, WarningType.DND_ACCESS)
       } catch (e: Exception) {

@@ -21,6 +21,7 @@ import {
   View,
 } from 'react-native';
 
+import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import {
   applyReminderSettings,
   DEFAULT_REMINDER,
@@ -32,6 +33,7 @@ import {
 } from '../lib/dailyReminder';
 
 export function DailyReminderScreen() {
+  const styles = useThemedStyles(makeStyles);
   const [settings, setSettings] = useState<ReminderSettings>(DEFAULT_REMINDER);
   const [loading, setLoading] = useState(true);
   const [showPicker, setShowPicker] = useState(false);
@@ -146,11 +148,12 @@ export function DailyReminderScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
     gap: 16,
+    backgroundColor: colors.background,
   },
   centered: {
     flex: 1,
@@ -164,7 +167,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#999',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   rowText: {
     flex: 1,
@@ -172,10 +176,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 17,
     fontWeight: '700',
+    color: colors.text,
   },
   subtitle: {
     fontSize: 13,
-    opacity: 0.7,
+    color: colors.textMuted,
     marginTop: 2,
   },
   timeRow: {
@@ -184,7 +189,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderRadius: 12,
-    backgroundColor: '#E6F4FE',
+    backgroundColor: colors.accentBlue,
   },
   timeRowDisabled: {
     opacity: 0.45,
@@ -192,15 +197,16 @@ const styles = StyleSheet.create({
   timeLabel: {
     fontSize: 15,
     fontWeight: '600',
+    color: colors.text,
   },
   timeValue: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#1A6B3C',
+    color: colors.brand,
   },
   note: {
     fontSize: 12,
-    opacity: 0.55,
+    color: colors.textMuted,
     lineHeight: 18,
   },
 });

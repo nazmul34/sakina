@@ -3,6 +3,7 @@ import { Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import type { ActivityLogEntry } from '../../modules/ringer-control';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import { useActivityLog } from '../lib/activityLog';
 
 /**
@@ -16,6 +17,7 @@ import { useActivityLog } from '../lib/activityLog';
  * the most recent 100 events.
  */
 export function ActivityScreen() {
+  const styles = useThemedStyles(makeStyles);
   const { entries, clear } = useActivityLog();
   const [confirmVisible, setConfirmVisible] = useState(false);
 
@@ -72,6 +74,7 @@ export function ActivityScreen() {
 }
 
 function ActivityRow({ entry }: { entry: ActivityLogEntry }) {
+  const styles = useThemedStyles(makeStyles);
   const silenced = entry.event === 'silenced';
   return (
     <View style={styles.row}>
@@ -129,7 +132,7 @@ function groupByDay(entries: ActivityLogEntry[]): DaySection[] {
   return sections;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   list: {
     padding: 20,
     gap: 8,
@@ -144,29 +147,30 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700',
+    color: colors.text,
   },
   emptyBody: {
     fontSize: 14,
     textAlign: 'center',
-    opacity: 0.7,
+    color: colors.textMuted,
   },
   clearButton: {
     alignSelf: 'flex-end',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: '#FBE9E7',
+    backgroundColor: colors.dangerTint,
     marginBottom: 8,
   },
   clearButtonText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#B3261E',
+    color: colors.danger,
   },
   sectionHeader: {
     fontSize: 13,
     fontWeight: '700',
-    opacity: 0.5,
+    color: colors.textMuted,
     marginTop: 12,
     marginBottom: 4,
   },
@@ -177,7 +181,8 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#999',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   icon: {
     fontSize: 20,
@@ -189,9 +194,10 @@ const styles = StyleSheet.create({
   rowTitle: {
     fontSize: 15,
     fontWeight: '600',
+    color: colors.text,
   },
   rowTime: {
     fontSize: 13,
-    opacity: 0.6,
+    color: colors.textMuted,
   },
 });

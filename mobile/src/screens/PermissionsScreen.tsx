@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 
+import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import {
   checkPermissions,
   fixPermission,
@@ -27,6 +28,7 @@ import {
  * the moment the user comes back, without a manual refresh.
  */
 export function PermissionsScreen() {
+  const styles = useThemedStyles(makeStyles);
   const [items, setItems] = useState<PermissionItem[] | null>(null);
   const [busy, setBusy] = useState<PermissionKey | null>(null);
 
@@ -105,6 +107,7 @@ function PermissionRow({
   busy: boolean;
   onFix: () => void;
 }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
       <View style={styles.rowText}>
@@ -132,28 +135,28 @@ function PermissionRow({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     padding: 20,
     gap: 12,
   },
   intro: {
     fontSize: 14,
-    opacity: 0.7,
+    color: colors.textMuted,
     marginBottom: 4,
   },
   loading: {
     marginTop: 32,
   },
   allSet: {
-    backgroundColor: '#E7F6EC',
+    backgroundColor: colors.successTint,
     borderRadius: 10,
     padding: 12,
   },
   allSetText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1B7F3B',
+    color: colors.success,
   },
   row: {
     flexDirection: 'row',
@@ -162,7 +165,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#999',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   rowText: {
     flex: 1,
@@ -180,21 +184,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     flexShrink: 1,
+    color: colors.text,
   },
   rowDescription: {
     fontSize: 13,
-    opacity: 0.7,
+    color: colors.textMuted,
   },
   grantedLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#1B7F3B',
+    color: colors.success,
   },
   fixButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: '#E6F4FE',
+    backgroundColor: colors.accentBlue,
   },
   fixButtonBusy: {
     opacity: 0.5,
@@ -202,5 +207,6 @@ const styles = StyleSheet.create({
   fixButtonText: {
     fontSize: 14,
     fontWeight: '700',
+    color: colors.info,
   },
 });

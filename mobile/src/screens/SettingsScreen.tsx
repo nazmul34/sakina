@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { RingerControlPanel } from '../components/RingerControlPanel';
 import { API_BASE_URL } from '../config/env';
-import { colors } from '../lib/colors';
+import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
 import { getDeviceId } from '../lib/deviceId';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -103,6 +103,7 @@ const SECTIONS: readonly SettingsSection[] = [
  */
 export function SettingsScreen() {
   const navigation = useNavigation();
+  const styles = useThemedStyles(makeStyles);
   const [deviceId, setDeviceId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -159,6 +160,8 @@ function Row({
   first: boolean;
   onPress: () => void;
 }) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       style={({ pressed }) => [
@@ -171,18 +174,18 @@ function Row({
       accessibilityLabel={row.label}
     >
       <View style={styles.rowIcon}>
-        <Ionicons name={row.icon} size={20} color={colors.brand} />
+        <Ionicons name={row.icon} size={20} color={c.brand} />
       </View>
       <View style={styles.rowText}>
         <Text style={styles.rowLabel}>{row.label}</Text>
         <Text style={styles.rowSubtitle}>{row.subtitle}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+      <Ionicons name="chevron-forward" size={18} color={c.muted} />
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,

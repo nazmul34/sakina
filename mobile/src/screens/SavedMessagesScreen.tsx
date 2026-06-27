@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 
+import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import { useFavorites } from '../lib/favorites';
 import { composeShareText, type IslamicMessage } from '../lib/messagesApi';
 
@@ -26,6 +27,7 @@ const CATEGORY_LABELS: Record<IslamicMessage['category'], string> = {
 };
 
 export function SavedMessagesScreen() {
+  const styles = useThemedStyles(makeStyles);
   const { favorites, removeFavorite } = useFavorites();
 
   if (favorites.length === 0) {
@@ -81,7 +83,7 @@ export function SavedMessagesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   list: {
     padding: 16,
     gap: 12,
@@ -89,8 +91,8 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 16,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#D0D0D0',
-    backgroundColor: '#FAFAFA',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     padding: 18,
   },
   category: {
@@ -98,18 +100,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: '#1A6B3C',
+    color: colors.brand,
     marginBottom: 8,
   },
   messageText: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#111',
+    color: colors.text,
   },
   sourceLabel: {
     marginTop: 10,
     fontSize: 13,
-    opacity: 0.55,
+    color: colors.textMuted,
     fontStyle: 'italic',
   },
   actions: {
@@ -121,15 +123,15 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 10,
-    backgroundColor: '#EEE',
+    backgroundColor: colors.surfaceAlt,
   },
   actionText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#333',
+    color: colors.text,
   },
   removeText: {
-    color: '#B3261E',
+    color: colors.danger,
   },
   empty: {
     flex: 1,
@@ -141,10 +143,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700',
+    color: colors.text,
   },
   emptyBody: {
     fontSize: 14,
-    opacity: 0.6,
+    color: colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
   },
