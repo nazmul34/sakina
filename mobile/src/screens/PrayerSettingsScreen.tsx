@@ -26,6 +26,7 @@ import {
   View,
 } from 'react-native';
 
+import { SelectField } from '../components/SelectField';
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import { getHighAccuracyFix } from '../lib/location';
 import {
@@ -154,30 +155,13 @@ export function PrayerSettingsScreen() {
       </View>
 
       <Text style={styles.sectionTitle}>Calculation method</Text>
-      <View style={styles.group}>
-        {CALCULATION_METHODS.map(({ key, label }) => {
-          const selected = config.method === key;
-          return (
-            <Pressable
-              key={key}
-              style={[styles.option, selected && styles.optionSelected]}
-              onPress={() => setConfig({ ...config, method: key })}
-              accessibilityRole="radio"
-              accessibilityState={{ selected }}
-            >
-              <Text
-                style={[
-                  styles.optionLabel,
-                  selected && styles.optionLabelSelected,
-                ]}
-              >
-                {label}
-              </Text>
-              {selected && <Text style={styles.check}>✓</Text>}
-            </Pressable>
-          );
-        })}
-      </View>
+      <SelectField
+        value={config.method}
+        options={CALCULATION_METHODS}
+        onChange={(method) => setConfig({ ...config, method })}
+        title="Calculation method"
+        accessibilityLabel="Calculation method"
+      />
 
       <Text style={styles.sectionTitle}>Asr calculation</Text>
       <View style={styles.segmented}>
@@ -346,30 +330,6 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface,
     overflow: 'hidden',
-  },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  optionSelected: {
-    backgroundColor: colors.brandTint,
-  },
-  optionLabel: {
-    fontSize: 15,
-    color: colors.text,
-  },
-  optionLabelSelected: {
-    fontWeight: '700',
-  },
-  check: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.brand,
   },
   segmented: {
     flexDirection: 'row',
