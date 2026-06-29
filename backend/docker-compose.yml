@@ -23,6 +23,9 @@ services:
     command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/app
+      # Dev-only: expose the host's built APKs to the container so the
+      # /dev/apk download endpoint can serve them (see core/dev_views.py).
+      - ../mobile/android/app/build/outputs/apk:/apks:ro
     ports:
       - "8000:8000"
     environment:
@@ -31,6 +34,7 @@ services:
       SECRET_KEY: dev-insecure-secret-key-change-me
       ALLOWED_HOSTS: "*"
       DATABASE_URL: postgres://sakina:sakina@db:5432/sakina
+      DEV_APK_DIR: /apks
     depends_on:
       db:
         condition: service_healthy
