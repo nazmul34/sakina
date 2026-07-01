@@ -1,8 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import RingerControl, { type RingerMode } from '../../modules/ringer-control';
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
+import { isAutoSilentEnabled } from '../lib/autoSilentSettings';
 import { ConfirmDialog } from './ConfirmDialog';
 
 const MODES: RingerMode[] = ['silent', 'vibrate', 'normal'];
@@ -11,16 +12,54 @@ const MODES: RingerMode[] = ['silent', 'vibrate', 'normal'];
 const TEST_ZONE = 'test-zone';
 
 /**
+ * Display-only mirror of the native grace timers (see `RingerHysteresis.kt`:
+ * `DWELL_MS` / `EXIT_BUFFER_MS`). Native AlarmManager remains the real source of
+ * truth for when silence/restore actually fire; these just drive the dev panel's
+ * countdown so QA can *see* when it's about to happen. Keep in sync with native.
+ */
+const DWELL_MS = 45_000;
+const EXIT_BUFFER_MS = 20_000;
+
+/**
+ * How long to wait for the native commit alarm after the grace elapses before
+ * flagging it as deferred. The dwell/exit timers fire via `setAndAllowWhileIdle`,
+ * which the OS can delay for a *manually* triggered test (no preceding geofence
+ * wake) when the app isn't battery-exempt — so the actual silence/restore can
+ * land tens of seconds after the grace. Beyond this we stop waiting and explain.
+ */
+const CONFIRM_TIMEOUT_MS = 90_000;
+
+/** Which grace timer the panel is currently counting down, if any. */
+type Countdown = { kind: 'dwell' | 'exit'; endsAt: number };
+
+/**
+ * After the grace elapses, the native outcome the panel is polling to confirm —
+ * `silence` waits for a zone to go active, `restore` waits for the last to clear.
+ */
+type Awaiting = { kind: 'silence' | 'restore'; since: number };
+
+type StatusTone = 'success' | 'warning' | 'danger' | 'info' | 'muted';
+
+/**
  * Dev/QA panel that exercises the native `RingerControl` module directly — a
  * manual harness for the F-00.2 ringer primitives and, via the zone Enter/Exit
  * buttons, the full F-01.3/1.4/1.5/1.8/1.9 state machine without needing real
- * geofence data (EPIC-02/03) or physical movement. Real auto-silent UI replaces
- * this later.
+ * geofence data (EPIC-02/03) or physical movement.
  *
  * The Enter/Exit buttons feed the same `onZoneEnter`/`onZoneExit` seam the
  * background geofencing task uses, so they drive the genuine dwell → silence →
  * exit-buffer → restore flow (and its activity log + failure warnings), just on
- * demand instead of from GPS.
+ * demand instead of from GPS. The panel adds three QA affordances on top:
+ *
+ *  - a live **countdown** mirroring the native dwell/exit grace, so it's obvious
+ *    when silence/restore will fire rather than guessing at the 45 s / 20 s waits;
+ *  - a plain-language **status line** explaining what the state machine is doing
+ *    (and, crucially, *why* it didn't silence when expected);
+ *  - a **prerequisites checklist** (master toggle, DND, notifications, battery)
+ *    so a "nothing happened" report is one glance to diagnose.
+ *
+ * Rendered only in dev builds (gated by `__DEV__` at the call site) — production
+ * never shows this section, nor the API/device footer beside it.
  */
 export function RingerControlPanel() {
   const styles = useThemedStyles(makeStyles);
@@ -33,17 +72,86 @@ export function RingerControlPanel() {
   const [ringerMode, setRingerModeState] = useState<RingerMode>(() =>
     RingerControl.getRingerMode(),
   );
+  const [silenceMode, setSilenceMode] = useState(() =>
+    RingerControl.getSilenceMode(),
+  );
   const [activeZones, setActiveZones] = useState(() =>
     RingerControl.activeZoneCount(),
   );
+  const [masterEnabled, setMasterEnabled] = useState(() => isAutoSilentEnabled());
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() =>
+    RingerControl.areNotificationsEnabled(),
+  );
+  const [batteryExempt, setBatteryExempt] = useState(() =>
+    RingerControl.isIgnoringBatteryOptimizations(),
+  );
   const [dndPromptVisible, setDndPromptVisible] = useState(false);
+
+  // Grace-timer + confirmation bookkeeping. `countdown` is the precise dwell/exit
+  // grace (mirrors native). When it elapses the *actual* silence/restore is done
+  // by a native AlarmManager alarm that — unlike production, where a geofence
+  // event has just woken the device — can be deferred by the OS for a manually
+  // triggered test (App Standby / no battery exemption). So instead of assuming
+  // it's done at 0s, we move into `awaiting` and poll native until the zone really
+  // commits; `notice` holds a one-off explanation if the alarm never fires in time.
+  const [countdown, setCountdown] = useState<Countdown | null>(null);
+  const [awaiting, setAwaiting] = useState<Awaiting | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   const refresh = useCallback(() => {
     setDndGranted(RingerControl.isDndAccessGranted());
     setRingerModeState(RingerControl.getRingerMode());
+    setSilenceMode(RingerControl.getSilenceMode());
     setDeviceId(RingerControl.getDeviceId());
     setActiveZones(RingerControl.activeZoneCount());
+    setMasterEnabled(isAutoSilentEnabled());
+    setNotificationsEnabled(RingerControl.areNotificationsEnabled());
+    setBatteryExempt(RingerControl.isIgnoringBatteryOptimizations());
   }, []);
+
+  // Tick the precise grace countdown; when it elapses, hand off to the polling
+  // phase — the deferrable native alarm that actually silences/restores may not
+  // have fired yet, so we don't claim it's done.
+  useEffect(() => {
+    if (!countdown) return;
+    const id = setInterval(() => {
+      if (Date.now() >= countdown.endsAt) {
+        const kind = countdown.kind === 'dwell' ? 'silence' : 'restore';
+        setCountdown(null);
+        setNotice(null);
+        setAwaiting({ kind, since: Date.now() });
+      } else {
+        setNow(Date.now());
+      }
+    }, 250);
+    return () => clearInterval(id);
+  }, [countdown]);
+
+  // Poll native until the grace's outcome actually lands (silence: a zone goes
+  // active; restore: the last zone clears), then re-read state. If the deferrable
+  // alarm hasn't fired within the timeout, stop and explain — almost always the
+  // missing battery-optimisation exemption.
+  useEffect(() => {
+    if (!awaiting) return;
+    const id = setInterval(() => {
+      const count = RingerControl.activeZoneCount();
+      const landed = awaiting.kind === 'silence' ? count > 0 : count === 0;
+      if (landed) {
+        setAwaiting(null);
+        refresh();
+      } else if (Date.now() - awaiting.since > CONFIRM_TIMEOUT_MS) {
+        setAwaiting(null);
+        setNotice(
+          `The ${awaiting.kind === 'silence' ? 'dwell' : 'restore'} alarm hasn’t fired within ${CONFIRM_TIMEOUT_MS / 1000}s — the OS is deferring it. Grant the battery-optimisation exemption (checklist below) so alarms fire on time; in production a geofence event wakes the device first, so this lag doesn’t happen.`,
+        );
+        refresh();
+      } else {
+        setNow(Date.now());
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [awaiting, refresh]);
 
   const applyMode = useCallback((mode: RingerMode) => {
     // Changing the ringer needs Do Not Disturb access; rather than fail with a
@@ -62,56 +170,168 @@ export function RingerControlPanel() {
   }, []);
 
   const enterZone = useCallback(() => {
-    setActiveZones(RingerControl.onZoneEnter(TEST_ZONE));
-  }, []);
+    setNotice(null);
+    // Re-enter during the exit buffer is a jitter bounce: cancel the pending
+    // restore so the zone stays active and silent. Don't reset here — exercising
+    // the bounce is the whole point of pressing Enter mid-buffer.
+    if (countdown?.kind === 'exit') {
+      setActiveZones(RingerControl.onZoneEnter(TEST_ZONE));
+      setCountdown(null);
+      return;
+    }
+    // Otherwise treat Enter as a fresh simulated entry: clear any prior/stuck
+    // session first so the dwell always runs. Without this, entering a zone
+    // that's already active no-ops natively and shows no countdown — the
+    // "Enter zone shows no timer" bug once a previous dwell has committed.
+    RingerControl.resetAutoSilent();
+    RingerControl.onZoneEnter(TEST_ZONE);
+    setActiveZones(RingerControl.activeZoneCount());
+    setRingerModeState(RingerControl.getRingerMode());
+    setAwaiting(null);
+    setCountdown({ kind: 'dwell', endsAt: Date.now() + DWELL_MS });
+  }, [countdown]);
+
+  const resetZones = useCallback(() => {
+    RingerControl.resetAutoSilent();
+    setCountdown(null);
+    setAwaiting(null);
+    setNotice(null);
+    refresh();
+  }, [refresh]);
 
   const exitZone = useCallback(() => {
-    setActiveZones(RingerControl.onZoneExit(TEST_ZONE));
+    setNotice(null);
+    setAwaiting(null);
+    const count = RingerControl.onZoneExit(TEST_ZONE);
+    setActiveZones(count);
+    setCountdown((cur) => {
+      // Exit during the dwell is a drive-past: native cancels the pending
+      // silence, so drop the countdown entirely.
+      if (cur?.kind === 'dwell') return null;
+      // Leaving a zone we were silencing for: start the exit-buffer countdown.
+      if (count > 0) return { kind: 'exit', endsAt: Date.now() + EXIT_BUFFER_MS };
+      return null;
+    });
   }, []);
+
+  const remainingSec = countdown
+    ? Math.ceil(Math.max(0, countdown.endsAt - now) / 1000)
+    : 0;
+
+  const status = deriveStatus({
+    countdown,
+    remainingSec,
+    awaiting,
+    awaitingSec: awaiting ? Math.floor((now - awaiting.since) / 1000) : 0,
+    notice,
+    activeZones,
+    ringerMode,
+    silenceMode,
+    dndGranted,
+    masterEnabled,
+  });
+
+  const checks: readonly {
+    label: string;
+    ok: boolean;
+    hint: string;
+    critical?: boolean;
+  }[] = [
+    {
+      label: 'Auto-silent master',
+      ok: masterEnabled,
+      hint: masterEnabled ? 'on' : 'off — turn it on so zones can silence',
+    },
+    {
+      label: 'DND access',
+      ok: dndGranted,
+      hint: dndGranted ? 'granted' : 'required to switch to silent/vibrate',
+      critical: true,
+    },
+    {
+      label: 'Notifications',
+      ok: notificationsEnabled,
+      hint: notificationsEnabled
+        ? 'enabled'
+        : 'needed for the foreground service & failure warnings',
+    },
+    {
+      label: 'Battery exemption',
+      ok: batteryExempt,
+      hint: batteryExempt
+        ? 'exempt'
+        : 'not exempt — the OS may defer geofence/alarm work',
+    },
+  ];
 
   return (
     <>
       <View style={styles.panel}>
         <Text style={styles.heading}>RingerControl (dev)</Text>
-        <Text style={styles.row}>Device ID: {deviceId}</Text>
-        <Text style={styles.row}>
-          DND access: {dndGranted ? 'granted' : 'not granted'}
-        </Text>
+
+        <View style={[styles.status, styles[`status_${status.tone}`]]}>
+          <Text style={[styles.statusText, styles[`statusText_${status.tone}`]]}>
+            {status.text}
+          </Text>
+        </View>
+
+        {countdown ? (
+          <Text style={styles.countdown}>
+            {countdown.kind === 'dwell' ? 'Silencing in' : 'Restoring in'}{' '}
+            {remainingSec}s
+          </Text>
+        ) : awaiting ? (
+          <Text style={styles.countdown}>
+            {awaiting.kind === 'silence' ? 'Applying silence…' : 'Restoring…'}
+          </Text>
+        ) : null}
+
         <Text style={styles.row}>Ringer mode: {ringerMode}</Text>
+        <Text style={styles.row}>Silences to: {silenceMode}</Text>
         <Text style={styles.row}>Active zones: {activeZones}</Text>
 
-        <View style={styles.buttons}>
-          {MODES.map((mode) => (
-            <Pressable
-              key={mode}
-              style={styles.button}
-              onPress={() => applyMode(mode)}
-            >
-              <Text style={styles.buttonText}>{mode}</Text>
-            </Pressable>
+        <View style={styles.checklist}>
+          {checks.map((c) => (
+            <View key={c.label} style={styles.checkRow}>
+              <View
+                style={[
+                  styles.dot,
+                  {
+                    backgroundColor: c.ok
+                      ? styles.dotOk.color
+                      : c.critical
+                        ? styles.dotBad.color
+                        : styles.dotWarn.color,
+                  },
+                ]}
+              />
+              <Text style={styles.checkLabel}>{c.label}</Text>
+              <Text style={styles.checkHint}>{c.hint}</Text>
+            </View>
           ))}
         </View>
 
         <View style={styles.buttons}>
-          <Pressable style={styles.button} onPress={enterZone}>
-            <Text style={styles.buttonText}>Enter zone</Text>
-          </Pressable>
-          <Pressable style={styles.button} onPress={exitZone}>
-            <Text style={styles.buttonText}>Exit zone</Text>
-          </Pressable>
+          {MODES.map((mode) => (
+            <Button key={mode} label={mode} onPress={() => applyMode(mode)} />
+          ))}
         </View>
 
         <View style={styles.buttons}>
-          <Pressable
-            style={styles.button}
-            onPress={() => RingerControl.openDndSettings()}
-          >
-            <Text style={styles.buttonText}>Open DND settings</Text>
-          </Pressable>
-          <Pressable style={styles.button} onPress={refresh}>
-            <Text style={styles.buttonText}>Refresh</Text>
-          </Pressable>
+          <Button label="Enter zone" onPress={enterZone} />
+          <Button label="Exit zone" onPress={exitZone} />
+          <Button label="Reset" onPress={resetZones} />
         </View>
+
+        <View style={styles.buttons}>
+          <Button
+            label="Open DND settings"
+            onPress={() => RingerControl.openDndSettings()}
+          />
+          <Button label="Refresh" onPress={refresh} />
+        </View>
+
+        <Text style={styles.deviceId}>Device ID: {deviceId}</Text>
       </View>
       <ConfirmDialog
         visible={dndPromptVisible}
@@ -127,6 +347,98 @@ export function RingerControlPanel() {
       />
     </>
   );
+}
+
+/**
+ * A panel button with an explicit pressed state — the bare `Pressable`s gave no
+ * feedback on tap, so a tester couldn't tell a press registered (the original
+ * "Enter zone feels dead" complaint).
+ */
+function Button({ label, onPress }: { label: string; onPress: () => void }) {
+  const styles = useThemedStyles(makeStyles);
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+    >
+      <Text style={styles.buttonText}>{label}</Text>
+    </Pressable>
+  );
+}
+
+/**
+ * Translate the raw state machine into one plain-language line, biased toward
+ * explaining *why* the phone isn't silenced when a tester expected it to be.
+ */
+function deriveStatus(s: {
+  countdown: Countdown | null;
+  remainingSec: number;
+  awaiting: Awaiting | null;
+  awaitingSec: number;
+  notice: string | null;
+  activeZones: number;
+  ringerMode: RingerMode;
+  silenceMode: RingerMode;
+  dndGranted: boolean;
+  masterEnabled: boolean;
+}): { tone: StatusTone; text: string } {
+  if (s.countdown?.kind === 'dwell') {
+    return {
+      tone: 'info',
+      text: `Dwell grace running — auto-silent applies in ${s.remainingSec}s if you stay (exit now = drive-past, no silence).`,
+    };
+  }
+  if (s.countdown?.kind === 'exit') {
+    return {
+      tone: 'info',
+      text: `Exit buffer running — ringer restores in ${s.remainingSec}s (re-enter to cancel the restore).`,
+    };
+  }
+  if (s.awaiting?.kind === 'silence') {
+    return {
+      tone: 'info',
+      text: `Dwell elapsed — applying silence… waiting for the OS alarm (${s.awaitingSec}s). It can lag when battery optimisation isn’t disabled.`,
+    };
+  }
+  if (s.awaiting?.kind === 'restore') {
+    return {
+      tone: 'info',
+      text: `Exit buffer elapsed — restoring… waiting for the OS alarm (${s.awaitingSec}s). It can lag when battery optimisation isn’t disabled.`,
+    };
+  }
+  if (s.notice) {
+    return { tone: 'warning', text: s.notice };
+  }
+  if (s.activeZones > 0) {
+    if (s.ringerMode === s.silenceMode) {
+      return {
+        tone: 'success',
+        text: `Silenced (${s.silenceMode}) — inside ${s.activeZones} zone(s).`,
+      };
+    }
+    if (!s.dndGranted) {
+      return {
+        tone: 'danger',
+        text: 'In a zone but NOT silenced: Do Not Disturb access is off, so the ringer can’t be changed. Grant it and re-enter.',
+      };
+    }
+    return {
+      tone: 'warning',
+      text: `In a zone but ringer is "${s.ringerMode}", not "${s.silenceMode}". Most likely a manual override (your choice is honored until you leave), a prayer-aware window gap, or DND was just lost.`,
+    };
+  }
+  if (!s.masterEnabled) {
+    return {
+      tone: 'warning',
+      text: 'Auto-silent master toggle is OFF — real geofences are disarmed. These buttons still drive the state machine for testing.',
+    };
+  }
+  return {
+    tone: 'muted',
+    text: 'Idle — not in any zone. Tap "Enter zone" to start the dwell countdown.',
+  };
 }
 
 const makeStyles = (colors: ThemeColors) => StyleSheet.create({
@@ -146,9 +458,66 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     marginBottom: 4,
     color: colors.text,
   },
+  status: {
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    marginBottom: 2,
+  },
+  status_success: { backgroundColor: colors.successTint },
+  status_warning: { backgroundColor: colors.warningTint },
+  status_danger: { backgroundColor: colors.dangerTint },
+  status_info: { backgroundColor: colors.surfaceAlt },
+  status_muted: { backgroundColor: colors.surfaceAlt },
+  statusText: {
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+  statusText_success: { color: colors.success },
+  statusText_warning: { color: colors.warning },
+  statusText_danger: { color: colors.danger },
+  statusText_info: { color: colors.info },
+  statusText_muted: { color: colors.textMuted },
+  countdown: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.text,
+    fontVariant: ['tabular-nums'],
+  },
   row: {
     fontSize: 13,
     color: colors.textMuted,
+  },
+  checklist: {
+    marginTop: 8,
+    gap: 6,
+  },
+  checkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  // Carriers for the dot palette — referenced as `styles.dotOk.color` etc. so the
+  // theme colours stay in one place rather than being read off `colors` inline.
+  dotOk: { color: colors.success },
+  dotWarn: { color: colors.warning },
+  dotBad: { color: colors.danger },
+  checkLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  checkHint: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: 'right',
   },
   buttons: {
     flexDirection: 'row',
@@ -162,9 +531,18 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: 8,
     backgroundColor: colors.accentBlue,
   },
+  buttonPressed: {
+    opacity: 0.55,
+    transform: [{ scale: 0.97 }],
+  },
   buttonText: {
     fontSize: 13,
     fontWeight: '600',
     color: colors.info,
+  },
+  deviceId: {
+    marginTop: 10,
+    fontSize: 11,
+    color: colors.muted,
   },
 });

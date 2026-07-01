@@ -245,6 +245,48 @@ internal object RingerSilenceController {
     synchronized(lock) { RingerSnapshotStore(context).activeZones.size }
 
   /**
+   * Hard-reset the state machine to idle — for the dev/QA panel. Cancels every
+   * pending dwell / exit-buffer / prayer-window alarm, restores the ringer if
+   * we're currently holding it silent (so a reset never strands the phone on
+   * silent), and clears all persisted session state.
+   *
+   * Unlike a normal [exitZone] there is no grace buffer: it returns to a clean
+   * slate at once, so the panel's "Enter zone" can always start a fresh dwell
+   * instead of no-opping on a zone that's already active. Not part of the
+   * production flow — geofence enter/exit never call this.
+   */
+  fun reset(context: Context) {
+    synchronized(lock) {
+      val store = RingerSnapshotStore(context)
+
+      store.pendingEnterZones.forEach { RingerHysteresis.cancelDwell(context, it) }
+      store.pendingExitZones.forEach { RingerHysteresis.cancelExitBuffer(context, it) }
+      RingerHysteresis.cancelWindowBoundary(context)
+
+      // Don't leave the phone stranded on silent: if we're holding it down,
+      // put it back to the captured prior mode (or normal as a safety net).
+      if (store.silencing) {
+        val restore = store.snapshot ?: "normal"
+        try {
+          RingerIO.setRingerMode(context, restore)
+        } catch (e: Exception) {
+          Log.w(TAG, "reset: could not restore '$restore'", e)
+        }
+      }
+
+      store.activeZones = HashSet()
+      store.pendingEnterZones = HashSet()
+      store.pendingExitZones = HashSet()
+      store.snapshot = null
+      store.sessionZoneId = null
+      store.lastSetMode = null
+      store.overridden = false
+      store.silencing = false
+      Log.i(TAG, "reset: state machine cleared to idle")
+    }
+  }
+
+  /**
    * Reconcile pending grace timers lost to a reboot ([RingerBootReceiver]).
    * AlarmManager alarms don't survive a reboot, so any zone caught mid-dwell or
    * mid-exit-buffer would otherwise dangle forever. We resolve each to its safe
