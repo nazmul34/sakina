@@ -139,6 +139,16 @@ export declare class RingerControlModule extends NativeModule {
   activeZoneCount(): number;
 
   /**
+   * Dev/QA only: hard-reset the auto-silent state machine to idle. Cancels all
+   * pending dwell / exit-buffer / prayer-window timers, restores the ringer if
+   * it's currently held silent, and clears persisted session state. The
+   * developer panel uses this so "Enter zone" can always start a fresh dwell
+   * instead of no-opping on an already-active zone. Never called on the geofence
+   * path.
+   */
+  resetAutoSilent(): void;
+
+  /**
    * Enable or disable prayer-aware silent (F-01.10) — the opt-in gate that, while
    * inside a zone, tightens silencing to the prayer windows pushed via
    * {@link setPrayerWindows} instead of the whole presence. Off by default; takes

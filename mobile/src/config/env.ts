@@ -16,3 +16,21 @@
  */
 export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://10.0.2.2:8000';
+
+/**
+ * Whether to surface the developer/QA tools (the RingerControl panel and the
+ * API/device footer in Settings).
+ *
+ * `__DEV__` alone can't gate these for distributable builds: a bundled APK —
+ * whether a QA build or a real release — is always a production bundle with
+ * `__DEV__ === false`, so it can't tell the two apart. We therefore add an
+ * explicit opt-in: set `EXPO_PUBLIC_SHOW_DEV_TOOLS=1` when building a **testing**
+ * APK (it's inlined into the bundle), and leave it unset for **release /
+ * production**, which then always hide the dev tools.
+ *
+ * - Local debug build (Metro): `__DEV__` is true → shown, no env var needed.
+ * - Testing APK: build with `EXPO_PUBLIC_SHOW_DEV_TOOLS=1` → shown.
+ * - Release/production: flag unset → hidden.
+ */
+export const SHOW_DEV_TOOLS =
+  __DEV__ || process.env.EXPO_PUBLIC_SHOW_DEV_TOOLS === '1';

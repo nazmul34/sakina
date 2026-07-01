@@ -115,6 +115,13 @@ class RingerControlModule : Module() {
       RingerSilenceController.activeZoneCount(context)
     }
 
+    // Dev/QA only: hard-reset the state machine to idle (used by the developer
+    // panel so "Enter zone" can always start a fresh dwell). Not on the geofence
+    // path.
+    Function("resetAutoSilent") {
+      RingerSilenceController.reset(context)
+    }
+
     // --- Prayer-aware silent gate (F-01.10) ---------------------------------
     // JS owns prayer-time computation (adhan is JS-only), so it pushes the opt-in
     // flag and the upcoming window boundaries here; the silence state machine
