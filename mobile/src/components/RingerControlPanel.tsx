@@ -98,6 +98,14 @@ export function RingerControlPanel() {
   const [awaiting, setAwaiting] = useState<Awaiting | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  // A dwell/exit countdown polled from native for a *real* geofence-driven
+  // silence (e.g. a pinned zone). Distinct from `countdown`, which the manual
+  // Enter/Exit buttons drive with a precise local clock. Only one is shown at a
+  // time — the manual one wins while a test is mid-flight.
+  const [livePending, setLivePending] = useState<{
+    kind: 'dwell' | 'exit';
+    remainingSec: number;
+  } | null>(null);
 
   const refresh = useCallback(() => {
     setDndGranted(RingerControl.isDndAccessGranted());
@@ -152,6 +160,33 @@ export function RingerControlPanel() {
     }, 1000);
     return () => clearInterval(id);
   }, [awaiting, refresh]);
+
+  // Mirror *real* geofence-driven auto-silent (e.g. a pinned zone) live, not just
+  // the manual Enter/Exit buttons: while no manual test is mid-flight, poll native
+  // for the current state and its dwell/exit grace countdown so the panel shows
+  // the timer + status for a silence the background geofencing task drove. Paused
+  // during a manual test so the two countdowns never fight over the display.
+  useEffect(() => {
+    const id = setInterval(() => {
+      // A manual test owns the display via `countdown`/`awaiting`; clear the
+      // native mirror so the two never show at once.
+      if (countdown || awaiting) {
+        setLivePending(null);
+        return;
+      }
+      refresh();
+      const pending = RingerControl.getPendingCountdown();
+      setLivePending(
+        pending
+          ? {
+              kind: pending.kind,
+              remainingSec: Math.ceil(pending.remainingMs / 1000),
+            }
+          : null,
+      );
+    }, 1000);
+    return () => clearInterval(id);
+  }, [countdown, awaiting, refresh]);
 
   const applyMode = useCallback((mode: RingerMode) => {
     // Changing the ringer needs Do Not Disturb access; rather than fail with a
@@ -218,9 +253,14 @@ export function RingerControlPanel() {
     ? Math.ceil(Math.max(0, countdown.endsAt - now) / 1000)
     : 0;
 
+  // The countdown to display and explain: the manual buttons' precise local
+  // `countdown` when a test is running, otherwise the native-polled `livePending`
+  // for a real geofence-driven grace. Normalised to one shape for the UI + status.
+  const displayCountdown: { kind: 'dwell' | 'exit'; remainingSec: number } | null =
+    countdown ? { kind: countdown.kind, remainingSec } : awaiting ? null : livePending;
+
   const status = deriveStatus({
-    countdown,
-    remainingSec,
+    countdown: displayCountdown,
     awaiting,
     awaitingSec: awaiting ? Math.floor((now - awaiting.since) / 1000) : 0,
     notice,
@@ -275,10 +315,10 @@ export function RingerControlPanel() {
           </Text>
         </View>
 
-        {countdown ? (
+        {displayCountdown ? (
           <Text style={styles.countdown}>
-            {countdown.kind === 'dwell' ? 'Silencing in' : 'Restoring in'}{' '}
-            {remainingSec}s
+            {displayCountdown.kind === 'dwell' ? 'Silencing in' : 'Restoring in'}{' '}
+            {displayCountdown.remainingSec}s
           </Text>
         ) : awaiting ? (
           <Text style={styles.countdown}>
@@ -373,8 +413,7 @@ function Button({ label, onPress }: { label: string; onPress: () => void }) {
  * explaining *why* the phone isn't silenced when a tester expected it to be.
  */
 function deriveStatus(s: {
-  countdown: Countdown | null;
-  remainingSec: number;
+  countdown: { kind: 'dwell' | 'exit'; remainingSec: number } | null;
   awaiting: Awaiting | null;
   awaitingSec: number;
   notice: string | null;
@@ -387,13 +426,13 @@ function deriveStatus(s: {
   if (s.countdown?.kind === 'dwell') {
     return {
       tone: 'info',
-      text: `Dwell grace running — auto-silent applies in ${s.remainingSec}s if you stay (exit now = drive-past, no silence).`,
+      text: `Dwell grace running — auto-silent applies in ${s.countdown.remainingSec}s if you stay (exit now = drive-past, no silence).`,
     };
   }
   if (s.countdown?.kind === 'exit') {
     return {
       tone: 'info',
-      text: `Exit buffer running — ringer restores in ${s.remainingSec}s (re-enter to cancel the restore).`,
+      text: `Exit buffer running — ringer restores in ${s.countdown.remainingSec}s (re-enter to cancel the restore).`,
     };
   }
   if (s.awaiting?.kind === 'silence') {

@@ -17,6 +17,7 @@
 import * as Location from 'expo-location';
 
 import AutoSilent from '../../../modules/auto-silent';
+import RingerControl from '../../../modules/ringer-control';
 import { syncPrayerAwareSilentToNative } from '../prayerAwareSilent';
 import { GEOFENCING_TASK, REREGISTER_THRESHOLD_M } from './constants';
 import { getGeofenceCandidates } from './candidates';
@@ -96,6 +97,14 @@ export async function armGeofencing(): Promise<void> {
   anchor = { latitude: center.latitude, longitude: center.longitude };
   console.info(`[geofencing] armed ${regions.length} region(s)`);
 
+  // Release any zone the state machine still holds active that we're no longer
+  // monitoring (e.g. a deleted pin). Android fires no exit for a geofence we stop
+  // monitoring, so without this the ringer stays silenced on a vanished zone and
+  // the stale zone blocks a later re-add from re-silencing (FR-1.3).
+  RingerControl.reconcileActiveZones(
+    regions.flatMap((r) => (r.identifier ? [r.identifier] : [])),
+  );
+
   // Refresh the prayer-aware silent gate (F-01.10) with windows computed around
   // the position we just armed at. Best-effort and gated by its own opt-in flag,
   // so it never affects arming when the feature is off.
@@ -112,6 +121,11 @@ export async function disarmGeofencing(): Promise<void> {
     await Location.stopGeofencingAsync(GEOFENCING_TASK);
     console.info('[geofencing] disarmed');
   }
+  // Nothing is monitored anymore, so release every zone the state machine still
+  // holds active — restoring the ringer if it was silencing. This is what keeps
+  // auto-silent from stranding the phone on silent when the user toggles it off
+  // (or deletes their last pin) while parked inside a zone (FR-1.3).
+  RingerControl.reconcileActiveZones([]);
   // Clear any prayer-window boundaries so a stale set can't gate later (no zones
   // means no session, so this only tidies native state). Best-effort.
   await syncPrayerAwareSilentToNative(null);

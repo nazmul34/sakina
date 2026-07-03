@@ -115,6 +115,20 @@ class RingerControlModule : Module() {
       RingerSilenceController.activeZoneCount(context)
     }
 
+    // Reconcile the state machine against the geofence set JS is now monitoring.
+    // Called on every (re)arm/disarm so a zone that dropped out of the set — e.g.
+    // a deleted pin — releases its silence instead of dangling (Android sends no
+    // exit for a geofence it stops monitoring). Returns the active-zone count.
+    Function("reconcileActiveZones") { validIds: List<String> ->
+      RingerSilenceController.reconcileZones(context, validIds)
+    }
+
+    // Dev/QA: the live dwell/exit grace countdown (or null when idle), so the
+    // panel can mirror a real geofence-driven silence, not just the test buttons.
+    Function("getPendingCountdown") {
+      RingerSilenceController.pendingCountdown(context)
+    }
+
     // Dev/QA only: hard-reset the state machine to idle (used by the developer
     // panel so "Enter zone" can always start a fresh dwell). Not on the geofence
     // path.

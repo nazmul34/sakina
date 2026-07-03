@@ -109,6 +109,33 @@ internal class RingerSnapshotStore(context: Context) {
       }.apply()
     }
 
+  /**
+   * Epoch-ms fire time of the most recently scheduled dwell timer — a display hint
+   * for the dev panel's live countdown so real geofence-driven silencing (e.g. a
+   * pinned zone) shows the same "silencing in Ns" the manual test buttons do.
+   * Read only while a zone is pending-enter; the AlarmManager alarm remains the
+   * real source of truth. `null` when none has been scheduled.
+   */
+  var dwellFireAt: Long?
+    get() = prefs.getLong(KEY_DWELL_FIRE_AT, 0L).takeIf { it > 0L }
+    set(value) {
+      prefs.edit().apply {
+        if (value == null) remove(KEY_DWELL_FIRE_AT) else putLong(KEY_DWELL_FIRE_AT, value)
+      }.apply()
+    }
+
+  /**
+   * Epoch-ms fire time of the most recently scheduled exit-buffer timer — the
+   * exit-side twin of [dwellFireAt], read only while a zone is pending-exit.
+   */
+  var exitFireAt: Long?
+    get() = prefs.getLong(KEY_EXIT_FIRE_AT, 0L).takeIf { it > 0L }
+    set(value) {
+      prefs.edit().apply {
+        if (value == null) remove(KEY_EXIT_FIRE_AT) else putLong(KEY_EXIT_FIRE_AT, value)
+      }.apply()
+    }
+
   /** SharedPreferences hands back a shared, unmodifiable set, so copy defensively. */
   private fun readSet(key: String): MutableSet<String> =
     HashSet(prefs.getStringSet(key, emptySet()) ?: emptySet())
@@ -127,5 +154,7 @@ internal class RingerSnapshotStore(context: Context) {
     const val KEY_OVERRIDDEN = "overridden"
     const val KEY_SESSION_ZONE = "session_zone"
     const val KEY_SILENCING = "silencing"
+    const val KEY_DWELL_FIRE_AT = "dwell_fire_at"
+    const val KEY_EXIT_FIRE_AT = "exit_fire_at"
   }
 }
