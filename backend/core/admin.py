@@ -2,7 +2,15 @@
 
 from django.contrib import admin
 
-from .models import Device, DeviceSettings, FetchedTile, IslamicMessage, Mosque, Pin
+from .models import (
+    Device,
+    DeviceSettings,
+    FetchedTile,
+    IslamicMessage,
+    Mosque,
+    MosqueReport,
+    Pin,
+)
 
 
 @admin.register(Device)
@@ -39,6 +47,33 @@ class MosqueAdmin(admin.ModelAdmin):
     list_filter = ("source",)
     search_fields = ("name", "external_id")
     readonly_fields = ("id", "created_at", "updated_at")
+
+
+@admin.register(MosqueReport)
+class MosqueReportAdmin(admin.ModelAdmin):
+    list_display = (
+        "mosque_name",
+        "mosque_public_id",
+        "reason",
+        "status",
+        "device",
+        "created_at",
+    )
+    list_filter = ("status", "reason", "created_at")
+    search_fields = ("mosque_name", "mosque_public_id", "note")
+    list_editable = ("status",)
+    readonly_fields = (
+        "id",
+        "device",
+        "mosque_public_id",
+        "mosque_name",
+        "lat",
+        "lng",
+        "reason",
+        "note",
+        "created_at",
+        "updated_at",
+    )
 
 
 @admin.register(FetchedTile)

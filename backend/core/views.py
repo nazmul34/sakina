@@ -15,7 +15,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from .geo import GeoProviderError, Mosque, find_nearby_mosques
-from .models import DeviceSettings, IslamicMessage, Pin
+from .models import DeviceSettings, IslamicMessage, MosqueReport, Pin
 
 
 @api_view(["GET"])
@@ -67,6 +67,71 @@ def mosques(request: Request) -> Response:
             "mosques": [_serialize(m) for m in results],
         }
     )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def mosque_reports(request: Request) -> Response:
+    """``POST /mosques/reports`` — flag a mosque as incorrect (FR-2.6).
+
+    Records a crowdsourced correction (closed, misnamed, or not a mosque) as a
+    moderated :class:`MosqueReport` row. It **never** edits the mosque itself —
+    that data is provider-owned and refreshed on a TTL — so the report lands as
+    ``PENDING`` for later reconciliation (EPIC-08).
+
+    The body carries the opaque ``mosque_id`` the API exposes plus a snapshot of
+    what the user was shown (``name``/``lat``/``lng``) so the report stays
+    meaningful after the cache refreshes; ``reason`` and ``note`` are optional.
+    The reporting device is attributed from the ``X-Device-Id`` header when
+    present, but a report is never rejected for the lack of one — flagging bad
+    data should always succeed.
+    """
+    try:
+        fields = _parse_report_body(request.data)
+    except ValueError as exc:
+        return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    report = MosqueReport.objects.create(device=request.device, **fields)
+    return Response(
+        {"id": str(report.id), "status": report.status},
+        status=status.HTTP_201_CREATED,
+    )
+
+
+def _parse_report_body(data: dict) -> dict:
+    """Validate a mosque-report body into normalised model fields.
+
+    ``mosque_id`` and the ``lat``/``lng`` snapshot are required; ``name``,
+    ``reason`` (a :class:`MosqueReport.Reason`), and ``note`` are optional.
+    Raises ``ValueError`` with a client-facing message on any bad field.
+    """
+    mosque_id = data.get("mosque_id")
+    if not isinstance(mosque_id, str) or not mosque_id.strip():
+        raise ValueError("mosque_id is required")
+    if len(mosque_id) > 64:
+        raise ValueError("mosque_id is too long")
+
+    name = data.get("name")
+    if name is not None and not isinstance(name, str):
+        raise ValueError("name must be a string")
+
+    note = data.get("note", "")
+    if not isinstance(note, str):
+        raise ValueError("note must be a string")
+
+    reason = data.get("reason", MosqueReport.Reason.UNSPECIFIED)
+    valid_reasons = {c.value for c in MosqueReport.Reason}
+    if reason not in valid_reasons:
+        raise ValueError(f"reason must be one of: {', '.join(sorted(valid_reasons))}")
+
+    return {
+        "mosque_public_id": mosque_id.strip(),
+        "mosque_name": name,
+        "lat": _parse_coord(data.get("lat"), "lat", limit=90.0),
+        "lng": _parse_coord(data.get("lng"), "lng", limit=180.0),
+        "reason": reason,
+        "note": note,
+    }
 
 
 @api_view(["GET", "POST"])
