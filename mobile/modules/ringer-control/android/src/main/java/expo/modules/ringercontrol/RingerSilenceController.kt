@@ -74,6 +74,9 @@ internal object RingerSilenceController {
         pendingEnter.add(regionId)
         store.pendingEnterZones = pendingEnter
         RingerHysteresis.scheduleDwell(context, regionId)
+        // Record when it will fire so the dev panel can show a live countdown for
+        // this (real geofence-driven) dwell, not just the manual test buttons.
+        store.dwellFireAt = System.currentTimeMillis() + RingerHysteresis.DWELL_MS
         Log.i(TAG, "enterZone($regionId): dwell started (${RingerHysteresis.DWELL_MS} ms)")
       }
       store.activeZones.size
@@ -108,6 +111,9 @@ internal object RingerSilenceController {
         pendingExit.add(regionId)
         store.pendingExitZones = pendingExit
         RingerHysteresis.scheduleExitBuffer(context, regionId)
+        // Record when it will fire so the dev panel's countdown mirrors a real
+        // geofence-driven exit buffer too (see [dwellFireAt]).
+        store.exitFireAt = System.currentTimeMillis() + RingerHysteresis.EXIT_BUFFER_MS
         Log.i(TAG, "exitZone($regionId): exit buffer started (${RingerHysteresis.EXIT_BUFFER_MS} ms)")
       }
       zones.size
@@ -243,6 +249,87 @@ internal object RingerSilenceController {
   /** Number of zones currently keeping the phone silent. */
   fun activeZoneCount(context: Context): Int =
     synchronized(lock) { RingerSnapshotStore(context).activeZones.size }
+
+  /**
+   * Reconcile the state machine against the set of geofence regions currently
+   * being monitored ([validIds]) — called by JS whenever the geofence set is
+   * (re)armed or disarmed.
+   *
+   * Android delivers **no exit event for a geofence you stop monitoring**, so a
+   * zone the user removed (e.g. a deleted pin) would otherwise dangle in
+   * [RingerSnapshotStore.activeZones] forever: the phone stays stranded on silent
+   * and the stale zone masks the "first active zone" check so re-adding a pin
+   * never re-opens a session. We fix that here by dropping any active/pending zone
+   * no longer in [validIds] and, if that empties the active set, ending the
+   * session so the ringer is restored — exactly what the missing exit would have
+   * done. Zones still monitored are untouched. Returns the active-zone count.
+   */
+  fun reconcileZones(context: Context, validIds: List<String>): Int =
+    synchronized(lock) {
+      val store = RingerSnapshotStore(context)
+      val valid = validIds.toHashSet()
+      refreshOverride(context, store)
+
+      // Cancel any pending dwell for a zone we've stopped monitoring — it must
+      // never silence for a zone that no longer exists.
+      val pendingEnter = store.pendingEnterZones
+      val staleEnter = pendingEnter.filterNot { it in valid }
+      if (staleEnter.isNotEmpty()) {
+        staleEnter.forEach { RingerHysteresis.cancelDwell(context, it) }
+        pendingEnter.removeAll(staleEnter.toSet())
+        store.pendingEnterZones = pendingEnter
+      }
+
+      // Cancel any pending exit-buffer for such a zone — it's leaving the active
+      // set now regardless.
+      val pendingExit = store.pendingExitZones
+      val staleExit = pendingExit.filterNot { it in valid }
+      if (staleExit.isNotEmpty()) {
+        staleExit.forEach { RingerHysteresis.cancelExitBuffer(context, it) }
+        pendingExit.removeAll(staleExit.toSet())
+        store.pendingExitZones = pendingExit
+      }
+
+      // Drop any active zone we've stopped monitoring; on the last one, end the
+      // session and restore the ringer (honoring a manual override), never leaving
+      // the phone stranded on silent.
+      val zones = store.activeZones
+      val staleActive = zones.filterNot { it in valid }
+      if (staleActive.isNotEmpty()) {
+        zones.removeAll(staleActive.toSet())
+        store.activeZones = zones
+        if (zones.isEmpty()) {
+          RingerHysteresis.cancelWindowBoundary(context)
+          endSession(context, store)
+        }
+        Log.i(TAG, "reconcileZones: released ${staleActive.size} stale zone(s), ${zones.size} active")
+      }
+      store.activeZones.size
+    }
+
+  /**
+   * The live dwell/exit countdown for the dev panel, or `null` when idle. Lets the
+   * panel show the grace timer for a *real* geofence-driven silence (e.g. a pinned
+   * zone), not only the manual Enter/Exit test buttons. A pending dwell (about to
+   * silence) takes priority over a pending exit; `remainingMs` is clamped to ≥ 0.
+   * Display-only — the AlarmManager alarm is still what actually fires.
+   */
+  fun pendingCountdown(context: Context): Map<String, Any>? =
+    synchronized(lock) {
+      val store = RingerSnapshotStore(context)
+      val now = System.currentTimeMillis()
+      when {
+        store.pendingEnterZones.isNotEmpty() -> {
+          val fireAt = store.dwellFireAt ?: (now + RingerHysteresis.DWELL_MS)
+          mapOf("kind" to "dwell", "remainingMs" to (fireAt - now).coerceAtLeast(0L).toDouble())
+        }
+        store.pendingExitZones.isNotEmpty() -> {
+          val fireAt = store.exitFireAt ?: (now + RingerHysteresis.EXIT_BUFFER_MS)
+          mapOf("kind" to "exit", "remainingMs" to (fireAt - now).coerceAtLeast(0L).toDouble())
+        }
+        else -> null
+      }
+    }
 
   /**
    * Hard-reset the state machine to idle — for the dev/QA panel. Cancels every

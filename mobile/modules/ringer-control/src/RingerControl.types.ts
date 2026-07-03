@@ -139,6 +139,26 @@ export declare class RingerControlModule extends NativeModule {
   activeZoneCount(): number;
 
   /**
+   * Reconcile the auto-silent state machine against the geofence regions still
+   * being monitored, releasing any active/pending zone whose id is **not** in
+   * `validIds`. Android delivers no exit event for a geofence you stop monitoring,
+   * so when the arming layer re-registers a changed set (e.g. after a pin is
+   * deleted) this is what tears down the silence for the vanished zone — ending
+   * the session and restoring the ringer if it was the last active one, so the
+   * phone is never stranded on silent. Pass every currently-monitored region id
+   * (empty array when disarming). Returns the remaining active-zone count.
+   */
+  reconcileActiveZones(validIds: string[]): number;
+
+  /**
+   * Dev/QA only: the live dwell/exit grace countdown, or `null` when no grace is
+   * running. Lets the developer panel surface the countdown for a real
+   * geofence-driven silence (e.g. a pinned zone), not just the manual Enter/Exit
+   * test buttons. `remainingMs` is the time left before the native alarm fires.
+   */
+  getPendingCountdown(): { kind: 'dwell' | 'exit'; remainingMs: number } | null;
+
+  /**
    * Dev/QA only: hard-reset the auto-silent state machine to idle. Cancels all
    * pending dwell / exit-buffer / prayer-window timers, restores the ringer if
    * it's currently held silent, and clears persisted session state. The
