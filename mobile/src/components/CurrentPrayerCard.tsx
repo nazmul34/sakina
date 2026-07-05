@@ -1,28 +1,29 @@
 /**
- * Next-prayer countdown for the home screen (F-05.3 / FR-5.3).
+ * Current-prayer card for the home screen (F-05.3 / FR-5.3).
  *
- * Shows which prayer is next and a live `H:MM:SS` countdown to it, derived from
- * the on-device computation ([[prayerTimes]]) and the user's saved method/Asr
- * config ([[prayerSettings]]) — so it works offline. When the countdown reaches
- * the prayer time it rolls over to the following prayer automatically (and to
- * tomorrow's Fajr after Isha), without remounting.
+ * Shows which prayer is **in effect right now** and a live `H:MM:SS` countdown of
+ * how much of it remains — i.e. until the next prayer begins — derived from the
+ * on-device computation ([[prayerTimes]]) and the user's saved method/Asr config
+ * ([[prayerSettings]]), so it works offline. When the countdown reaches zero it
+ * rolls over to the next prayer automatically (and handles the Isha→Fajr night
+ * wrap), without remounting.
  *
- * Location is a best-effort one-shot fix; without it we can't compute times, so
- * the card invites the user to enable location rather than showing nothing.
+ * Location is a best-effort fix via [[useHighAccuracyLocation]]; without it we
+ * can't compute times, so the card invites the user to enable location and then
+ * fills in on its own once they do (the hook retries on foreground).
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import { useHighAccuracyLocation } from '../hooks/useHighAccuracyLocation';
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
-import type { LatLng } from '../lib/geofencing/types';
-import { getHighAccuracyFix } from '../lib/location';
 import { usePrayerTimesConfig } from '../lib/prayerSettings';
 import {
   formatTimeOfDay,
-  getNextPrayer,
+  getCurrentPrayer,
   PRAYER_LABELS,
-  type NextPrayer,
+  type CurrentPrayer,
 } from '../lib/prayerTimes';
 
 /** Format a positive millisecond span as `H:MM:SS`. */
@@ -36,27 +37,16 @@ function formatCountdown(ms: number): string {
   return `${hours}:${mm}:${ss}`;
 }
 
-export function NextPrayerCountdown() {
+export function CurrentPrayerCard() {
   const styles = useThemedStyles(makeStyles);
   const [config] = usePrayerTimesConfig();
-  const [location, setLocation] = useState<LatLng | null>(null);
-  const [locationError, setLocationError] = useState(false);
+  // Best-effort location fix. Without it we can't compute times; the hook retries
+  // on foreground, so the card fills in once location is enabled rather than
+  // needing an app restart.
+  const { location, status: locationStatus } = useHighAccuracyLocation();
+  const locationError =
+    locationStatus === 'denied' || locationStatus === 'error';
   const [now, setNow] = useState(() => Date.now());
-
-  // Best-effort one-shot location fix. Without it we can't compute times.
-  useEffect(() => {
-    let active = true;
-    getHighAccuracyFix()
-      .then((fix) => {
-        if (active) setLocation(fix);
-      })
-      .catch(() => {
-        if (active) setLocationError(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   // One-second tick driving the live countdown.
   useEffect(() => {
@@ -64,20 +54,20 @@ export function NextPrayerCountdown() {
     return () => clearInterval(id);
   }, []);
 
-  // Derive the next prayer from the current instant each tick. Because the tick
-  // advances `now`, the result rolls over to the following prayer the moment a
-  // time passes (and to tomorrow's Fajr after Isha) with no extra bookkeeping.
-  const next: NextPrayer | null = useMemo(
-    () => (location ? getNextPrayer(location, new Date(now), config) : null),
+  // Derive the current prayer from the current instant each tick. Because the tick
+  // advances `now`, the result rolls over to the next prayer the moment this one
+  // ends (and wraps Isha→Fajr overnight) with no extra bookkeeping.
+  const current: CurrentPrayer | null = useMemo(
+    () => (location ? getCurrentPrayer(location, new Date(now), config) : null),
     [location, now, config],
   );
 
-  const remaining = next ? next.time.getTime() - now : 0;
+  const remaining = current ? current.end.getTime() - now : 0;
 
-  if (locationError && !next) {
+  if (locationError && !current) {
     return (
       <View style={styles.card}>
-        <Text style={styles.label}>Next prayer</Text>
+        <Text style={styles.label}>Current prayer</Text>
         <Text style={styles.hint}>
           Enable location to see prayer times and your countdown.
         </Text>
@@ -85,7 +75,7 @@ export function NextPrayerCountdown() {
     );
   }
 
-  if (!next) {
+  if (!current) {
     return (
       <View style={styles.card}>
         <ActivityIndicator />
@@ -95,14 +85,12 @@ export function NextPrayerCountdown() {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>
-        Next prayer{next.isTomorrow ? ' (tomorrow)' : ''}
-      </Text>
+      <Text style={styles.label}>Current prayer</Text>
       <View style={styles.row}>
-        <Text style={styles.name}>{PRAYER_LABELS[next.name]}</Text>
-        <Text style={styles.at}>{formatTimeOfDay(next.time)}</Text>
+        <Text style={styles.name}>{PRAYER_LABELS[current.name]}</Text>
+        <Text style={styles.at}>ends {formatTimeOfDay(current.end)}</Text>
       </View>
-      <Text style={styles.countdown}>in {formatCountdown(remaining)}</Text>
+      <Text style={styles.countdown}>{formatCountdown(remaining)} left</Text>
     </View>
   );
 }

@@ -5,8 +5,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AutoSilentToggle } from '../components/AutoSilentToggle';
+import { CurrentPrayerCard } from '../components/CurrentPrayerCard';
 import { LocationHeader } from '../components/LocationHeader';
-import { NextPrayerCountdown } from '../components/NextPrayerCountdown';
 import { apiFetch } from '../lib/api';
 import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
 
@@ -44,7 +44,7 @@ export function HomeScreen() {
           </Text>
         </View>
 
-        <NextPrayerCountdown />
+        <CurrentPrayerCard />
         <AutoSilentToggle />
 
         <Text style={styles.sectionTitle}>Quick actions</Text>

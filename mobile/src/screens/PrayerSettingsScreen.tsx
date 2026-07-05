@@ -28,8 +28,8 @@ import {
 } from 'react-native';
 
 import { SelectField } from '../components/SelectField';
+import { useHighAccuracyLocation } from '../hooks/useHighAccuracyLocation';
 import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
-import { getHighAccuracyFix } from '../lib/location';
 import {
   evaluatePrayerAwareSilence,
   pushPrayerWindowsToNative,
@@ -52,7 +52,6 @@ import {
   PRAYER_NAMES,
   type PrayerName,
 } from '../lib/prayerTimes';
-import type { LatLng } from '../lib/geofencing/types';
 
 /**
  * A weather glyph per prayer, evoking the sky at its time — dawn for Fajr, high
@@ -74,25 +73,13 @@ export function PrayerSettingsScreen() {
   const [config, setConfig] = usePrayerTimesConfig();
   const [notifications, setNotifications] = usePrayerNotificationSettings();
   const [prayerAware, setPrayerAware] = usePrayerAwareSilentSettings();
-  const [location, setLocation] = useState<LatLng | null>(null);
-  const [locationError, setLocationError] = useState(false);
-
-  // Best-effort one-shot fix so the preview reflects the user's actual times.
-  // The selection still persists without it; we just can't preview offline-of-
-  // location, so we show a hint instead of blocking the screen.
-  useEffect(() => {
-    let active = true;
-    getHighAccuracyFix()
-      .then((fix) => {
-        if (active) setLocation(fix);
-      })
-      .catch(() => {
-        if (active) setLocationError(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+  // Best-effort fix so the preview reflects the user's actual times; the method
+  // choice still persists without it. Recovers on its own once location is
+  // enabled (the hook retries on foreground), so the preview fills in without an
+  // app restart. A denial/failure just shows a hint instead of blocking.
+  const { location, status: locationStatus } = useHighAccuracyLocation();
+  const locationError =
+    locationStatus === 'denied' || locationStatus === 'error';
 
   // Recompute whenever the location or the config (method/Asr) changes. Pure and
   // offline — this is exactly what the home countdown (F-05.3) will consume.
