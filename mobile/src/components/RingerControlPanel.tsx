@@ -4,6 +4,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import RingerControl, { type RingerMode } from '../../modules/ringer-control';
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import { isAutoSilentEnabled } from '../lib/autoSilentSettings';
+import { sendTestPrayerNotification } from '../lib/prayerNotifications';
 import { ConfirmDialog } from './ConfirmDialog';
 
 const MODES: RingerMode[] = ['silent', 'vibrate', 'normal'];
@@ -287,6 +288,25 @@ export function RingerControlPanel() {
     });
   }, []);
 
+  // Fire a real prayer reminder ~2s out so a tester can see the notification
+  // without waiting for an actual prayer time (the reminders can't otherwise be
+  // exercised on demand). Mirrors the zone Enter/Exit buttons' "drive the real
+  // path manually" idea, for the prayer-notification feature.
+  const testPrayerReminder = useCallback(async () => {
+    const scheduled = await sendTestPrayerNotification();
+    if (!scheduled) {
+      Alert.alert(
+        'Notifications are off',
+        'Enable notifications for Sakina in system settings, then try again.',
+      );
+      return;
+    }
+    Alert.alert(
+      'Test reminder scheduled',
+      'A prayer reminder will fire in ~2 seconds. Background the app now to see the heads-up banner and hear the channel sound.',
+    );
+  }, []);
+
   const remainingSec = countdown
     ? Math.ceil(Math.max(0, countdown.endsAt - now) / 1000)
     : 0;
@@ -424,6 +444,13 @@ export function RingerControlPanel() {
             onPress={() => RingerControl.openDndSettings()}
           />
           <Button label="Refresh" onPress={refresh} />
+        </View>
+
+        <View style={styles.buttons}>
+          <Button
+            label="Test prayer reminder"
+            onPress={() => void testPrayerReminder()}
+          />
         </View>
 
         <Text style={styles.deviceId}>Device ID: {deviceId}</Text>

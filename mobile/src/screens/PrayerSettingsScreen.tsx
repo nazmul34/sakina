@@ -14,6 +14,7 @@
  * via [[prayerNotifications]], using the location and config already on screen.
  */
 
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -27,7 +28,7 @@ import {
 } from 'react-native';
 
 import { SelectField } from '../components/SelectField';
-import { useThemedStyles, type ThemeColors } from '../lib/colors';
+import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
 import { getHighAccuracyFix } from '../lib/location';
 import {
   evaluatePrayerAwareSilence,
@@ -53,8 +54,23 @@ import {
 } from '../lib/prayerTimes';
 import type { LatLng } from '../lib/geofencing/types';
 
+/**
+ * A weather glyph per prayer, evoking the sky at its time — dawn for Fajr, high
+ * sun for Dhuhr, softening light for Asr, sunset for Maghrib, night for Isha.
+ */
+const PRAYER_ICONS: Readonly<
+  Record<PrayerName, keyof typeof MaterialCommunityIcons.glyphMap>
+> = {
+  fajr: 'weather-sunset-up',
+  dhuhr: 'weather-sunny',
+  asr: 'weather-partly-cloudy',
+  maghrib: 'weather-sunset-down',
+  isha: 'weather-night',
+};
+
 export function PrayerSettingsScreen() {
   const styles = useThemedStyles(makeStyles);
+  const colors = useColors();
   const [config, setConfig] = usePrayerTimesConfig();
   const [notifications, setNotifications] = usePrayerNotificationSettings();
   const [prayerAware, setPrayerAware] = usePrayerAwareSilentSettings();
@@ -133,26 +149,64 @@ export function PrayerSettingsScreen() {
     });
   };
 
+  // Highlight the next upcoming prayer in today's list. A snapshot taken at mount
+  // (not a live countdown — that's the home-screen card), so the clock is read
+  // once via a lazy initializer rather than during render.
+  const [now] = useState(() => Date.now());
+  const nextPrayerName = useMemo(
+    () =>
+      prayerTimes?.times.find((t) => t.time.getTime() > now)?.name ?? null,
+    [prayerTimes, now],
+  );
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <Text style={styles.sectionTitle}>Today’s times</Text>
-      <View style={styles.previewCard}>
-        {prayerTimes ? (
-          prayerTimes.times.map(({ name, time }) => (
-            <View key={name} style={styles.previewRow}>
-              <Text style={styles.previewName}>{PRAYER_LABELS[name]}</Text>
-              <Text style={styles.previewTime}>{formatTimeOfDay(time)}</Text>
-            </View>
-          ))
-        ) : locationError ? (
+      {prayerTimes ? (
+        <View style={styles.timesCard}>
+          {prayerTimes.times.map(({ name, time }, index) => {
+            const isNext = name === nextPrayerName;
+            return (
+              <View
+                key={name}
+                style={[
+                  styles.timeRow,
+                  index > 0 && styles.timeRowBordered,
+                  isNext && styles.timeRowNext,
+                ]}
+              >
+                <View
+                  style={[styles.timeIcon, isNext && styles.timeIconNext]}
+                >
+                  <MaterialCommunityIcons
+                    name={PRAYER_ICONS[name]}
+                    size={20}
+                    color={isNext ? colors.onBrand : colors.brand}
+                  />
+                </View>
+                <Text style={styles.timeName}>{PRAYER_LABELS[name]}</Text>
+                {isNext && (
+                  <View style={styles.nextChip}>
+                    <Text style={styles.nextChipText}>Next</Text>
+                  </View>
+                )}
+                <Text style={styles.timeValue}>{formatTimeOfDay(time)}</Text>
+              </View>
+            );
+          })}
+        </View>
+      ) : locationError ? (
+        <View style={styles.timesCard}>
           <Text style={styles.hint}>
             Grant location access to preview your prayer times. Your method choice
             below is still saved.
           </Text>
-        ) : (
+        </View>
+      ) : (
+        <View style={[styles.timesCard, styles.timesCardLoading]}>
           <ActivityIndicator />
-        )}
-      </View>
+        </View>
+      )}
 
       <Text style={styles.sectionTitle}>Calculation method</Text>
       <SelectField
@@ -223,14 +277,21 @@ export function PrayerSettingsScreen() {
 
         {PRAYER_NAMES.map((name) => (
           <View key={name} style={[styles.switchRow, styles.switchRowBordered]}>
-            <Text
-              style={[
-                styles.switchLabel,
-                !notifications.enabled && styles.disabledText,
-              ]}
-            >
-              {PRAYER_LABELS[name]}
-            </Text>
+            <View style={styles.switchLabelRow}>
+              <MaterialCommunityIcons
+                name={PRAYER_ICONS[name]}
+                size={18}
+                color={notifications.enabled ? colors.brand : colors.muted}
+              />
+              <Text
+                style={[
+                  styles.switchLabel,
+                  !notifications.enabled && styles.disabledText,
+                ]}
+              >
+                {PRAYER_LABELS[name]}
+              </Text>
+            </View>
             <Switch
               value={notifications.prayers[name]}
               disabled={!notifications.enabled}
@@ -296,23 +357,71 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textMuted,
     marginTop: 8,
   },
-  previewCard: {
-    borderRadius: 12,
-    backgroundColor: colors.accentBlue,
-    padding: 16,
-    gap: 8,
+  timesCard: {
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
     minHeight: 48,
+    padding: 4,
+  },
+  timesCardLoading: {
+    padding: 20,
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  previewRow: {
+  timeRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
   },
-  previewName: {
-    fontSize: 15,
+  timeRowBordered: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  timeRowNext: {
+    borderTopWidth: 0,
+    backgroundColor: colors.brandTint,
+  },
+  timeIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.brandTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeIconNext: {
+    backgroundColor: colors.brandSolid,
+  },
+  timeName: {
+    flex: 1,
+    fontSize: 16,
     fontWeight: '600',
     color: colors.text,
+  },
+  nextChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: colors.brandSolid,
+  },
+  nextChipText: {
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    color: colors.onBrand,
+  },
+  timeValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.brand,
+    fontVariant: ['tabular-nums'],
   },
   previewTime: {
     fontSize: 16,
@@ -370,6 +479,11 @@ const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   switchText: {
     flex: 1,
     paddingRight: 12,
+  },
+  switchLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   switchLabel: {
     fontSize: 15,
