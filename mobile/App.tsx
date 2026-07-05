@@ -10,10 +10,23 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { armGeofencing } from './src/lib/geofencing';
 import { isAutoSilentEnabled } from './src/lib/autoSilentSettings';
+import { darkColors, lightColors } from './src/lib/colors';
 import { trySyncDeviceSettings } from './src/lib/deviceSettingsSync';
 import { trySyncPins } from './src/lib/pinsSync';
 import { hydrateTheme, useResolvedScheme } from './src/lib/theme';
 import { RootNavigator } from './src/navigation/RootNavigator';
+
+// Navigation themes with the accent pinned to our green brand, so the app chrome
+// (header tint, links, active controls) reads green instead of React Navigation's
+// default blue.
+const navLightTheme = {
+  ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, primary: lightColors.brand },
+};
+const navDarkTheme = {
+  ...DarkTheme,
+  colors: { ...DarkTheme.colors, primary: darkColors.brand },
+};
 
 export default function App() {
   const scheme = useResolvedScheme();
@@ -53,7 +66,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer theme={scheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <NavigationContainer theme={scheme === 'dark' ? navDarkTheme : navLightTheme}>
         <RootNavigator />
       </NavigationContainer>
       {/* Pin the status-bar contrast to the resolved scheme (not 'auto') so a

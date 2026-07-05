@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import RingerControl, { type RingerMode } from '../../modules/ringer-control';
@@ -106,6 +106,18 @@ export function RingerControlPanel() {
     kind: 'dwell' | 'exit';
     remainingSec: number;
   } | null>(null);
+  // Post-grace "applying" phase for the *real* geofence-driven path — the mirror
+  // of the manual buttons' `awaiting`. Native's dwell/exit grace has elapsed but
+  // the commit alarm hasn't fired yet, so the phone isn't silenced/restored *yet*
+  // (the OS can defer the alarm when the app isn't battery-exempt). Without this
+  // the panel would sit on a stuck "Silencing in 0s" instead of saying it's
+  // applying; `liveNotice` explains it if the alarm never lands in time.
+  const [liveApplying, setLiveApplying] = useState<{
+    kind: 'dwell' | 'exit';
+    since: number;
+  } | null>(null);
+  const [liveNotice, setLiveNotice] = useState<string | null>(null);
+  const liveApplyingSinceRef = useRef<number | null>(null);
 
   const refresh = useCallback(() => {
     setDndGranted(RingerControl.isDndAccessGranted());
@@ -167,23 +179,49 @@ export function RingerControlPanel() {
   // the timer + status for a silence the background geofencing task drove. Paused
   // during a manual test so the two countdowns never fight over the display.
   useEffect(() => {
+    const clearLive = () => {
+      setLivePending(null);
+      setLiveApplying(null);
+      setLiveNotice(null);
+      liveApplyingSinceRef.current = null;
+    };
     const id = setInterval(() => {
       // A manual test owns the display via `countdown`/`awaiting`; clear the
       // native mirror so the two never show at once.
       if (countdown || awaiting) {
-        setLivePending(null);
+        clearLive();
         return;
       }
       refresh();
       const pending = RingerControl.getPendingCountdown();
-      setLivePending(
-        pending
-          ? {
-              kind: pending.kind,
-              remainingSec: Math.ceil(pending.remainingMs / 1000),
-            }
-          : null,
-      );
+      if (!pending) {
+        clearLive();
+        return;
+      }
+      if (pending.remainingMs > 0) {
+        // Grace still counting down — show the timer.
+        setLivePending({
+          kind: pending.kind,
+          remainingSec: Math.ceil(pending.remainingMs / 1000),
+        });
+        setLiveApplying(null);
+        setLiveNotice(null);
+        liveApplyingSinceRef.current = null;
+        return;
+      }
+      // Grace elapsed but native still reports it pending: the commit alarm
+      // hasn't fired yet (the OS can defer it without a battery exemption), so
+      // we're mid-apply. Show "applying…" and, past the timeout, explain the lag.
+      const since = liveApplyingSinceRef.current ?? Date.now();
+      liveApplyingSinceRef.current = since;
+      setLivePending(null);
+      setLiveApplying({ kind: pending.kind, since });
+      setNow(Date.now());
+      if (Date.now() - since > CONFIRM_TIMEOUT_MS) {
+        setLiveNotice(
+          `The ${pending.kind === 'dwell' ? 'dwell' : 'restore'} alarm hasn’t fired within ${CONFIRM_TIMEOUT_MS / 1000}s — the OS is deferring it. Grant the battery-optimisation exemption (checklist below) so alarms fire on time; in production a geofence event wakes the device first, so this lag doesn’t happen.`,
+        );
+      }
     }, 1000);
     return () => clearInterval(id);
   }, [countdown, awaiting, refresh]);
@@ -255,15 +293,32 @@ export function RingerControlPanel() {
 
   // The countdown to display and explain: the manual buttons' precise local
   // `countdown` when a test is running, otherwise the native-polled `livePending`
-  // for a real geofence-driven grace. Normalised to one shape for the UI + status.
+  // for a real geofence-driven grace. Null while we're in the post-grace "applying"
+  // phase (`awaiting`/`liveApplying`), where the timer's been replaced by a
+  // "applying…" message. Normalised to one shape for the UI + status.
   const displayCountdown: { kind: 'dwell' | 'exit'; remainingSec: number } | null =
-    countdown ? { kind: countdown.kind, remainingSec } : awaiting ? null : livePending;
+    countdown
+      ? { kind: countdown.kind, remainingSec }
+      : awaiting || liveApplying
+        ? null
+        : livePending;
+
+  // The post-grace "applying/restoring, waiting on the deferred OS alarm" phase,
+  // unified across the manual (`awaiting`) and real geofence (`liveApplying`)
+  // paths so the display + status treat them identically.
+  const applying: { kind: 'silence' | 'restore'; sinceSec: number } | null = awaiting
+    ? { kind: awaiting.kind, sinceSec: Math.floor((now - awaiting.since) / 1000) }
+    : liveApplying
+      ? {
+          kind: liveApplying.kind === 'dwell' ? 'silence' : 'restore',
+          sinceSec: Math.floor((now - liveApplying.since) / 1000),
+        }
+      : null;
 
   const status = deriveStatus({
     countdown: displayCountdown,
-    awaiting,
-    awaitingSec: awaiting ? Math.floor((now - awaiting.since) / 1000) : 0,
-    notice,
+    applying,
+    notice: notice ?? liveNotice,
     activeZones,
     ringerMode,
     silenceMode,
@@ -320,9 +375,9 @@ export function RingerControlPanel() {
             {displayCountdown.kind === 'dwell' ? 'Silencing in' : 'Restoring in'}{' '}
             {displayCountdown.remainingSec}s
           </Text>
-        ) : awaiting ? (
+        ) : applying ? (
           <Text style={styles.countdown}>
-            {awaiting.kind === 'silence' ? 'Applying silence…' : 'Restoring…'}
+            {applying.kind === 'silence' ? 'Applying silence…' : 'Restoring…'}
           </Text>
         ) : null}
 
@@ -414,8 +469,7 @@ function Button({ label, onPress }: { label: string; onPress: () => void }) {
  */
 function deriveStatus(s: {
   countdown: { kind: 'dwell' | 'exit'; remainingSec: number } | null;
-  awaiting: Awaiting | null;
-  awaitingSec: number;
+  applying: { kind: 'silence' | 'restore'; sinceSec: number } | null;
   notice: string | null;
   activeZones: number;
   ringerMode: RingerMode;
@@ -435,16 +489,16 @@ function deriveStatus(s: {
       text: `Exit buffer running — ringer restores in ${s.countdown.remainingSec}s (re-enter to cancel the restore).`,
     };
   }
-  if (s.awaiting?.kind === 'silence') {
+  if (s.applying?.kind === 'silence') {
     return {
       tone: 'info',
-      text: `Dwell elapsed — applying silence… waiting for the OS alarm (${s.awaitingSec}s). It can lag when battery optimisation isn’t disabled.`,
+      text: `Dwell elapsed — applying silence… waiting for the OS alarm (${s.applying.sinceSec}s). It can lag when battery optimisation isn’t disabled.`,
     };
   }
-  if (s.awaiting?.kind === 'restore') {
+  if (s.applying?.kind === 'restore') {
     return {
       tone: 'info',
-      text: `Exit buffer elapsed — restoring… waiting for the OS alarm (${s.awaitingSec}s). It can lag when battery optimisation isn’t disabled.`,
+      text: `Exit buffer elapsed — restoring… waiting for the OS alarm (${s.applying.sinceSec}s). It can lag when battery optimisation isn’t disabled.`,
     };
   }
   if (s.notice) {
