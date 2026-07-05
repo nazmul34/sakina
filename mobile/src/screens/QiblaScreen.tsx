@@ -15,7 +15,6 @@
  */
 
 import { useNavigation } from '@react-navigation/native';
-import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -26,15 +25,8 @@ import {
 
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import { useDeviceHeading } from '../hooks/useDeviceHeading';
-import type { LatLng } from '../lib/geofencing/types';
-import { getHighAccuracyFix, LocationPermissionError } from '../lib/location';
+import { useHighAccuracyLocation } from '../hooks/useHighAccuracyLocation';
 import { qiblaBearing, qiblaRotation } from '../lib/qibla';
-
-type LocationState =
-  | { status: 'loading' }
-  | { status: 'ready'; location: LatLng }
-  | { status: 'denied' }
-  | { status: 'error' };
 
 /** The Kaaba glyph used as the Qibla marker on the compass rose. */
 const KAABA_GLYPH = '🕋';
@@ -62,36 +54,12 @@ const ALIGN_TOLERANCE_DEG = 6;
 export function QiblaScreen() {
   const navigation = useNavigation();
   const styles = useThemedStyles(makeStyles);
-  const [locationState, setLocationState] = useState<LocationState>({
-    status: 'loading',
-  });
+  // Recovers on its own once location is enabled (the hook retries on
+  // foreground), so the compass appears without needing an app restart.
+  const { location, status: locationStatus } = useHighAccuracyLocation();
   const { heading, isAvailable } = useDeviceHeading();
 
-  useEffect(() => {
-    let active = true;
-
-    getHighAccuracyFix()
-      .then((location) => {
-        if (active) {
-          setLocationState({ status: 'ready', location });
-        }
-      })
-      .catch((err: unknown) => {
-        if (!active) {
-          return;
-        }
-        setLocationState({
-          status:
-            err instanceof LocationPermissionError ? 'denied' : 'error',
-        });
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  if (locationState.status === 'denied') {
+  if (locationStatus === 'denied') {
     return (
       <View style={styles.centered}>
         <Text style={styles.centeredTitle}>Location needed</Text>
@@ -110,7 +78,7 @@ export function QiblaScreen() {
     );
   }
 
-  if (locationState.status === 'error') {
+  if (locationStatus === 'error') {
     return (
       <View style={styles.centered}>
         <Text style={styles.centeredTitle}>Couldn&apos;t find you</Text>
@@ -122,7 +90,7 @@ export function QiblaScreen() {
     );
   }
 
-  if (locationState.status === 'loading' || isAvailable === null) {
+  if (location === null || isAvailable === null) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator />
@@ -131,7 +99,7 @@ export function QiblaScreen() {
     );
   }
 
-  const bearing = qiblaBearing(locationState.location);
+  const bearing = qiblaBearing(location);
 
   // No magnetometer: show the absolute bearing as a number so the feature is
   // still useful. The full graceful-degradation experience is F-06.3.

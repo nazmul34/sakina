@@ -16,6 +16,7 @@
 import * as Location from 'expo-location';
 
 import type { LatLng } from './geofencing/types';
+import { runExclusive } from './permissionQueue';
 
 /**
  * Thrown when a location fix is requested without the foreground permission the
@@ -47,4 +48,38 @@ export async function getHighAccuracyFix(): Promise<LatLng> {
     accuracy: Location.Accuracy.High,
   });
   return { latitude: coords.latitude, longitude: coords.longitude };
+}
+
+// Dedupe concurrent foreground requests — the first-launch prompt and a screen
+// mounting at the same time would otherwise fire two dialogs — into one ask.
+let foregroundRequest: Promise<boolean> | null = null;
+
+/**
+ * Ensure the foreground location permission, *requesting* it if it's still
+ * askable, and return whether it ends up granted.
+ *
+ * This is what makes the location-backed features (prayer times, Qibla, nearby
+ * mosques) ask for access when you open them instead of silently showing
+ * nothing — and ask again next time, until the user has permanently denied it (at
+ * which point the OS stops showing the dialog and the caller falls back to a hint
+ * / settings deep-link). Concurrent calls share a single request.
+ */
+export async function ensureLocationPermission(): Promise<boolean> {
+  const current = await Location.getForegroundPermissionsAsync();
+  if (current.granted) {
+    return true;
+  }
+  if (!current.canAskAgain) {
+    return false;
+  }
+  if (!foregroundRequest) {
+    foregroundRequest = runExclusive(() =>
+      Location.requestForegroundPermissionsAsync(),
+    )
+      .then((res) => res.granted)
+      .finally(() => {
+        foregroundRequest = null;
+      });
+  }
+  return foregroundRequest;
 }

@@ -16,10 +16,45 @@
  * ({@link ../screens/PermissionsScreen}) just renders these and re-checks on focus.
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { Alert, Linking } from 'react-native';
 
 import RingerControl from '../../modules/ringer-control';
+import { ensureLocationPermission } from './location';
+import { ensureNotificationPermission } from './notifications';
+
+/** Marks that the first-launch permission prompts have already been shown. */
+const FIRST_RUN_PROMPT_KEY = 'sakina.permissions_prompted';
+
+/**
+ * Ask for the two everyday permissions — notifications and (foreground) location
+ * — once, right after install, so a new user grants them up front instead of
+ * later finding prayer times blank or reminders silent. Runs a single time
+ * (guarded by a persisted flag); afterwards each feature asks on demand when it
+ * needs access (see {@link ensureLocationPermission} /
+ * {@link ./notifications#ensureNotificationPermission}). The deeper auto-silent
+ * grants (background location, DND, battery) stay in the checklist, which is the
+ * right place for their extra rationale.
+ *
+ * Best-effort and non-blocking: dialogs are shown sequentially so they don't
+ * stack, and any failure (or a user dismissal) is fine — nothing here gates app
+ * start.
+ */
+export async function requestInitialPermissions(): Promise<void> {
+  try {
+    if (await AsyncStorage.getItem(FIRST_RUN_PROMPT_KEY)) {
+      return;
+    }
+    // Stamp before prompting so a mid-flow interruption doesn't re-prompt on the
+    // next launch — the per-feature asks cover anything left undecided.
+    await AsyncStorage.setItem(FIRST_RUN_PROMPT_KEY, '1');
+  } catch {
+    // Storage unavailable — still prompt once this session.
+  }
+  await ensureNotificationPermission();
+  await ensureLocationPermission();
+}
 
 /** Stable identifier for each checklist item. */
 export type PermissionKey = 'dnd' | 'location' | 'notifications' | 'battery';

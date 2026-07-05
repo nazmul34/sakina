@@ -14,6 +14,8 @@
 
 import * as Notifications from 'expo-notifications';
 
+import { runExclusive } from './permissionQueue';
+
 /** Which feature scheduled a notification, stored in `content.data.source`. */
 export type NotificationSource = 'daily-reminder' | 'prayer';
 
@@ -54,17 +56,30 @@ Notifications.setNotificationHandler({
   },
 });
 
+// Dedupe concurrent requests (the first-launch prompt and a reminder toggle) into
+// a single system dialog.
+let permissionRequest: Promise<boolean> | null = null;
+
 /**
  * Ensure notification permission, requesting it if it hasn't been decided yet.
- * Returns whether it is granted so callers can surface a denial.
+ * Returns whether it is granted so callers can surface a denial. Concurrent calls
+ * share one request.
  */
 export async function ensureNotificationPermission(): Promise<boolean> {
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) {
     return true;
   }
-  const requested = await Notifications.requestPermissionsAsync();
-  return requested.granted;
+  if (!permissionRequest) {
+    permissionRequest = runExclusive(() =>
+      Notifications.requestPermissionsAsync(),
+    )
+      .then((res) => res.granted)
+      .finally(() => {
+        permissionRequest = null;
+      });
+  }
+  return permissionRequest;
 }
 
 /** Cancel only the scheduled notifications a given feature created. */
