@@ -30,7 +30,11 @@ import {
 export { ensureNotificationPermission } from './notifications';
 
 const SETTINGS_KEY = 'sakina.daily_reminder';
-const ANDROID_CHANNEL_ID = 'daily-reminder';
+// Bumped to `-v2` when the channel gained HIGH importance + an explicit sound:
+// Android channels are immutable once created, so a new id is the only way those
+// settings reach devices that already made the original, quieter channel.
+const ANDROID_CHANNEL_ID = 'daily-reminder-v2';
+const LEGACY_ANDROID_CHANNEL_ID = 'daily-reminder';
 
 export interface ReminderSettings {
   readonly enabled: boolean;
@@ -82,28 +86,49 @@ async function saveReminderSettings(settings: ReminderSettings): Promise<void> {
 }
 
 async function ensureAndroidChannel(): Promise<void> {
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
-      name: 'Daily reminder',
-      importance: Notifications.AndroidImportance.DEFAULT,
-    });
+  if (Platform.OS !== 'android') {
+    return;
   }
+  // HIGH importance + an explicit default sound so the reminder reliably makes a
+  // sound (and a heads-up) when the phone isn't silenced.
+  await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
+    name: 'Daily reminder',
+    importance: Notifications.AndroidImportance.HIGH,
+    sound: 'default',
+  });
+  // Remove the old, quieter channel so users don't see a stale duplicate in
+  // system settings (best-effort; harmless if it was never created).
+  await Notifications.deleteNotificationChannelAsync(
+    LEGACY_ANDROID_CHANNEL_ID,
+  ).catch(() => {});
 }
 
 /** Notification title + body, from a freshly fetched message (offline-safe). */
 async function buildContent(): Promise<{
   title: string;
   body: string;
+  sound: boolean;
   data: NotificationSourceData;
 }> {
-  const data: NotificationSourceData = { source: 'daily-reminder' };
+  // `sound: true` (iOS) + `playSound` (the foreground handler) alongside the
+  // channel's sound (Android background), so the reminder is audible everywhere.
+  const data: NotificationSourceData = {
+    source: 'daily-reminder',
+    playSound: true,
+  };
   try {
     const message = await fetchRandomMessage();
-    return { title: 'Daily reminder', body: composeShareText(message), data };
+    return {
+      title: 'Daily reminder',
+      body: composeShareText(message),
+      sound: true,
+      data,
+    };
   } catch {
     return {
       title: 'Daily reminder',
       body: "Open Sakina for today's reminder.",
+      sound: true,
       data,
     };
   }

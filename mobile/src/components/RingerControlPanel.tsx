@@ -87,6 +87,10 @@ export function RingerControlPanel() {
     RingerControl.isIgnoringBatteryOptimizations(),
   );
   const [dndPromptVisible, setDndPromptVisible] = useState(false);
+  // Dev-only mirror of the prayer-aware gate the buttons below drive. The native
+  // store has no getter, so this reflects what *this panel* last set — enough to
+  // exercise "tighten around prayer" without waiting for a real prayer time.
+  const [prayerGate, setPrayerGate] = useState<'off' | 'open' | 'closed'>('off');
 
   // Grace-timer + confirmation bookkeeping. `countdown` is the precise dwell/exit
   // grace (mirrors native). When it elapses the *actual* silence/restore is done
@@ -288,6 +292,38 @@ export function RingerControlPanel() {
     });
   }, []);
 
+  // --- Prayer-aware ("tighten around prayer") gate testing (F-01.10) ----------
+  // Push a synthetic prayer window straight to native, bypassing prayer-time
+  // computation, so the gate can be exercised on demand. `setPrayerWindows` /
+  // `setPrayerAware` re-evaluate any active session immediately (onGateChanged),
+  // so with a zone active you see the ringer flip the moment you tap. Fake a
+  // window covering *now* → the gate opens and (in a zone) it silences.
+  const fakePrayerTimeNow = useCallback(() => {
+    const now = Date.now();
+    RingerControl.setPrayerAware(true);
+    RingerControl.setPrayerWindows([now - 5 * 60_000], [now + 30 * 60_000]);
+    setPrayerGate('open');
+    refresh();
+  }, [refresh]);
+
+  // Gate on, but no window covers now → the gate closes, so in a zone the ringer
+  // is restored even though you haven't left (the "prayer window gap").
+  const fakeNonPrayerTime = useCallback(() => {
+    RingerControl.setPrayerAware(true);
+    RingerControl.setPrayerWindows([], []);
+    setPrayerGate('closed');
+    refresh();
+  }, [refresh]);
+
+  // Turn the gate off entirely — back to plain presence-only silencing. Also the
+  // way to undo a test so a real zone isn't left gated-off for the session.
+  const clearPrayerGate = useCallback(() => {
+    RingerControl.setPrayerAware(false);
+    RingerControl.setPrayerWindows([], []);
+    setPrayerGate('off');
+    refresh();
+  }, [refresh]);
+
   // Fire a real prayer reminder ~2s out so a tester can see the notification
   // without waiting for an actual prayer time (the reminders can't otherwise be
   // exercised on demand). Mirrors the zone Enter/Exit buttons' "drive the real
@@ -404,6 +440,14 @@ export function RingerControlPanel() {
         <Text style={styles.row}>Ringer mode: {ringerMode}</Text>
         <Text style={styles.row}>Silences to: {silenceMode}</Text>
         <Text style={styles.row}>Active zones: {activeZones}</Text>
+        <Text style={styles.row}>
+          Prayer gate:{' '}
+          {prayerGate === 'off'
+            ? 'off (presence-only)'
+            : prayerGate === 'open'
+              ? 'window open — silences in a zone'
+              : 'window closed — restores in a zone'}
+        </Text>
 
         <View style={styles.checklist}>
           {checks.map((c) => (
@@ -436,6 +480,12 @@ export function RingerControlPanel() {
           <Button label="Enter zone" onPress={enterZone} />
           <Button label="Exit zone" onPress={exitZone} />
           <Button label="Reset" onPress={resetZones} />
+        </View>
+
+        <View style={styles.buttons}>
+          <Button label="Prayer time now" onPress={fakePrayerTimeNow} />
+          <Button label="Non-prayer time" onPress={fakeNonPrayerTime} />
+          <Button label="Prayer gate off" onPress={clearPrayerGate} />
         </View>
 
         <View style={styles.buttons}>

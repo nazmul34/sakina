@@ -147,7 +147,10 @@ export async function applyPrayerNotificationSettings(
 
   await ensureAndroidChannels();
   const channelId = settings.sound ? CHANNEL_SOUND : CHANNEL_SILENT;
-  const data: NotificationSourceData = { source: 'prayer' };
+  const data: NotificationSourceData = {
+    source: 'prayer',
+    playSound: settings.sound,
+  };
   const now = Date.now();
 
   for (let dayOffset = 0; dayOffset < WINDOW_DAYS; dayOffset += 1) {
@@ -196,7 +199,10 @@ export async function sendTestPrayerNotification(
   const settings = await getPrayerNotificationSettings();
   await ensureAndroidChannels();
   const channelId = settings.sound ? CHANNEL_SOUND : CHANNEL_SILENT;
-  const data: NotificationSourceData = { source: 'prayer' };
+  const data: NotificationSourceData = {
+    source: 'prayer',
+    playSound: settings.sound,
+  };
   await Notifications.scheduleNotificationAsync({
     content: {
       title: `${PRAYER_LABELS[name]} (test)`,
