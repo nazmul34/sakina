@@ -1,0 +1,57 @@
+# Production stack for the Sakina backend on a single VM.
+#
+#   web        — Django + Gunicorn, SQLite on a persistent named volume
+#   caddy      — reverse proxy + automatic HTTPS (Let's Encrypt), ports 80/443
+#   litestream — continuous SQLite backup to Cloudflare R2
+#
+# First time:
+#   cp .env.prod.example .env.prod   # then fill it in
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# The DB is a single file on the `sqlite_data` volume, so it survives container
+# rebuilds/redeploys. Litestream streams it to R2 for off-box durability.
+
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env.prod
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.prod
+      # SQLite on the shared volume (four slashes = absolute path).
+      DATABASE_URL: sqlite:////data/db.sqlite3
+    volumes:
+      - sqlite_data:/data
+    expose:
+      - "8000" # internal only — Caddy publishes it to the internet
+    # migrate + gunicorn come from the image's CMD (see Dockerfile).
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - web
+    env_file: .env.prod # provides DOMAIN + ACME_EMAIL for the Caddyfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  litestream:
+    image: litestream/litestream:0.3.13 # bump to the current tag if needed
+    restart: unless-stopped
+    depends_on:
+      - web
+    env_file: .env.prod # provides the R2_* credentials
+    volumes:
+      - sqlite_data:/data
+      - ./deploy/litestream.yml:/etc/litestream.yml:ro
+    command: replicate
+
+volumes:
+  sqlite_data:
+  caddy_data:
+  caddy_config:
