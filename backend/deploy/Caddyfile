@@ -1,0 +1,13 @@
+# Caddy reverse proxy + automatic HTTPS for the Sakina backend.
+#
+# {$DOMAIN} and {$ACME_EMAIL} are read from the environment (see .env.prod).
+# Caddy gets a real Let's Encrypt certificate over the HTTP-01 challenge, so
+# port 80 must be reachable from the internet. It then serves HTTPS on 443 and
+# proxies to the `web` container. X-Forwarded-Proto is set automatically, which
+# is what config/settings/prod.py's SECURE_PROXY_SSL_HEADER trusts.
+
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy web:8000
+	tls {$ACME_EMAIL}
+}
