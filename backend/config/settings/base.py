@@ -15,6 +15,7 @@ Do not use this module directly. Select an environment-specific module via
 from pathlib import Path
 
 import environ
+from django.db.backends.signals import connection_created
 
 # backend/ — the directory that holds manage.py.
 # This file is backend/config/settings/base.py, so go up three levels.
@@ -97,6 +98,22 @@ DATABASES = {
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
     ),
 }
+
+
+# SQLite is the production default (a single file on the VM, backed up to R2), so
+# tune it for a small concurrent web workload: WAL lets reads run alongside a
+# write, and a busy timeout makes a briefly-locked write wait rather than fail
+# with "database is locked". Applied to every new SQLite connection; a no-op on
+# other engines (e.g. if DATABASE_URL later points at Postgres).
+def _configure_sqlite(connection, **kwargs):
+    if connection.vendor == "sqlite":
+        cursor = connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA synchronous=NORMAL;")
+        cursor.execute("PRAGMA busy_timeout=5000;")
+
+
+connection_created.connect(_configure_sqlite)
 
 # ---------------------------------------------------------------------------
 # Password validation
