@@ -1,0 +1,18 @@
+# Litestream: continuously replicate the SQLite DB to Cloudflare R2 (S3-compatible).
+#
+# Values come from the environment (see .env.prod). R2 needs `region: auto`,
+# a path-style endpoint, and force-path-style. On a fresh VM, restore first with:
+#   docker compose -f docker-compose.prod.yml run --rm litestream \
+#     restore -if-replica-exists /data/db.sqlite3
+
+dbs:
+  - path: /data/db.sqlite3
+    replicas:
+      - type: s3
+        endpoint: ${R2_ENDPOINT} # https://<accountid>.r2.cloudflarestorage.com
+        bucket: ${R2_BUCKET}
+        path: sakina
+        region: auto
+        access-key-id: ${R2_ACCESS_KEY_ID}
+        secret-access-key: ${R2_SECRET_ACCESS_KEY}
+        force-path-style: true

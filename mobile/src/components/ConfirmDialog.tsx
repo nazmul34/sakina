@@ -1,5 +1,7 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useThemedStyles, type ThemeColors } from '../lib/colors';
+
 interface ConfirmDialogProps {
   visible: boolean;
   title: string;
@@ -28,6 +30,7 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Modal
       visible={visible}
@@ -74,7 +77,7 @@ export function ConfirmDialog({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',
@@ -84,7 +87,7 @@ const styles = StyleSheet.create({
   },
   card: {
     alignSelf: 'stretch',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     gap: 8,
@@ -97,10 +100,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 17,
     fontWeight: '700',
+    color: colors.text,
   },
   message: {
     fontSize: 14,
-    opacity: 0.7,
+    color: colors.textMuted,
     lineHeight: 20,
   },
   actions: {
@@ -117,27 +121,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#EFEFEF',
+    backgroundColor: colors.surfaceAlt,
   },
   cancelText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
   },
   confirmButton: {
-    backgroundColor: '#E6F4FE',
+    backgroundColor: colors.accentBlue,
   },
   confirmText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0B6FB8',
+    color: colors.info,
   },
   destructiveButton: {
-    backgroundColor: '#FBE9E7',
+    backgroundColor: colors.dangerTint,
   },
   destructiveText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#B3261E',
+    color: colors.danger,
   },
 });

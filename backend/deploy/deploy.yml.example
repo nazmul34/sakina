@@ -1,0 +1,39 @@
+# Continuous deployment to the production VM on merge to `main`.
+#
+# HOW IT WORKS: a *self-hosted* GitHub Actions runner installed on the Oracle VM
+# picks up this job and rebuilds the stack in place. The runner only makes
+# OUTBOUND connections to GitHub, so you don't open any inbound port for CI/CD —
+# which sidesteps Oracle's firewall entirely.
+#
+# ENABLE IT: once the self-hosted runner is registered (see DEPLOYMENT.md,
+# "Auto-deploy"), move this file to .github/workflows/deploy.yml. Until the runner
+# with the `sakina-vm` label exists, leave it here so it never runs.
+
+name: Deploy (production)
+
+on:
+  push:
+    branches: [main]
+
+# Never run two deploys at once.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Matches the labels you give the self-hosted runner at registration time.
+    runs-on: [self-hosted, sakina-vm]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rebuild & restart the stack
+        working-directory: backend
+        run: |
+          docker compose -f docker-compose.prod.yml up -d --build
+          docker image prune -f
+
+      - name: Health check
+        run: |
+          sleep 5
+          curl -fsS https://${{ vars.DEPLOY_DOMAIN }}/health || (echo "health check failed" && exit 1)

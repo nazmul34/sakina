@@ -7,6 +7,13 @@ import type { NativeModule } from 'expo';
 export type RingerMode = 'silent' | 'vibrate' | 'normal';
 
 /**
+ * What auto-silent switches the phone into while inside a zone or prayer window
+ * (FR-1.3): full `silent`, or `vibrate`. The user's choice via {@link
+ * RingerControlModule.setSilenceMode}; defaults to `silent`.
+ */
+export type SilenceMode = 'silent' | 'vibrate';
+
+/**
  * An auto-silent activity-log event (FR-1.8): the phone was switched to silent on
  * entering a zone, or restored to its prior mode on leaving the last one.
  */
@@ -89,6 +96,20 @@ export declare class RingerControlModule extends NativeModule {
   setRingerMode(mode: RingerMode): void;
 
   /**
+   * The mode auto-silent switches the phone into while a zone / prayer window is
+   * active (FR-1.3) — `silent` or `vibrate`. Defaults to `silent`.
+   */
+  getSilenceMode(): SilenceMode;
+
+  /**
+   * Choose whether auto-silent fully silences the phone or drops it to vibrate
+   * (FR-1.3). Persisted device-locally (survives app-kill/reboot) and applied
+   * immediately to any active in-zone session, so flipping it while parked at a
+   * mosque takes effect at once.
+   */
+  setSilenceMode(mode: SilenceMode): void;
+
+  /**
    * Records entry into a geofenced zone (F-01.3), identified by its geofence
    * region id. Does not silence immediately: it starts a dwell grace (F-01.4) and
    * silences only if the user is still inside when it elapses, so a drive-past
@@ -116,6 +137,36 @@ export declare class RingerControlModule extends NativeModule {
 
   /** Number of zones currently silencing the phone (debugging/observability). */
   activeZoneCount(): number;
+
+  /**
+   * Reconcile the auto-silent state machine against the geofence regions still
+   * being monitored, releasing any active/pending zone whose id is **not** in
+   * `validIds`. Android delivers no exit event for a geofence you stop monitoring,
+   * so when the arming layer re-registers a changed set (e.g. after a pin is
+   * deleted) this is what tears down the silence for the vanished zone — ending
+   * the session and restoring the ringer if it was the last active one, so the
+   * phone is never stranded on silent. Pass every currently-monitored region id
+   * (empty array when disarming). Returns the remaining active-zone count.
+   */
+  reconcileActiveZones(validIds: string[]): number;
+
+  /**
+   * Dev/QA only: the live dwell/exit grace countdown, or `null` when no grace is
+   * running. Lets the developer panel surface the countdown for a real
+   * geofence-driven silence (e.g. a pinned zone), not just the manual Enter/Exit
+   * test buttons. `remainingMs` is the time left before the native alarm fires.
+   */
+  getPendingCountdown(): { kind: 'dwell' | 'exit'; remainingMs: number } | null;
+
+  /**
+   * Dev/QA only: hard-reset the auto-silent state machine to idle. Cancels all
+   * pending dwell / exit-buffer / prayer-window timers, restores the ringer if
+   * it's currently held silent, and clears persisted session state. The
+   * developer panel uses this so "Enter zone" can always start a fresh dwell
+   * instead of no-opping on an already-active zone. Never called on the geofence
+   * path.
+   */
+  resetAutoSilent(): void;
 
   /**
    * Enable or disable prayer-aware silent (F-01.10) — the opt-in gate that, while

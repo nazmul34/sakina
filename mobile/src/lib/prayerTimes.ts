@@ -185,6 +185,81 @@ export function getNextPrayer(
   return { name: 'fajr', time: tomorrow.byName.fajr, isTomorrow: true };
 }
 
+/** The prayer currently in effect, and when it ends (the next prayer begins). */
+export interface CurrentPrayer {
+  readonly name: PrayerName;
+  /** When this prayer began. */
+  readonly start: Date;
+  /** When it ends — i.e. when the next prayer starts. */
+  readonly end: Date;
+  /** True when this is the previous day's Isha (now is before today's Fajr). */
+  readonly startedYesterday: boolean;
+}
+
+/**
+ * The prayer currently in effect at `now`, and when it ends (FR-5.3).
+ *
+ * A prayer time marks the *start* of that prayer's period, which runs until the
+ * next prayer begins. So the current prayer is the latest time at or before
+ * `now`, and its `end` is the following prayer's start. Two night wrap-arounds
+ * keep the remaining time positive around midnight: before today's Fajr we're
+ * still in **yesterday's Isha** (ending at today's Fajr), and after Isha we're in
+ * today's Isha ending at **tomorrow's Fajr**. Pure and offline like
+ * {@link computeDailyPrayerTimes}.
+ */
+export function getCurrentPrayer(
+  location: LatLng,
+  now: Date = new Date(),
+  config: PrayerTimesConfig = DEFAULT_PRAYER_TIMES_CONFIG,
+): CurrentPrayer {
+  const today = computeDailyPrayerTimes(location, now, config);
+  const nowMs = now.getTime();
+
+  // Before today's Fajr: still within yesterday's Isha, which ends at Fajr.
+  if (nowMs < today.byName.fajr.getTime()) {
+    const yesterdayDate = new Date(now);
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterday = computeDailyPrayerTimes(location, yesterdayDate, config);
+    return {
+      name: 'isha',
+      start: yesterday.byName.isha,
+      end: today.byName.fajr,
+      startedYesterday: true,
+    };
+  }
+
+  // The current prayer is the latest of today's times at or before now. Iterating
+  // the ordered names (`now >= Fajr` here, so Fajr always qualifies as the seed).
+  let currentName: PrayerName = 'fajr';
+  for (const name of PRAYER_NAMES) {
+    if (today.byName[name].getTime() <= nowMs) {
+      currentName = name;
+    } else {
+      break;
+    }
+  }
+
+  const nextName = PRAYER_NAMES[PRAYER_NAMES.indexOf(currentName) + 1] as
+    | PrayerName
+    | undefined;
+  let end: Date;
+  if (nextName) {
+    end = today.byName[nextName];
+  } else {
+    // Isha: ends at tomorrow's Fajr (times shift day to day, so recompute).
+    const tomorrowDate = new Date(now);
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    end = computeDailyPrayerTimes(location, tomorrowDate, config).byName.fajr;
+  }
+
+  return {
+    name: currentName,
+    start: today.byName[currentName],
+    end,
+    startedYesterday: false,
+  };
+}
+
 /** Format a prayer instant as a 12-hour clock label in local time, e.g. "5:14 AM". */
 export function formatTimeOfDay(date: Date): string {
   const hours = date.getHours();

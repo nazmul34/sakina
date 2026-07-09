@@ -25,6 +25,7 @@ import {
   View,
 } from 'react-native';
 
+import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import { useNearbyMosques } from '../hooks/useNearbyMosques';
 import { bearingDegrees } from '../lib/geofencing/geo';
 import { LocationPermissionError } from '../lib/location';
@@ -45,6 +46,7 @@ export function NearbyMosquesScreen() {
   const { mosques, status, error, fromCache, lastUpdatedAt, origin, refresh } =
     useNearbyMosques();
   const navigation = useNavigation();
+  const styles = useThemedStyles(makeStyles);
 
   // Pair each mosque with its bearing from the fetch origin, sorted nearest
   // first (the backend already sorts; we re-sort defensively so the AC holds
@@ -142,6 +144,7 @@ export function NearbyMosquesScreen() {
 }
 
 function MosqueRow({ item }: { item: MosqueItem }) {
+  const styles = useThemedStyles(makeStyles);
   const { mosque, bearing } = item;
   const point = bearing == null ? null : COMPASS_POINTS[compassIndex(bearing)];
   const arrow = bearing == null ? null : COMPASS_ARROWS[compassIndex(bearing)];
@@ -277,7 +280,7 @@ function formatRelative(at: number): string {
   return dateFormatter.format(new Date(at));
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   list: {
     padding: 16,
     gap: 8,
@@ -295,36 +298,38 @@ const styles = StyleSheet.create({
   centeredTitle: {
     fontSize: 18,
     fontWeight: '700',
+    color: colors.text,
   },
   centeredBody: {
     fontSize: 14,
     textAlign: 'center',
-    opacity: 0.7,
+    color: colors.textMuted,
   },
   primaryButton: {
     marginTop: 8,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 12,
-    backgroundColor: '#E6F4FE',
+    backgroundColor: colors.accentBlue,
   },
   primaryButtonText: {
     fontSize: 15,
     fontWeight: '700',
+    color: colors.info,
   },
   staleBanner: {
     padding: 12,
     borderRadius: 10,
-    backgroundColor: '#FFF8E1',
+    backgroundColor: colors.warningTint,
     marginBottom: 4,
   },
   staleText: {
     fontSize: 13,
-    color: '#8A6D00',
+    color: colors.warning,
   },
   freshness: {
     fontSize: 12,
-    opacity: 0.55,
+    color: colors.textMuted,
     marginBottom: 4,
     paddingHorizontal: 2,
   },
@@ -335,7 +340,8 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#999',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   bearing: {
     alignItems: 'center',
@@ -344,10 +350,11 @@ const styles = StyleSheet.create({
   arrow: {
     fontSize: 20,
     lineHeight: 22,
+    color: colors.text,
   },
   compass: {
     fontSize: 11,
-    opacity: 0.6,
+    color: colors.textMuted,
   },
   rowText: {
     flex: 1,
@@ -356,10 +363,11 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: '600',
+    color: colors.text,
   },
   meta: {
     fontSize: 13,
-    opacity: 0.6,
+    color: colors.textMuted,
   },
   actions: {
     gap: 6,
@@ -369,24 +377,25 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 10,
-    backgroundColor: '#E6F4FE',
+    backgroundColor: colors.accentBlue,
     alignItems: 'center',
   },
   navButtonText: {
     fontSize: 13,
     fontWeight: '700',
+    color: colors.info,
   },
   reportButton: {
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#999',
+    borderColor: colors.borderStrong,
     alignItems: 'center',
   },
   reportButtonText: {
     fontSize: 12,
     fontWeight: '600',
-    opacity: 0.7,
+    color: colors.textMuted,
   },
 });

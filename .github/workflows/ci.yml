@@ -45,7 +45,7 @@ jobs:
         run: python manage.py test --verbosity 2
 
   mobile:
-    name: Mobile (lint · typecheck)
+    name: Mobile (lint · typecheck · test)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -67,3 +67,6 @@ jobs:
 
       - name: Typecheck (tsc)
         run: npm run typecheck
+
+      - name: Test (jest)
+        run: npm test

@@ -12,11 +12,13 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import { readPins, type Pin } from '../lib/pins';
 import { trySyncPins } from '../lib/pinsSync';
 
 export function PinnedLocationsScreen() {
   const navigation = useNavigation();
+  const styles = useThemedStyles(makeStyles);
   const [pins, setPins] = useState<Pin[]>([]);
 
   // On focus, show local pins immediately (a save/delete in the editor is
@@ -97,9 +99,10 @@ function formatRadius(meters: number): string {
   return `${meters / 1000} km`;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   list: {
     padding: 16,
@@ -118,11 +121,12 @@ const styles = StyleSheet.create({
   centeredTitle: {
     fontSize: 18,
     fontWeight: '700',
+    color: colors.text,
   },
   centeredBody: {
     fontSize: 14,
     textAlign: 'center',
-    opacity: 0.7,
+    color: colors.textMuted,
   },
   row: {
     flexDirection: 'row',
@@ -131,7 +135,8 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#999',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   rowText: {
     flex: 1,
@@ -140,25 +145,26 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: '600',
+    color: colors.text,
   },
   meta: {
     fontSize: 13,
-    opacity: 0.6,
+    color: colors.textMuted,
   },
   chevron: {
     fontSize: 24,
-    opacity: 0.4,
+    color: colors.muted,
   },
   addButton: {
     margin: 16,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#E6F4FE',
+    backgroundColor: colors.accentBlue,
     alignItems: 'center',
   },
   addButtonText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0B6FB8',
+    color: colors.info,
   },
 });

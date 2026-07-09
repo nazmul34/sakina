@@ -85,6 +85,20 @@ class RingerControlModule : Module() {
       RingerIO.setRingerMode(context, mode)
     }
 
+    // --- Silence mode (FR-1.3) ----------------------------------------------
+    // What auto-silent switches the phone into while inside a zone / prayer
+    // window: full "silent" or "vibrate". Distinct from the master on/off
+    // toggle. Changing it re-applies to any active in-zone session immediately.
+
+    Function("getSilenceMode") {
+      SilenceModeStore(context).mode
+    }
+
+    Function("setSilenceMode") { mode: String ->
+      SilenceModeStore(context).mode = mode
+      RingerSilenceController.onSilenceModeChanged(context)
+    }
+
     // --- Auto-silent zone hand-off (F-01.3) ---------------------------------
     // Called by the geofencing task on enter/exit, passing the geofence region
     // identifier. Return the active-zone count for debugging/observability.
@@ -99,6 +113,27 @@ class RingerControlModule : Module() {
 
     Function("activeZoneCount") {
       RingerSilenceController.activeZoneCount(context)
+    }
+
+    // Reconcile the state machine against the geofence set JS is now monitoring.
+    // Called on every (re)arm/disarm so a zone that dropped out of the set — e.g.
+    // a deleted pin — releases its silence instead of dangling (Android sends no
+    // exit for a geofence it stops monitoring). Returns the active-zone count.
+    Function("reconcileActiveZones") { validIds: List<String> ->
+      RingerSilenceController.reconcileZones(context, validIds)
+    }
+
+    // Dev/QA: the live dwell/exit grace countdown (or null when idle), so the
+    // panel can mirror a real geofence-driven silence, not just the test buttons.
+    Function("getPendingCountdown") {
+      RingerSilenceController.pendingCountdown(context)
+    }
+
+    // Dev/QA only: hard-reset the state machine to idle (used by the developer
+    // panel so "Enter zone" can always start a fresh dwell). Not on the geofence
+    // path.
+    Function("resetAutoSilent") {
+      RingerSilenceController.reset(context)
     }
 
     // --- Prayer-aware silent gate (F-01.10) ---------------------------------

@@ -31,6 +31,7 @@ import { Platform } from 'react-native';
 import type { LatLng } from './geofencing/types';
 import {
   cancelScheduledBySource,
+  ensureNotificationPermission,
   type NotificationSourceData,
 } from './notifications';
 import {
@@ -41,7 +42,7 @@ import {
   type PrayerTimesConfig,
 } from './prayerTimes';
 
-export { ensureNotificationPermission } from './notifications';
+export { ensureNotificationPermission };
 
 const SETTINGS_KEY = 'sakina.prayer_notifications';
 const CHANNEL_SOUND = 'prayer-reminders';
@@ -146,7 +147,10 @@ export async function applyPrayerNotificationSettings(
 
   await ensureAndroidChannels();
   const channelId = settings.sound ? CHANNEL_SOUND : CHANNEL_SILENT;
-  const data: NotificationSourceData = { source: 'prayer' };
+  const data: NotificationSourceData = {
+    source: 'prayer',
+    playSound: settings.sound,
+  };
   const now = Date.now();
 
   for (let dayOffset = 0; dayOffset < WINDOW_DAYS; dayOffset += 1) {
@@ -173,6 +177,46 @@ export async function applyPrayerNotificationSettings(
       });
     }
   }
+}
+
+/**
+ * Dev/QA only: fire a real prayer reminder a couple of seconds from now, so a
+ * tester can see the actual notification — same channel, copy and sound as the
+ * scheduled ones — without waiting for an prayer time. Requests notification
+ * permission if needed and returns whether it was granted (so the caller can
+ * explain a denial). The short delay lets the tester background the app to see
+ * the heads-up banner and hear the channel sound (the foreground handler shows a
+ * silent banner). Tagged `source: 'prayer'` like the real ones; it fires long
+ * before any reschedule could cancel it. Not part of the production flow.
+ */
+export async function sendTestPrayerNotification(
+  name: PrayerName = 'dhuhr',
+): Promise<boolean> {
+  const granted = await ensureNotificationPermission();
+  if (!granted) {
+    return false;
+  }
+  const settings = await getPrayerNotificationSettings();
+  await ensureAndroidChannels();
+  const channelId = settings.sound ? CHANNEL_SOUND : CHANNEL_SILENT;
+  const data: NotificationSourceData = {
+    source: 'prayer',
+    playSound: settings.sound,
+  };
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: `${PRAYER_LABELS[name]} (test)`,
+      body: `It's time for ${PRAYER_LABELS[name]}. — developer test reminder`,
+      sound: settings.sound,
+      data,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: new Date(Date.now() + 2000),
+      channelId,
+    },
+  });
+  return true;
 }
 
 /**

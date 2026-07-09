@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import type { ActivityLogEntry } from '../../modules/ringer-control';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import { useActivityLog } from '../lib/activityLog';
+import { readAllPins } from '../lib/pins';
 
 /**
  * Activity log screen (FR-1.8).
@@ -16,7 +19,9 @@ import { useActivityLog } from '../lib/activityLog';
  * the most recent 100 events.
  */
 export function ActivityScreen() {
+  const styles = useThemedStyles(makeStyles);
   const { entries, clear } = useActivityLog();
+  const pinLabels = usePinLabels();
   const [confirmVisible, setConfirmVisible] = useState(false);
 
   const sections = useMemo(() => groupByDay(entries), [entries]);
@@ -47,7 +52,9 @@ export function ActivityScreen() {
         renderSectionHeader={({ section }) => (
           <Text style={styles.sectionHeader}>{section.title}</Text>
         )}
-        renderItem={({ item }) => <ActivityRow entry={item} />}
+        renderItem={({ item }) => (
+          <ActivityRow entry={item} pinLabels={pinLabels} />
+        )}
         ListHeaderComponent={
           <Pressable
             style={styles.clearButton}
@@ -71,14 +78,22 @@ export function ActivityScreen() {
   );
 }
 
-function ActivityRow({ entry }: { entry: ActivityLogEntry }) {
+function ActivityRow({
+  entry,
+  pinLabels,
+}: {
+  entry: ActivityLogEntry;
+  pinLabels: Map<string, string>;
+}) {
+  const styles = useThemedStyles(makeStyles);
   const silenced = entry.event === 'silenced';
   return (
     <View style={styles.row}>
       <Text style={styles.icon}>{silenced ? '🔕' : '🔔'}</Text>
       <View style={styles.rowText}>
         <Text style={styles.rowTitle}>
-          {silenced ? 'Silenced' : 'Restored'} · {zoneLabel(entry.zone)}
+          {silenced ? 'Silenced near' : 'Restored leaving'}{' '}
+          {zoneLabel(entry.zone, pinLabels)}
         </Text>
         <Text style={styles.rowTime}>{formatTime(entry.at)}</Text>
       </View>
@@ -87,12 +102,41 @@ function ActivityRow({ entry }: { entry: ActivityLogEntry }) {
 }
 
 /**
- * Display name for a zone. Today the log stores the geofence region id (the only
- * identifier available); EPIC-02/03 will supply real mosque/pin names, at which
- * point this maps an id to that name.
+ * A user-friendly name for the zone an event happened at — never the raw
+ * geofence region id, which is a UUID/internal handle that means nothing to the
+ * user. A pinned zone resolves to the label the user gave it (kept even after the
+ * pin is deleted, via {@link readAllPins}); anything else is a nearby mosque
+ * (EPIC-02 will supply their real names later).
  */
-function zoneLabel(zone: string): string {
-  return zone.length > 0 ? zone : 'a nearby zone';
+function zoneLabel(zone: string, pinLabels: Map<string, string>): string {
+  if (pinLabels.has(zone)) {
+    const label = pinLabels.get(zone)?.trim();
+    return label && label.length > 0 ? label : 'a pinned zone';
+  }
+  return 'a nearby mosque';
+}
+
+/**
+ * Live map of pin id → the user's label, refreshed on focus, so the log can show
+ * a pin's name instead of its id. Uses {@link readAllPins} (tombstones included)
+ * so an event recorded before a pin was deleted still resolves to its name.
+ */
+function usePinLabels(): Map<string, string> {
+  const [labels, setLabels] = useState<Map<string, string>>(() => new Map());
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void readAllPins().then((pins) => {
+        if (active) {
+          setLabels(new Map(pins.map((p) => [p.id, p.label])));
+        }
+      });
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
+  return labels;
 }
 
 const dayFormatter = new Intl.DateTimeFormat(undefined, {
@@ -129,7 +173,7 @@ function groupByDay(entries: ActivityLogEntry[]): DaySection[] {
   return sections;
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   list: {
     padding: 20,
     gap: 8,
@@ -144,29 +188,30 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700',
+    color: colors.text,
   },
   emptyBody: {
     fontSize: 14,
     textAlign: 'center',
-    opacity: 0.7,
+    color: colors.textMuted,
   },
   clearButton: {
     alignSelf: 'flex-end',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: '#FBE9E7',
+    backgroundColor: colors.dangerTint,
     marginBottom: 8,
   },
   clearButtonText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#B3261E',
+    color: colors.danger,
   },
   sectionHeader: {
     fontSize: 13,
     fontWeight: '700',
-    opacity: 0.5,
+    color: colors.textMuted,
     marginTop: 12,
     marginBottom: 4,
   },
@@ -177,7 +222,8 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#999',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   icon: {
     fontSize: 20,
@@ -189,9 +235,10 @@ const styles = StyleSheet.create({
   rowTitle: {
     fontSize: 15,
     fontWeight: '600',
+    color: colors.text,
   },
   rowTime: {
     fontSize: 13,
-    opacity: 0.6,
+    color: colors.textMuted,
   },
 });

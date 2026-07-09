@@ -14,6 +14,7 @@
  * via [[prayerNotifications]], using the location and config already on screen.
  */
 
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -26,7 +27,9 @@ import {
   View,
 } from 'react-native';
 
-import { getHighAccuracyFix } from '../lib/location';
+import { SelectField } from '../components/SelectField';
+import { useHighAccuracyLocation } from '../hooks/useHighAccuracyLocation';
+import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
 import {
   evaluatePrayerAwareSilence,
   pushPrayerWindowsToNative,
@@ -49,31 +52,34 @@ import {
   PRAYER_NAMES,
   type PrayerName,
 } from '../lib/prayerTimes';
-import type { LatLng } from '../lib/geofencing/types';
+
+/**
+ * A weather glyph per prayer, evoking the sky at its time — dawn for Fajr, high
+ * sun for Dhuhr, softening light for Asr, sunset for Maghrib, night for Isha.
+ */
+const PRAYER_ICONS: Readonly<
+  Record<PrayerName, keyof typeof MaterialCommunityIcons.glyphMap>
+> = {
+  fajr: 'weather-sunset-up',
+  dhuhr: 'weather-sunny',
+  asr: 'weather-partly-cloudy',
+  maghrib: 'weather-sunset-down',
+  isha: 'weather-night',
+};
 
 export function PrayerSettingsScreen() {
+  const styles = useThemedStyles(makeStyles);
+  const colors = useColors();
   const [config, setConfig] = usePrayerTimesConfig();
   const [notifications, setNotifications] = usePrayerNotificationSettings();
   const [prayerAware, setPrayerAware] = usePrayerAwareSilentSettings();
-  const [location, setLocation] = useState<LatLng | null>(null);
-  const [locationError, setLocationError] = useState(false);
-
-  // Best-effort one-shot fix so the preview reflects the user's actual times.
-  // The selection still persists without it; we just can't preview offline-of-
-  // location, so we show a hint instead of blocking the screen.
-  useEffect(() => {
-    let active = true;
-    getHighAccuracyFix()
-      .then((fix) => {
-        if (active) setLocation(fix);
-      })
-      .catch(() => {
-        if (active) setLocationError(true);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+  // Best-effort fix so the preview reflects the user's actual times; the method
+  // choice still persists without it. Recovers on its own once location is
+  // enabled (the hook retries on foreground), so the preview fills in without an
+  // app restart. A denial/failure just shows a hint instead of blocking.
+  const { location, status: locationStatus } = useHighAccuracyLocation();
+  const locationError =
+    locationStatus === 'denied' || locationStatus === 'error';
 
   // Recompute whenever the location or the config (method/Asr) changes. Pure and
   // offline — this is exactly what the home countdown (F-05.3) will consume.
@@ -130,52 +136,73 @@ export function PrayerSettingsScreen() {
     });
   };
 
+  // Highlight the next upcoming prayer in today's list. A snapshot taken at mount
+  // (not a live countdown — that's the home-screen card), so the clock is read
+  // once via a lazy initializer rather than during render.
+  const [now] = useState(() => Date.now());
+  const nextPrayerName = useMemo(
+    () =>
+      prayerTimes?.times.find((t) => t.time.getTime() > now)?.name ?? null,
+    [prayerTimes, now],
+  );
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
       <Text style={styles.sectionTitle}>Today’s times</Text>
-      <View style={styles.previewCard}>
-        {prayerTimes ? (
-          prayerTimes.times.map(({ name, time }) => (
-            <View key={name} style={styles.previewRow}>
-              <Text style={styles.previewName}>{PRAYER_LABELS[name]}</Text>
-              <Text style={styles.previewTime}>{formatTimeOfDay(time)}</Text>
-            </View>
-          ))
-        ) : locationError ? (
+      {prayerTimes ? (
+        <View style={styles.timesCard}>
+          {prayerTimes.times.map(({ name, time }, index) => {
+            const isNext = name === nextPrayerName;
+            return (
+              <View
+                key={name}
+                style={[
+                  styles.timeRow,
+                  index > 0 && styles.timeRowBordered,
+                  isNext && styles.timeRowNext,
+                ]}
+              >
+                <View
+                  style={[styles.timeIcon, isNext && styles.timeIconNext]}
+                >
+                  <MaterialCommunityIcons
+                    name={PRAYER_ICONS[name]}
+                    size={20}
+                    color={isNext ? colors.onBrand : colors.brand}
+                  />
+                </View>
+                <Text style={styles.timeName}>{PRAYER_LABELS[name]}</Text>
+                {isNext && (
+                  <View style={styles.nextChip}>
+                    <Text style={styles.nextChipText}>Next</Text>
+                  </View>
+                )}
+                <Text style={styles.timeValue}>{formatTimeOfDay(time)}</Text>
+              </View>
+            );
+          })}
+        </View>
+      ) : locationError ? (
+        <View style={styles.timesCard}>
           <Text style={styles.hint}>
             Grant location access to preview your prayer times. Your method choice
             below is still saved.
           </Text>
-        ) : (
+        </View>
+      ) : (
+        <View style={[styles.timesCard, styles.timesCardLoading]}>
           <ActivityIndicator />
-        )}
-      </View>
+        </View>
+      )}
 
       <Text style={styles.sectionTitle}>Calculation method</Text>
-      <View style={styles.group}>
-        {CALCULATION_METHODS.map(({ key, label }) => {
-          const selected = config.method === key;
-          return (
-            <Pressable
-              key={key}
-              style={[styles.option, selected && styles.optionSelected]}
-              onPress={() => setConfig({ ...config, method: key })}
-              accessibilityRole="radio"
-              accessibilityState={{ selected }}
-            >
-              <Text
-                style={[
-                  styles.optionLabel,
-                  selected && styles.optionLabelSelected,
-                ]}
-              >
-                {label}
-              </Text>
-              {selected && <Text style={styles.check}>✓</Text>}
-            </Pressable>
-          );
-        })}
-      </View>
+      <SelectField
+        value={config.method}
+        options={CALCULATION_METHODS}
+        onChange={(method) => setConfig({ ...config, method })}
+        title="Calculation method"
+        accessibilityLabel="Calculation method"
+      />
 
       <Text style={styles.sectionTitle}>Asr calculation</Text>
       <View style={styles.segmented}>
@@ -237,14 +264,21 @@ export function PrayerSettingsScreen() {
 
         {PRAYER_NAMES.map((name) => (
           <View key={name} style={[styles.switchRow, styles.switchRowBordered]}>
-            <Text
-              style={[
-                styles.switchLabel,
-                !notifications.enabled && styles.disabledText,
-              ]}
-            >
-              {PRAYER_LABELS[name]}
-            </Text>
+            <View style={styles.switchLabelRow}>
+              <MaterialCommunityIcons
+                name={PRAYER_ICONS[name]}
+                size={18}
+                color={notifications.enabled ? colors.brand : colors.muted}
+              />
+              <Text
+                style={[
+                  styles.switchLabel,
+                  !notifications.enabled && styles.disabledText,
+                ]}
+              >
+                {PRAYER_LABELS[name]}
+              </Text>
+            </View>
             <Switch
               value={notifications.prayers[name]}
               disabled={!notifications.enabled}
@@ -295,7 +329,10 @@ export function PrayerSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
+  screen: {
+    backgroundColor: colors.background,
+  },
   container: {
     padding: 20,
     gap: 12,
@@ -304,70 +341,98 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     textTransform: 'uppercase',
-    opacity: 0.55,
+    color: colors.textMuted,
     marginTop: 8,
   },
-  previewCard: {
-    borderRadius: 12,
-    backgroundColor: '#E6F4FE',
-    padding: 16,
-    gap: 8,
+  timesCard: {
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
     minHeight: 48,
+    padding: 4,
+  },
+  timesCardLoading: {
+    padding: 20,
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  previewRow: {
+  timeRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
   },
-  previewName: {
-    fontSize: 15,
+  timeRowBordered: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  timeRowNext: {
+    borderTopWidth: 0,
+    backgroundColor: colors.brandTint,
+  },
+  timeIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.brandTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeIconNext: {
+    backgroundColor: colors.brandSolid,
+  },
+  timeName: {
+    flex: 1,
+    fontSize: 16,
     fontWeight: '600',
+    color: colors.text,
+  },
+  nextChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    backgroundColor: colors.brandSolid,
+  },
+  nextChipText: {
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    color: colors.onBrand,
+  },
+  timeValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.brand,
+    fontVariant: ['tabular-nums'],
   },
   previewTime: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1A6B3C',
+    color: colors.brand,
   },
   hint: {
     fontSize: 13,
-    opacity: 0.7,
+    color: colors.textMuted,
     lineHeight: 18,
   },
   group: {
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#999',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     overflow: 'hidden',
-  },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#DDD',
-  },
-  optionSelected: {
-    backgroundColor: '#E6F4FE',
-  },
-  optionLabel: {
-    fontSize: 15,
-  },
-  optionLabelSelected: {
-    fontWeight: '700',
-  },
-  check: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#1A6B3C',
   },
   segmented: {
     flexDirection: 'row',
     borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#999',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     overflow: 'hidden',
   },
   segment: {
@@ -376,14 +441,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   segmentSelected: {
-    backgroundColor: '#1A6B3C',
+    backgroundColor: colors.brandSolid,
   },
   segmentLabel: {
     fontSize: 15,
     fontWeight: '600',
+    color: colors.text,
   },
   segmentLabelSelected: {
-    color: '#FFF',
+    color: colors.onBrand,
     fontWeight: '700',
   },
   switchRow: {
@@ -395,19 +461,25 @@ const styles = StyleSheet.create({
   },
   switchRowBordered: {
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#DDD',
+    borderTopColor: colors.border,
   },
   switchText: {
     flex: 1,
     paddingRight: 12,
   },
+  switchLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   switchLabel: {
     fontSize: 15,
     fontWeight: '600',
+    color: colors.text,
   },
   switchSub: {
     fontSize: 12,
-    opacity: 0.6,
+    color: colors.textMuted,
     marginTop: 2,
   },
   disabledText: {
@@ -415,7 +487,7 @@ const styles = StyleSheet.create({
   },
   note: {
     fontSize: 12,
-    opacity: 0.55,
+    color: colors.textMuted,
     lineHeight: 18,
     marginTop: 8,
   },

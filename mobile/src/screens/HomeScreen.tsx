@@ -5,10 +5,10 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AutoSilentToggle } from '../components/AutoSilentToggle';
+import { CurrentPrayerCard } from '../components/CurrentPrayerCard';
 import { LocationHeader } from '../components/LocationHeader';
-import { NextPrayerCountdown } from '../components/NextPrayerCountdown';
 import { apiFetch } from '../lib/api';
-import { colors } from '../lib/colors';
+import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
 
 /**
  * Home dashboard — the app's landing tab.
@@ -21,6 +21,7 @@ import { colors } from '../lib/colors';
  */
 export function HomeScreen() {
   const navigation = useNavigation();
+  const styles = useThemedStyles(makeStyles);
 
   useEffect(() => {
     // Ping the backend on first paint so the server upserts a Device row on
@@ -43,7 +44,7 @@ export function HomeScreen() {
           </Text>
         </View>
 
-        <NextPrayerCountdown />
+        <CurrentPrayerCard />
         <AutoSilentToggle />
 
         <Text style={styles.sectionTitle}>Quick actions</Text>
@@ -83,6 +84,8 @@ function QuickAction({
   label: string;
   onPress: () => void;
 }) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}
@@ -91,14 +94,14 @@ function QuickAction({
       accessibilityLabel={label}
     >
       <View style={styles.actionIcon}>
-        <Ionicons name={icon} size={22} color={colors.brand} />
+        <Ionicons name={icon} size={22} color={c.brand} />
       </View>
       <Text style={styles.actionLabel}>{label}</Text>
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.background,

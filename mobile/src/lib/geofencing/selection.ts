@@ -59,3 +59,29 @@ export function selectRegions(
 
   return chosen.map(({ candidate }) => toRegion(candidate));
 }
+
+/**
+ * The ids of `regions` whose ring already contains `center` — i.e. the zones the
+ * user is standing inside right now.
+ *
+ * Android evaluates geofences against *location updates*, so on a stationary
+ * device an enter transition (even the OS's initial-trigger) can lag for minutes
+ * or never arrive — which is exactly the "I dropped a pin where I'm sitting and it
+ * never silenced" case. The arming layer already has a position fix, so it uses
+ * this to drive the enter itself; the native state machine dedupes it against the
+ * OS's own trigger, so seeding is safe (see {@link armGeofencing}).
+ */
+export function regionsContainingPoint(
+  regions: readonly LocationRegion[],
+  center: LatLng,
+): string[] {
+  return regions
+    .filter((region) => {
+      if (!region.identifier) {
+        return false;
+      }
+      const radius = region.radius ?? DEFAULT_GEOFENCE_RADIUS_M;
+      return distanceMeters(center, region) <= radius;
+    })
+    .map((region) => region.identifier as string);
+}

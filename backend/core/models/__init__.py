@@ -19,6 +19,7 @@ from .device_settings import DeviceSettings
 from .fetched_tile import FetchedTile
 from .islamic_message import IslamicMessage
 from .mosque import Mosque
+from .mosque_report import MosqueReport
 from .pin import Pin
 
 __all__ = [
@@ -31,6 +32,7 @@ __all__ = [
     "DeviceSettings",
     "IslamicMessage",
     "Mosque",
+    "MosqueReport",
     "FetchedTile",
     "Pin",
 ]

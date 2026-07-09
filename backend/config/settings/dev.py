@@ -8,9 +8,19 @@ still overridable via the environment / ``.env``.
 """
 
 from .base import *  # noqa: F401,F403
-from .base import env
+from .base import BASE_DIR, env
 
 DEBUG = env.bool("DEBUG", default=True)
+
+# Directory the dev-only APK download endpoint serves from (see core/dev_views.py).
+# Defaults to the local Gradle output; in Docker the mobile/ tree is bind-mounted
+# elsewhere, so docker-compose overrides this via the DEV_APK_DIR env var.
+DEV_APK_DIR = env(
+    "DEV_APK_DIR",
+    default=str(
+        BASE_DIR.parent / "mobile" / "android" / "app" / "build" / "outputs" / "apk"
+    ),
+)
 
 # In development we allow all origins by default for convenience.
 CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=True)

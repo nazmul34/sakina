@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { RingerControlPanel } from '../components/RingerControlPanel';
-import { API_BASE_URL } from '../config/env';
-import { colors } from '../lib/colors';
+import { API_BASE_URL, SHOW_DEV_TOOLS } from '../config/env';
+import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
 import { getDeviceId } from '../lib/deviceId';
 import type { RootStackParamList } from '../navigation/types';
 
@@ -103,6 +103,7 @@ const SECTIONS: readonly SettingsSection[] = [
  */
 export function SettingsScreen() {
   const navigation = useNavigation();
+  const styles = useThemedStyles(makeStyles);
   const [deviceId, setDeviceId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -137,15 +138,23 @@ export function SettingsScreen() {
         </View>
       ))}
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Developer</Text>
-        <RingerControlPanel />
-      </View>
+      {/* Developer/QA tools and the API/device footer are gated on
+          SHOW_DEV_TOOLS: shown in debug and in a testing build
+          (EXPO_PUBLIC_SHOW_DEV_TOOLS=1), always hidden in release/production so
+          the ringer harness, backend URL, and raw device id never ship. */}
+      {SHOW_DEV_TOOLS && (
+        <>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Developer</Text>
+            <RingerControlPanel />
+          </View>
 
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>API: {API_BASE_URL}</Text>
-        <Text style={styles.footerText}>Device: {deviceId ?? '…'}</Text>
-      </View>
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>API: {API_BASE_URL}</Text>
+            <Text style={styles.footerText}>Device: {deviceId ?? '…'}</Text>
+          </View>
+        </>
+      )}
     </ScrollView>
   );
 }
@@ -159,6 +168,8 @@ function Row({
   first: boolean;
   onPress: () => void;
 }) {
+  const c = useColors();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       style={({ pressed }) => [
@@ -171,18 +182,18 @@ function Row({
       accessibilityLabel={row.label}
     >
       <View style={styles.rowIcon}>
-        <Ionicons name={row.icon} size={20} color={colors.brand} />
+        <Ionicons name={row.icon} size={20} color={c.brand} />
       </View>
       <View style={styles.rowText}>
         <Text style={styles.rowLabel}>{row.label}</Text>
         <Text style={styles.rowSubtitle}>{row.subtitle}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+      <Ionicons name="chevron-forward" size={18} color={c.muted} />
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,

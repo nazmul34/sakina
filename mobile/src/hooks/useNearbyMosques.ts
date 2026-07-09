@@ -21,7 +21,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { distanceMeters } from '../lib/geofencing/geo';
 import type { LatLng } from '../lib/geofencing/types';
-import { getHighAccuracyFix } from '../lib/location';
+import {
+  ensureLocationPermission,
+  getHighAccuracyFix,
+  LocationPermissionError,
+} from '../lib/location';
 import { fetchNearbyMosques, type NearbyMosque } from '../lib/mosques';
 import { readMosquesCache, writeMosquesCache } from '../lib/mosquesCache';
 
@@ -145,42 +149,54 @@ export function useNearbyMosques(): UseNearbyMosques {
     mounted.current = true;
     let subscription: Location.LocationSubscription | null = null;
 
-    void Location.watchPositionAsync(
-      {
-        accuracy: Location.Accuracy.High,
-        // Coarse OS pre-filter; the precise gate below is what enforces FR-2.4.
-        distanceInterval: MOVEMENT_REFETCH_THRESHOLD_M,
-      },
-      ({ coords }) => {
-        const here: LatLng = {
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-        };
-        latestPosition.current = here;
+    void (async () => {
+      // Ask for location when the list is opened without it, so the user gets a
+      // prompt (and is asked again next visit) rather than a silent empty screen.
+      const granted = await ensureLocationPermission();
+      if (!mounted.current) {
+        return;
+      }
+      if (!granted) {
+        setError(new LocationPermissionError());
+        setStatus('error');
+        return;
+      }
+      try {
+        const sub = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            // Coarse OS pre-filter; the precise gate below enforces FR-2.4.
+            distanceInterval: MOVEMENT_REFETCH_THRESHOLD_M,
+          },
+          ({ coords }) => {
+            const here: LatLng = {
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+            };
+            latestPosition.current = here;
 
-        const anchor = lastFetchedAt.current;
-        if (
-          !anchor ||
-          distanceMeters(anchor, here) >= MOVEMENT_REFETCH_THRESHOLD_M
-        ) {
-          void fetchAround(here);
-        }
-      },
-    )
-      .then((sub) => {
+            const anchor = lastFetchedAt.current;
+            if (
+              !anchor ||
+              distanceMeters(anchor, here) >= MOVEMENT_REFETCH_THRESHOLD_M
+            ) {
+              void fetchAround(here);
+            }
+          },
+        );
         if (mounted.current) {
           subscription = sub;
         } else {
           // Unmounted before the subscription resolved — tear it down now.
           sub.remove();
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         if (mounted.current) {
           setError(toError(err));
           setStatus('error');
         }
-      });
+      }
+    })();
 
     return () => {
       mounted.current = false;
