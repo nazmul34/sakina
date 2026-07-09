@@ -158,5 +158,1615 @@
       "category": "reminder",
       "is_active": true
     }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000017",
+    "fields": {
+      "text": "Indeed, with hardship [will be] ease.",
+      "source_label": "Qur'an 94:6",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000018",
+    "fields": {
+      "text": "And whoever fears Allah - He will make for him a way out.",
+      "source_label": "Qur'an 65:2",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000019",
+    "fields": {
+      "text": "Allah does not burden a soul beyond that it can bear.",
+      "source_label": "Qur'an 2:286",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000020",
+    "fields": {
+      "text": "So which of the favors of your Lord would you deny?",
+      "source_label": "Qur'an 55:13",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000021",
+    "fields": {
+      "text": "Indeed, Allah is with the patient.",
+      "source_label": "Qur'an 2:153",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000022",
+    "fields": {
+      "text": "And rely upon Allah; and sufficient is Allah as Disposer of affairs.",
+      "source_label": "Qur'an 33:3",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000023",
+    "fields": {
+      "text": "Unquestionably, by the remembrance of Allah hearts are assured.",
+      "source_label": "Qur'an 13:28",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000024",
+    "fields": {
+      "text": "My Lord, increase me in knowledge.",
+      "source_label": "Qur'an 20:114",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000025",
+    "fields": {
+      "text": "And when My servants ask you concerning Me - indeed I am near.",
+      "source_label": "Qur'an 2:186",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000026",
+    "fields": {
+      "text": "Call upon Me; I will respond to you.",
+      "source_label": "Qur'an 40:60",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000027",
+    "fields": {
+      "text": "Indeed, Allah loves those who rely upon Him.",
+      "source_label": "Qur'an 3:159",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000028",
+    "fields": {
+      "text": "And do good; indeed, Allah loves the doers of good.",
+      "source_label": "Qur'an 2:195",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000029",
+    "fields": {
+      "text": "Allah is the ally of those who believe.",
+      "source_label": "Qur'an 2:257",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000030",
+    "fields": {
+      "text": "And He found you lost and guided [you].",
+      "source_label": "Qur'an 93:7",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000031",
+    "fields": {
+      "text": "So be patient. Indeed, the promise of Allah is truth.",
+      "source_label": "Qur'an 30:60",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000032",
+    "fields": {
+      "text": "Say, 'Nothing will happen to us except what Allah has decreed for us.'",
+      "source_label": "Qur'an 9:51",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000033",
+    "fields": {
+      "text": "And it is He who sends down the rain after they had despaired.",
+      "source_label": "Qur'an 42:28",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000034",
+    "fields": {
+      "text": "Indeed, my Lord is near and responsive.",
+      "source_label": "Qur'an 11:61",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000035",
+    "fields": {
+      "text": "And your Lord says, 'Call upon Me; I will respond to you.'",
+      "source_label": "Qur'an 40:60",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000036",
+    "fields": {
+      "text": "Allah intends for you ease and does not intend for you hardship.",
+      "source_label": "Qur'an 2:185",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000037",
+    "fields": {
+      "text": "Whoever does righteousness, whether male or female, while being a believer - We will surely cause him to live a good life.",
+      "source_label": "Qur'an 16:97",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000038",
+    "fields": {
+      "text": "And be patient, for indeed, Allah does not allow to be lost the reward of those who do good.",
+      "source_label": "Qur'an 11:115",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000039",
+    "fields": {
+      "text": "Indeed, the mercy of Allah is near to the doers of good.",
+      "source_label": "Qur'an 7:56",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000040",
+    "fields": {
+      "text": "And whoever puts their trust in Allah - then He is sufficient for him.",
+      "source_label": "Qur'an 65:3",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000041",
+    "fields": {
+      "text": "Perhaps you hate a thing and it is good for you.",
+      "source_label": "Qur'an 2:216",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000042",
+    "fields": {
+      "text": "My mercy encompasses all things.",
+      "source_label": "Qur'an 7:156",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000043",
+    "fields": {
+      "text": "Say, 'O My servants who have transgressed against themselves, do not despair of the mercy of Allah.'",
+      "source_label": "Qur'an 39:53",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000044",
+    "fields": {
+      "text": "And establish prayer. Indeed, prayer prohibits immorality and wrongdoing.",
+      "source_label": "Qur'an 29:45",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000045",
+    "fields": {
+      "text": "Then remember Me; I will remember you.",
+      "source_label": "Qur'an 2:152",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000046",
+    "fields": {
+      "text": "Indeed, Allah is Forgiving and Merciful.",
+      "source_label": "Qur'an 2:173",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000047",
+    "fields": {
+      "text": "And speak to people good [words].",
+      "source_label": "Qur'an 2:83",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000048",
+    "fields": {
+      "text": "Repel [evil] by that [deed] which is better.",
+      "source_label": "Qur'an 41:34",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000049",
+    "fields": {
+      "text": "Indeed, Allah orders justice and good conduct.",
+      "source_label": "Qur'an 16:90",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000050",
+    "fields": {
+      "text": "And lower to them the wing of humility out of mercy.",
+      "source_label": "Qur'an 17:24",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000051",
+    "fields": {
+      "text": "Whoever is grateful - his gratitude is only for [the benefit of] himself.",
+      "source_label": "Qur'an 31:12",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000052",
+    "fields": {
+      "text": "If you are grateful, I will surely increase you [in favor].",
+      "source_label": "Qur'an 14:7",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000053",
+    "fields": {
+      "text": "And of His signs is that He created for you from yourselves mates that you may find tranquility in them.",
+      "source_label": "Qur'an 30:21",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000054",
+    "fields": {
+      "text": "And hold firmly to the rope of Allah all together and do not become divided.",
+      "source_label": "Qur'an 3:103",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000055",
+    "fields": {
+      "text": "Indeed, Allah will not change the condition of a people until they change what is in themselves.",
+      "source_label": "Qur'an 13:11",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000056",
+    "fields": {
+      "text": "Our Lord, pour upon us patience and plant firmly our feet.",
+      "source_label": "Qur'an 2:250",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000057",
+    "fields": {
+      "text": "Sufficient for us is Allah, and [He is] the best Disposer of affairs.",
+      "source_label": "Qur'an 3:173",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000058",
+    "fields": {
+      "text": "And seek help through patience and prayer.",
+      "source_label": "Qur'an 2:45",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000059",
+    "fields": {
+      "text": "Indeed, Allah is ever, over you, an Observer.",
+      "source_label": "Qur'an 4:1",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000060",
+    "fields": {
+      "text": "So remember Allah standing, sitting, or [lying] on your sides.",
+      "source_label": "Qur'an 4:103",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000061",
+    "fields": {
+      "text": "And hasten to forgiveness from your Lord and a garden as wide as the heavens and earth.",
+      "source_label": "Qur'an 3:133",
+      "category": "quran",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000062",
+    "fields": {
+      "text": "Actions are but by intentions, and every person will have only what they intended.",
+      "source_label": "Sahih al-Bukhari & Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000063",
+    "fields": {
+      "text": "The best of you are those who learn the Qur'an and teach it.",
+      "source_label": "Sahih al-Bukhari",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000064",
+    "fields": {
+      "text": "None of you truly believes until he loves for his brother what he loves for himself.",
+      "source_label": "Sahih al-Bukhari & Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000065",
+    "fields": {
+      "text": "Whoever believes in Allah and the Last Day, let him speak good or remain silent.",
+      "source_label": "Sahih al-Bukhari & Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000066",
+    "fields": {
+      "text": "The strong person is not the one who overcomes people, but the one who controls himself while angry.",
+      "source_label": "Sahih al-Bukhari & Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000067",
+    "fields": {
+      "text": "Make things easy and do not make them difficult; give glad tidings and do not repel people.",
+      "source_label": "Sahih al-Bukhari",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000068",
+    "fields": {
+      "text": "A good word is charity.",
+      "source_label": "Sahih al-Bukhari & Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000069",
+    "fields": {
+      "text": "He who does not thank people has not thanked Allah.",
+      "source_label": "Sunan Abi Dawud",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000070",
+    "fields": {
+      "text": "The most beloved deeds to Allah are those done consistently, even if small.",
+      "source_label": "Sahih al-Bukhari & Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000071",
+    "fields": {
+      "text": "Whoever treads a path in search of knowledge, Allah makes easy for him a path to Paradise.",
+      "source_label": "Sahih Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000072",
+    "fields": {
+      "text": "Fear Allah wherever you are, follow a bad deed with a good one to erase it, and treat people with good character.",
+      "source_label": "Jami' at-Tirmidhi",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000073",
+    "fields": {
+      "text": "The believer is not one who eats his fill while his neighbour goes hungry.",
+      "source_label": "Al-Adab al-Mufrad",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000074",
+    "fields": {
+      "text": "Kindness is not found in anything but that it beautifies it, and is not removed from anything but that it disgraces it.",
+      "source_label": "Sahih Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000075",
+    "fields": {
+      "text": "Allah is gentle and loves gentleness in all matters.",
+      "source_label": "Sahih al-Bukhari & Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000076",
+    "fields": {
+      "text": "Smiling in the face of your brother is charity.",
+      "source_label": "Jami' at-Tirmidhi",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000077",
+    "fields": {
+      "text": "The best of people are those most beneficial to people.",
+      "source_label": "Al-Mu'jam al-Awsat (al-Tabarani)",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000078",
+    "fields": {
+      "text": "Whoever relieves a believer's distress, Allah will relieve his distress on the Day of Resurrection.",
+      "source_label": "Sahih Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000079",
+    "fields": {
+      "text": "Richness is not having many possessions; rather, true richness is the richness of the soul.",
+      "source_label": "Sahih al-Bukhari & Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000080",
+    "fields": {
+      "text": "Modesty brings nothing but good.",
+      "source_label": "Sahih al-Bukhari & Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000081",
+    "fields": {
+      "text": "Whoever is not merciful to people, Allah will not be merciful to him.",
+      "source_label": "Sahih al-Bukhari & Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000082",
+    "fields": {
+      "text": "The best charity is that given when you are in need and struggling.",
+      "source_label": "Sunan Abi Dawud",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000083",
+    "fields": {
+      "text": "Cheerfulness towards your brother and pouring water into his bucket are acts of goodness.",
+      "source_label": "Jami' at-Tirmidhi",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000084",
+    "fields": {
+      "text": "Whoever guides someone to goodness will have a reward like the one who does it.",
+      "source_label": "Sahih Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000085",
+    "fields": {
+      "text": "Charity does not decrease wealth.",
+      "source_label": "Sahih Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000086",
+    "fields": {
+      "text": "Every act of goodness is charity.",
+      "source_label": "Sahih Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000087",
+    "fields": {
+      "text": "Whoever conceals the faults of a Muslim, Allah will conceal his faults in this world and the next.",
+      "source_label": "Sahih Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000088",
+    "fields": {
+      "text": "Part of the perfection of one's Islam is leaving that which does not concern him.",
+      "source_label": "Jami' at-Tirmidhi",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000089",
+    "fields": {
+      "text": "Verily, Allah does not look at your appearance or wealth, but He looks at your hearts and deeds.",
+      "source_label": "Sahih Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000090",
+    "fields": {
+      "text": "The seeking of knowledge is obligatory upon every Muslim.",
+      "source_label": "Sunan Ibn Majah",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000091",
+    "fields": {
+      "text": "Whoever loves to meet Allah, Allah loves to meet him.",
+      "source_label": "Sahih al-Bukhari & Muslim",
+      "category": "hadith",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000092",
+    "fields": {
+      "text": "Our Lord, give us good in this world and good in the Hereafter, and protect us from the punishment of the Fire.",
+      "source_label": "Qur'an 2:201",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000093",
+    "fields": {
+      "text": "My Lord, expand for me my breast [with assurance] and ease for me my task.",
+      "source_label": "Qur'an 20:25-26",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000094",
+    "fields": {
+      "text": "Our Lord, do not impose blame upon us if we forget or make a mistake.",
+      "source_label": "Qur'an 2:286",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000095",
+    "fields": {
+      "text": "My Lord, forgive me and my parents.",
+      "source_label": "Qur'an 71:28",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000096",
+    "fields": {
+      "text": "Our Lord, grant us from Yourself mercy and prepare for us right guidance.",
+      "source_label": "Qur'an 18:10",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000097",
+    "fields": {
+      "text": "My Lord, make me an establisher of prayer, and [many] from my descendants.",
+      "source_label": "Qur'an 14:40",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000098",
+    "fields": {
+      "text": "Our Lord, let not our hearts deviate after You have guided us, and grant us mercy from Yourself.",
+      "source_label": "Qur'an 3:8",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000099",
+    "fields": {
+      "text": "My Lord, enable me to be grateful for Your favor which You have bestowed upon me and upon my parents.",
+      "source_label": "Qur'an 27:19",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000100",
+    "fields": {
+      "text": "O Allah, I ask You for guidance, piety, chastity and self-sufficiency.",
+      "source_label": "Sahih Muslim",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000101",
+    "fields": {
+      "text": "O Allah, help me to remember You, to thank You, and to worship You in the best manner.",
+      "source_label": "Sunan Abi Dawud",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000102",
+    "fields": {
+      "text": "O Allah, I seek refuge in You from anxiety and grief, from weakness and laziness.",
+      "source_label": "Sahih al-Bukhari",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000103",
+    "fields": {
+      "text": "O Allah, rectify my religion which is the safeguard of my affairs.",
+      "source_label": "Sahih Muslim",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000104",
+    "fields": {
+      "text": "O Allah, You are Forgiving and love forgiveness, so forgive me.",
+      "source_label": "Jami' at-Tirmidhi",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000105",
+    "fields": {
+      "text": "O Turner of the hearts, keep my heart firm upon Your religion.",
+      "source_label": "Jami' at-Tirmidhi",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000106",
+    "fields": {
+      "text": "Our Lord, forgive us our sins and the excess in our affairs.",
+      "source_label": "Qur'an 3:147",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000107",
+    "fields": {
+      "text": "My Lord, do not leave me alone, and You are the best of inheritors.",
+      "source_label": "Qur'an 21:89",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000108",
+    "fields": {
+      "text": "Our Lord, upon You we have relied, and to You we have returned.",
+      "source_label": "Qur'an 60:4",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000109",
+    "fields": {
+      "text": "O Allah, I ask You for beneficial knowledge, good provision, and accepted deeds.",
+      "source_label": "Sunan Ibn Majah",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000110",
+    "fields": {
+      "text": "My Lord, grant me [from You] a righteous [child].",
+      "source_label": "Qur'an 37:100",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000111",
+    "fields": {
+      "text": "Our Lord, complete for us our light and forgive us. Indeed, You are over all things competent.",
+      "source_label": "Qur'an 66:8",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000112",
+    "fields": {
+      "text": "O Allah, I seek Your protection from knowledge that does not benefit and a heart that does not fear You.",
+      "source_label": "Sahih Muslim",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000113",
+    "fields": {
+      "text": "There is no deity except You; exalted are You. Indeed, I have been of the wrongdoers.",
+      "source_label": "Qur'an 21:87",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000114",
+    "fields": {
+      "text": "My Lord, indeed I am, for whatever good You would send down to me, in need.",
+      "source_label": "Qur'an 28:24",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000115",
+    "fields": {
+      "text": "Our Lord, and grant us what You promised us through Your messengers.",
+      "source_label": "Qur'an 3:194",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000116",
+    "fields": {
+      "text": "O Allah, make the best of my deeds the last of them, and the best of my days the day I meet You.",
+      "source_label": "Al-Mu'jam al-Awsat (al-Tabarani)",
+      "category": "dua",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000117",
+    "fields": {
+      "text": "Begin your day with the name of Allah, and let gratitude be your first thought.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000118",
+    "fields": {
+      "text": "A small deed done sincerely is greater than a large one done for show.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000119",
+    "fields": {
+      "text": "When you feel far from Allah, remember: He never moved. Turn back.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000120",
+    "fields": {
+      "text": "Patience is not passive waiting; it is trusting Allah's timing while you keep striving.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000121",
+    "fields": {
+      "text": "Guard your five daily prayers; they are the pillars that hold up your day.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000122",
+    "fields": {
+      "text": "Forgive others, not because they deserve it, but because you seek Allah's forgiveness.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000123",
+    "fields": {
+      "text": "Your tongue can be charity or harm — choose your words as if they are recorded, for they are.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000124",
+    "fields": {
+      "text": "Dua is never wasted: it is answered, stored, or turned into protection from harm.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000125",
+    "fields": {
+      "text": "Lower your gaze, and Allah will raise your heart.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000126",
+    "fields": {
+      "text": "The quiet worship no one sees may be the deed that saves you.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000127",
+    "fields": {
+      "text": "Do not let a moment of anger destroy what years of kindness built.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000128",
+    "fields": {
+      "text": "Give in secret; let your right hand not know what your left hand gives.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000129",
+    "fields": {
+      "text": "Every difficulty you face is known to Allah, and nothing is too big for Him.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000130",
+    "fields": {
+      "text": "Seek forgiveness often; it opens doors you did not know were closed.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000131",
+    "fields": {
+      "text": "Be the reason someone believes in the goodness of Muslims.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000132",
+    "fields": {
+      "text": "Consistency in small acts of worship outlasts bursts of enthusiasm.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000133",
+    "fields": {
+      "text": "Your parents' du'a for you is a treasure; earn it while you can.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000134",
+    "fields": {
+      "text": "Gratitude turns what you have into enough.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000135",
+    "fields": {
+      "text": "Do not measure your worth by people's praise, but by your standing with Allah.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000136",
+    "fields": {
+      "text": "Remember death often; it softens the heart and orders your priorities.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000137",
+    "fields": {
+      "text": "The dunya is a bridge — cross it, but do not build your house upon it.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000138",
+    "fields": {
+      "text": "A grateful heart in hardship is worth more than a complaining heart in ease.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000139",
+    "fields": {
+      "text": "Keep good company; you become like those you sit with.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000140",
+    "fields": {
+      "text": "When in doubt about a choice, pray istikhara and trust where Allah leads you.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000141",
+    "fields": {
+      "text": "Honor your neighbour, even the one who wrongs you.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000142",
+    "fields": {
+      "text": "Speak gently to your family; the best of you are the best to their families.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000143",
+    "fields": {
+      "text": "Reading a single verse with reflection is better than reciting many in haste.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000144",
+    "fields": {
+      "text": "Anxiety shrinks when you hand your affairs to the One who controls all affairs.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000145",
+    "fields": {
+      "text": "Do not delay repentance for tomorrow that may never come.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000146",
+    "fields": {
+      "text": "The Prophet ﷺ smiled often; a cheerful face is a gift you can give freely.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000147",
+    "fields": {
+      "text": "Wealth is a test as much as poverty; both ask, 'Will you remember Allah?'",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000148",
+    "fields": {
+      "text": "Feed the hungry, visit the sick, and free your heart of pride.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000149",
+    "fields": {
+      "text": "Whatever you missed was never meant to reach you; whatever reached you was never meant to miss.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000150",
+    "fields": {
+      "text": "Make du'a for your brothers and sisters in their absence; the angels say, 'And for you the same.'",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000151",
+    "fields": {
+      "text": "A heart attached to the mosque is shaded on the Day when there is no shade but His.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000152",
+    "fields": {
+      "text": "Control your anger, and Paradise is promised to you.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000153",
+    "fields": {
+      "text": "The best gift to give your children is your good example.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000154",
+    "fields": {
+      "text": "Do not despair over sins; despair is a trap. The door of return is always open.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000155",
+    "fields": {
+      "text": "Say 'Alhamdulillah' in ease and 'Alhamdulillah' in hardship; both are worship.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000156",
+    "fields": {
+      "text": "Protect your prayer times, and your day will find its order around them.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000157",
+    "fields": {
+      "text": "Kind words cost nothing yet weigh heavily on the scale of good deeds.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000158",
+    "fields": {
+      "text": "Be quick to forgive and slow to take offense.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000159",
+    "fields": {
+      "text": "Every breath is a blessing counted; use it in what pleases Allah.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000160",
+    "fields": {
+      "text": "The one who trusts Allah is never truly alone.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000161",
+    "fields": {
+      "text": "Hold your tongue from complaint and your heart from envy.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000162",
+    "fields": {
+      "text": "Charity given with a smile is doubled in beauty.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000163",
+    "fields": {
+      "text": "A moment of sincere du'a in the last third of the night can change a life.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000164",
+    "fields": {
+      "text": "Do not underestimate a sincere 'SubhanAllah' — it fills the scale.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000165",
+    "fields": {
+      "text": "Return to Allah before you are returned to Him.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000166",
+    "fields": {
+      "text": "The strongest among you is the one who pardons when able to punish.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000167",
+    "fields": {
+      "text": "Let your last words before sleep be the remembrance of Allah.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000168",
+    "fields": {
+      "text": "Mercy given is mercy earned.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000169",
+    "fields": {
+      "text": "Plant goodness wherever you go; you may not see the harvest, but Allah records the seed.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000170",
+    "fields": {
+      "text": "A humble servant is dearer to Allah than a proud worshipper.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000171",
+    "fields": {
+      "text": "Keep your promises, even the small ones.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000172",
+    "fields": {
+      "text": "When the world overwhelms you, return to sujood.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000173",
+    "fields": {
+      "text": "Your reaction to a test is itself the test.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000174",
+    "fields": {
+      "text": "Do good and cast it into the sea; if the fish do not know it, Allah does.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000175",
+    "fields": {
+      "text": "The believer's affair is wholly good: grateful in ease, patient in hardship.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000176",
+    "fields": {
+      "text": "Water your faith daily with dhikr, or watch it wither.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
+  },
+  {
+    "model": "core.islamicmessage",
+    "pk": "00000000-0000-0000-0000-000000000177",
+    "fields": {
+      "text": "Be a source of ease for people, and Allah will ease your affairs.",
+      "source_label": "",
+      "category": "reminder",
+      "is_active": true
+    }
   }
 ]
