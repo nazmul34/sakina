@@ -22,5 +22,8 @@ COPY . .
 
 EXPOSE 8000
 
-# Collect static + run migrations at start, then serve via Gunicorn.
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
+# Run migrations, (re)seed the daily-message content, then serve via Gunicorn.
+# `loaddata` is idempotent — the fixture has stable primary keys, so it updates
+# the same rows rather than duplicating — so every deploy syncs prod to the
+# fixture's current content.
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py loaddata islamic_messages && gunicorn config.wsgi:application --bind 0.0.0.0:8000"]
