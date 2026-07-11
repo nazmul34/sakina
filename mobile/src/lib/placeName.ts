@@ -21,28 +21,43 @@ import { useEffect, useState } from 'react';
 const PLACE_KEY = 'sakina.last_place';
 
 /**
- * Compose a concise "City, Region" label from a reverse-geocode result, with
+ * Compose a concise "Area, City" label from a reverse-geocode result, with
  * fallbacks for sparse data. Returns `null` when nothing usable is present.
+ *
+ * We walk the address from the finest level (neighbourhood/thana) to the
+ * coarsest (country) and show the two most-specific *distinct* levels. That
+ * yields "Daulatpur, Khulna" rather than "Khulna, Khulna Division" when the
+ * geocoder resolves a sub-locality — while still degrading gracefully to
+ * "Khulna, Khulna Division" (or a bare "Khulna") when it doesn't.
  */
 export function formatPlaceName(
   address: Location.LocationGeocodedAddress,
 ): string | null {
-  const primary =
-    address.city ??
-    address.district ??
-    address.subregion ??
-    address.region ??
-    address.name ??
-    address.country;
+  // Finest → coarsest. `district` is the sub-locality (thana / area), `city`
+  // the town, `subregion`/`region` the administrative area, then country.
+  const levels = [
+    address.district,
+    address.city,
+    address.subregion,
+    address.region,
+    address.country,
+  ];
+
+  // Keep non-empty levels, de-duplicated in order (geocoders often repeat a
+  // value across fields, e.g. subregion === region).
+  const parts: string[] = [];
+  for (const level of levels) {
+    if (level && !parts.includes(level)) {
+      parts.push(level);
+    }
+  }
+
+  const primary = parts[0] ?? address.name;
   if (!primary) {
     return null;
   }
-  // Add a region/country qualifier when it adds information (not a duplicate).
-  const secondary = address.region ?? address.country;
-  if (secondary && secondary !== primary) {
-    return `${primary}, ${secondary}`;
-  }
-  return primary;
+  const secondary = parts.find((part) => part !== primary);
+  return secondary ? `${primary}, ${secondary}` : primary;
 }
 
 /** Read the last cached place name, or `null` if none has been stored yet. */
