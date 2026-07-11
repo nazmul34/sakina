@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
+import { translate } from './i18n';
 import { composeShareText, fetchRandomMessage } from './messagesApi';
 import {
   cancelScheduledBySource,
@@ -119,15 +120,15 @@ async function buildContent(): Promise<{
   try {
     const message = await fetchRandomMessage();
     return {
-      title: 'Daily reminder',
+      title: translate('notif.dailyTitle'),
       body: composeShareText(message),
       sound: true,
       data,
     };
   } catch {
     return {
-      title: 'Daily reminder',
-      body: "Open Sakina for today's reminder.",
+      title: translate('notif.dailyTitle'),
+      body: translate('notif.dailyFallback'),
       sound: true,
       data,
     };

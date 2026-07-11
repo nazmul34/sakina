@@ -5,6 +5,7 @@ import { Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 import type { ActivityLogEntry } from '../../modules/ringer-control';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
+import { translate, useT } from '../lib/i18n';
 import { useActivityLog } from '../lib/activityLog';
 import { readAllPins } from '../lib/pins';
 
@@ -20,6 +21,7 @@ import { readAllPins } from '../lib/pins';
  */
 export function ActivityScreen() {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const { entries, clear } = useActivityLog();
   const pinLabels = usePinLabels();
   const [confirmVisible, setConfirmVisible] = useState(false);
@@ -34,11 +36,8 @@ export function ActivityScreen() {
   if (entries.length === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyTitle}>No activity yet</Text>
-        <Text style={styles.emptyBody}>
-          When auto-silent silences your phone near a mosque and restores it
-          after you leave, those events show up here.
-        </Text>
+        <Text style={styles.emptyTitle}>{t('activity.empty')}</Text>
+        <Text style={styles.emptyBody}>{t('activity.emptyBody')}</Text>
       </View>
     );
   }
@@ -61,15 +60,16 @@ export function ActivityScreen() {
             onPress={() => setConfirmVisible(true)}
             accessibilityRole="button"
           >
-            <Text style={styles.clearButtonText}>Clear log</Text>
+            <Text style={styles.clearButtonText}>{t('activity.clearLog')}</Text>
           </Pressable>
         }
       />
       <ConfirmDialog
         visible={confirmVisible}
-        title="Clear activity log?"
-        message="This removes all recorded events. This can't be undone."
-        confirmLabel="Clear"
+        title={t('activity.clearTitle')}
+        message={t('activity.clearMessage')}
+        confirmLabel={t('activity.clear')}
+        cancelLabel={t('common.cancel')}
         destructive
         onConfirm={onConfirmClear}
         onCancel={() => setConfirmVisible(false)}
@@ -86,14 +86,17 @@ function ActivityRow({
   pinLabels: Map<string, string>;
 }) {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const silenced = entry.event === 'silenced';
+  const zone = zoneLabel(entry.zone, pinLabels);
   return (
     <View style={styles.row}>
       <Text style={styles.icon}>{silenced ? '🔕' : '🔔'}</Text>
       <View style={styles.rowText}>
         <Text style={styles.rowTitle}>
-          {silenced ? 'Silenced near' : 'Restored leaving'}{' '}
-          {zoneLabel(entry.zone, pinLabels)}
+          {silenced
+            ? t('activity.silencedNear', { zone })
+            : t('activity.restoredLeaving', { zone })}
         </Text>
         <Text style={styles.rowTime}>{formatTime(entry.at)}</Text>
       </View>
@@ -111,9 +114,9 @@ function ActivityRow({
 function zoneLabel(zone: string, pinLabels: Map<string, string>): string {
   if (pinLabels.has(zone)) {
     const label = pinLabels.get(zone)?.trim();
-    return label && label.length > 0 ? label : 'a pinned zone';
+    return label && label.length > 0 ? label : translate('activity.pinnedZone');
   }
-  return 'a nearby mosque';
+  return translate('activity.nearbyMosque');
 }
 
 /**

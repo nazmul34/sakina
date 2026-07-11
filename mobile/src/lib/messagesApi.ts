@@ -7,6 +7,7 @@
  */
 
 import { apiFetch } from './api';
+import { getLocaleSnapshot } from './i18n/locale';
 
 export type MessageCategory = 'quran' | 'hadith' | 'dua' | 'reminder';
 
@@ -20,14 +21,20 @@ export interface IslamicMessage {
 /**
  * Fetch a random active message from the backend.
  * Pass `category` to restrict results to that category.
+ *
+ * The active app language is sent as `?lang=` so the backend returns the Bangla
+ * text when the user has switched to Bangla (falling back to English per-message
+ * where a translation isn't available yet — see the backend serializer).
  * Throws on network error or non-2xx response.
  */
 export async function fetchRandomMessage(
   category?: MessageCategory,
 ): Promise<IslamicMessage> {
-  const path = category
-    ? `messages/random?category=${category}`
-    : 'messages/random';
+  const params = new URLSearchParams({ lang: getLocaleSnapshot() });
+  if (category) {
+    params.set('category', category);
+  }
+  const path = `messages/random?${params.toString()}`;
 
   const response = await apiFetch(path);
 

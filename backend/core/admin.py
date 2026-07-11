@@ -86,14 +86,25 @@ class FetchedTileAdmin(admin.ModelAdmin):
 
 @admin.register(IslamicMessage)
 class IslamicMessageAdmin(admin.ModelAdmin):
-    list_display = ("source_label", "category", "is_active", "text_preview")
+    list_display = (
+        "source_label",
+        "category",
+        "is_active",
+        "has_bangla",
+        "text_preview",
+    )
     list_filter = ("category", "is_active")
-    search_fields = ("text", "source_label")
+    search_fields = ("text", "source_label", "text_bn", "source_label_bn")
     readonly_fields = ("id",)
 
     @admin.display(description="Text")
     def text_preview(self, obj):
         return obj.text[:80] + ("…" if len(obj.text) > 80 else "")
+
+    @admin.display(boolean=True, description="বাংলা")
+    def has_bangla(self, obj):
+        # Quick filter aid: which rows still need a Bangla translation added.
+        return bool(obj.text_bn)
 
 
 @admin.register(Pin)

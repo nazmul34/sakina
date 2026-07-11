@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Pressable } from 'react-native';
 
 import { useColors } from '../lib/colors';
+import { useT } from '../lib/i18n';
 import { DailyMessageScreen } from '../screens/DailyMessageScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { NearbyMosquesScreen } from '../screens/NearbyMosquesScreen';
@@ -62,6 +63,7 @@ const ICONS: Record<
  */
 export function MainTabs() {
   const c = useColors();
+  const t = useT();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -83,19 +85,19 @@ export function MainTabs() {
       <Tab.Screen
         name="Home"
         component={HomeScreen}
-        options={{ headerShown: false, title: 'Home' }}
+        options={{ headerShown: false, title: t('tab.home') }}
       />
       <Tab.Screen
         name="Mosques"
         component={NearbyMosquesScreen}
         options={{
-          title: 'Nearby mosques',
+          title: t('tab.mosques'),
           // Quick hop to the user's custom silencing zones — the other
           // location-based feature, otherwise only in Settings.
           headerRight: () => (
             <HeaderIconButton
               icon="pin-outline"
-              label="Pinned zones"
+              label={t('nav.pinnedZones')}
               route="PinnedLocations"
             />
           ),
@@ -105,11 +107,11 @@ export function MainTabs() {
         name="Messages"
         component={DailyMessageScreen}
         options={{
-          title: 'Daily message',
+          title: t('tab.messages'),
           headerRight: () => (
             <HeaderIconButton
               icon="heart-outline"
-              label="Saved messages"
+              label={t('nav.savedMessages')}
               route="SavedMessages"
             />
           ),
@@ -118,7 +120,7 @@ export function MainTabs() {
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
-        options={{ title: 'Settings' }}
+        options={{ title: t('tab.settings') }}
       />
     </Tab.Navigator>
   );

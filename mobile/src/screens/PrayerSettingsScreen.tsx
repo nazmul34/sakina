@@ -30,6 +30,7 @@ import {
 import { SelectField } from '../components/SelectField';
 import { useHighAccuracyLocation } from '../hooks/useHighAccuracyLocation';
 import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
+import { useT } from '../lib/i18n';
 import {
   evaluatePrayerAwareSilence,
   pushPrayerWindowsToNative,
@@ -48,7 +49,6 @@ import {
 import {
   computeDailyPrayerTimes,
   formatTimeOfDay,
-  PRAYER_LABELS,
   PRAYER_NAMES,
   type PrayerName,
 } from '../lib/prayerTimes';
@@ -70,6 +70,7 @@ const PRAYER_ICONS: Readonly<
 export function PrayerSettingsScreen() {
   const styles = useThemedStyles(makeStyles);
   const colors = useColors();
+  const t = useT();
   const [config, setConfig] = usePrayerTimesConfig();
   const [notifications, setNotifications] = usePrayerNotificationSettings();
   const [prayerAware, setPrayerAware] = usePrayerAwareSilentSettings();
@@ -103,8 +104,8 @@ export function PrayerSettingsScreen() {
     const granted = await ensureNotificationPermission();
     if (!granted) {
       Alert.alert(
-        'Notifications off',
-        'Enable notifications for Sakina in your system settings to get prayer reminders.',
+        t('prayerSettings.notifOff'),
+        t('prayerSettings.notifOffBody'),
       );
       return;
     }
@@ -148,7 +149,7 @@ export function PrayerSettingsScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.container}>
-      <Text style={styles.sectionTitle}>Today’s times</Text>
+      <Text style={styles.sectionTitle}>{t('prayerSettings.todaysTimes')}</Text>
       {prayerTimes ? (
         <View style={styles.timesCard}>
           {prayerTimes.times.map(({ name, time }, index) => {
@@ -171,10 +172,12 @@ export function PrayerSettingsScreen() {
                     color={isNext ? colors.onBrand : colors.brand}
                   />
                 </View>
-                <Text style={styles.timeName}>{PRAYER_LABELS[name]}</Text>
+                <Text style={styles.timeName}>{t(`prayer.${name}`)}</Text>
                 {isNext && (
                   <View style={styles.nextChip}>
-                    <Text style={styles.nextChipText}>Next</Text>
+                    <Text style={styles.nextChipText}>
+                      {t('prayerSettings.next')}
+                    </Text>
                   </View>
                 )}
                 <Text style={styles.timeValue}>{formatTimeOfDay(time)}</Text>
@@ -185,8 +188,7 @@ export function PrayerSettingsScreen() {
       ) : locationError ? (
         <View style={styles.timesCard}>
           <Text style={styles.hint}>
-            Grant location access to preview your prayer times. Your method choice
-            below is still saved.
+            {t('prayerSettings.locationHintSaved')}
           </Text>
         </View>
       ) : (
@@ -195,19 +197,23 @@ export function PrayerSettingsScreen() {
         </View>
       )}
 
-      <Text style={styles.sectionTitle}>Calculation method</Text>
+      <Text style={styles.sectionTitle}>{t('prayerSettings.calcMethod')}</Text>
       <SelectField
         value={config.method}
         options={CALCULATION_METHODS}
         onChange={(method) => setConfig({ ...config, method })}
-        title="Calculation method"
-        accessibilityLabel="Calculation method"
+        title={t('prayerSettings.calcMethod')}
+        accessibilityLabel={t('prayerSettings.calcMethod')}
       />
 
-      <Text style={styles.sectionTitle}>Asr calculation</Text>
+      <Text style={styles.sectionTitle}>{t('prayerSettings.asrCalc')}</Text>
       <View style={styles.segmented}>
-        {ASR_METHODS.map(({ key, label }) => {
+        {ASR_METHODS.map(({ key }) => {
           const selected = config.asr === key;
+          const label =
+            key === 'hanafi'
+              ? t('prayerSettings.asrHanafi')
+              : t('prayerSettings.asrStandard');
           return (
             <Pressable
               key={key}
@@ -229,13 +235,15 @@ export function PrayerSettingsScreen() {
         })}
       </View>
 
-      <Text style={styles.sectionTitle}>Reminders</Text>
+      <Text style={styles.sectionTitle}>{t('prayerSettings.reminders')}</Text>
       <View style={styles.group}>
         <View style={styles.switchRow}>
           <View style={styles.switchText}>
-            <Text style={styles.switchLabel}>Prayer reminders</Text>
+            <Text style={styles.switchLabel}>
+              {t('prayerSettings.prayerReminders')}
+            </Text>
             <Text style={styles.switchSub}>
-              A notification at each prayer time.
+              {t('prayerSettings.prayerRemindersSub')}
             </Text>
           </View>
           <Switch
@@ -251,7 +259,7 @@ export function PrayerSettingsScreen() {
               !notifications.enabled && styles.disabledText,
             ]}
           >
-            Play sound
+            {t('prayerSettings.playSound')}
           </Text>
           <Switch
             value={notifications.sound}
@@ -276,7 +284,7 @@ export function PrayerSettingsScreen() {
                   !notifications.enabled && styles.disabledText,
                 ]}
               >
-                {PRAYER_LABELS[name]}
+                {t(`prayer.${name}`)}
               </Text>
             </View>
             <Switch
@@ -288,14 +296,15 @@ export function PrayerSettingsScreen() {
         ))}
       </View>
 
-      <Text style={styles.sectionTitle}>Prayer-aware silent</Text>
+      <Text style={styles.sectionTitle}>{t('prayerSettings.prayerAware')}</Text>
       <View style={styles.group}>
         <View style={styles.switchRow}>
           <View style={styles.switchText}>
-            <Text style={styles.switchLabel}>Tighten around prayer</Text>
+            <Text style={styles.switchLabel}>
+              {t('prayerSettings.tighten')}
+            </Text>
             <Text style={styles.switchSub}>
-              Near a mosque, silence around each prayer (from just before jamaat
-              to the end of salah) rather than the whole time you’re nearby.
+              {t('prayerSettings.tightenSub')}
             </Text>
           </View>
           <Switch
@@ -307,24 +316,22 @@ export function PrayerSettingsScreen() {
         </View>
         {prayerAware.enabled && (
           <View style={[styles.switchRow, styles.switchRowBordered]}>
-            <Text style={styles.switchLabel}>Active now</Text>
+            <Text style={styles.switchLabel}>
+              {t('prayerSettings.activeNow')}
+            </Text>
             <Text style={styles.previewTime}>
               {activeWindow
-                ? `${PRAYER_LABELS[activeWindow.name]} · until ${formatTimeOfDay(
-                    activeWindow.end,
-                  )}`
-                : 'No prayer window'}
+                ? t('prayerSettings.windowUntil', {
+                    prayer: t(`prayer.${activeWindow.name}`),
+                    time: formatTimeOfDay(activeWindow.end),
+                  })
+                : t('prayerSettings.noPrayerWindow')}
             </Text>
           </View>
         )}
       </View>
 
-      <Text style={styles.note}>
-        Prayer times are computed on your device from your location — no account
-        needed, and they work offline. Reminders are scheduled locally and play
-        the default notification sound. Prayer-aware silent is optional and off
-        by default.
-      </Text>
+      <Text style={styles.note}>{t('prayerSettings.note')}</Text>
     </ScrollView>
   );
 }

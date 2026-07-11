@@ -13,12 +13,14 @@ import { useCallback, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
+import { useT } from '../lib/i18n';
 import { readPins, type Pin } from '../lib/pins';
 import { trySyncPins } from '../lib/pinsSync';
 
 export function PinnedLocationsScreen() {
   const navigation = useNavigation();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const [pins, setPins] = useState<Pin[]>([]);
 
   // On focus, show local pins immediately (a save/delete in the editor is
@@ -53,11 +55,8 @@ export function PinnedLocationsScreen() {
         }
         ListEmptyComponent={
           <View style={styles.centered}>
-            <Text style={styles.centeredTitle}>No pinned zones yet</Text>
-            <Text style={styles.centeredBody}>
-              Drop a pin on a spot — like your local masjid — to make it a
-              silent zone, even if it isn&apos;t in our mosque data.
-            </Text>
+            <Text style={styles.centeredTitle}>{t('pinned.emptyTitle')}</Text>
+            <Text style={styles.centeredBody}>{t('pinned.emptyBody')}</Text>
           </View>
         }
         renderItem={({ item }) => (
@@ -65,14 +64,16 @@ export function PinnedLocationsScreen() {
             style={styles.row}
             onPress={() => navigation.navigate('PinEditor', { pinId: item.id })}
             accessibilityRole="button"
-            accessibilityLabel={`Edit ${item.label || 'unlabelled pin'}`}
+            accessibilityLabel={t('pinned.editLabel', {
+              label: item.label || t('pinned.unlabelledForEdit'),
+            })}
           >
             <View style={styles.rowText}>
               <Text style={styles.name} numberOfLines={1}>
-                {item.label || 'Unlabelled pin'}
+                {item.label || t('pinned.unlabelled')}
               </Text>
               <Text style={styles.meta}>
-                {formatRadius(item.radiusM)} radius
+                {t('pinned.radius', { radius: formatRadius(item.radiusM) })}
               </Text>
             </View>
             <Text style={styles.chevron}>›</Text>
@@ -85,7 +86,7 @@ export function PinnedLocationsScreen() {
         onPress={() => navigation.navigate('PinEditor', {})}
         accessibilityRole="button"
       >
-        <Text style={styles.addButtonText}>+ Add a pin</Text>
+        <Text style={styles.addButtonText}>{t('pinned.addPin')}</Text>
       </Pressable>
     </View>
   );

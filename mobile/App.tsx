@@ -14,6 +14,7 @@ import { darkColors, lightColors } from './src/lib/colors';
 import { requestInitialPermissions } from './src/lib/permissions';
 import { trySyncDeviceSettings } from './src/lib/deviceSettingsSync';
 import { trySyncPins } from './src/lib/pinsSync';
+import { hydrateLocale } from './src/lib/i18n';
 import { hydrateTheme, useResolvedScheme } from './src/lib/theme';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
@@ -33,9 +34,10 @@ export default function App() {
   const scheme = useResolvedScheme();
 
   useEffect(() => {
-    // Load the saved theme preference into memory on launch so the app chrome
-    // reflects the user's choice rather than flashing the OS default (F-07.3).
+    // Load the saved theme + language preferences into memory on launch so the
+    // app chrome reflects the user's choices rather than flashing defaults.
     void hydrateTheme();
+    void hydrateLocale();
   }, []);
 
   useEffect(() => {
