@@ -10,6 +10,8 @@ def _make(category="quran", is_active=True, **kwargs):
     return IslamicMessage.objects.create(
         text=kwargs.get("text", "Test message"),
         source_label=kwargs.get("source_label", "Test 1:1"),
+        text_bn=kwargs.get("text_bn", ""),
+        source_label_bn=kwargs.get("source_label_bn", ""),
         category=category,
         is_active=is_active,
     )
@@ -68,6 +70,36 @@ class RandomMessageApiTests(APITestCase):
         response = self.client.get("/messages/random?category=unknown")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("detail", response.json())
+
+    # --- language (Bangla) ---------------------------------------------------
+
+    def test_bangla_text_returned_when_lang_bn(self):
+        _make(text="Peace", text_bn="শান্তি", source_label="Q 1:1",
+              source_label_bn="কুরআন ১:১")
+        body = self.client.get("/messages/random?lang=bn").json()
+        self.assertEqual(body["text"], "শান্তি")
+        self.assertEqual(body["source_label"], "কুরআন ১:১")
+
+    def test_falls_back_to_english_when_no_translation(self):
+        _make(text="Only English", text_bn="", source_label="Q 2:2")
+        body = self.client.get("/messages/random?lang=bn").json()
+        self.assertEqual(body["text"], "Only English")
+        self.assertEqual(body["source_label"], "Q 2:2")
+
+    def test_english_returned_by_default(self):
+        _make(text="Hello", text_bn="হ্যালো")
+        body = self.client.get("/messages/random").json()
+        self.assertEqual(body["text"], "Hello")
+
+    def test_unknown_lang_falls_back_to_english(self):
+        _make(text="Hello", text_bn="হ্যালো")
+        body = self.client.get("/messages/random?lang=fr").json()
+        self.assertEqual(body["text"], "Hello")
+
+    def test_response_shape_unchanged_with_lang(self):
+        _make(text="Hi", text_bn="হাই")
+        body = self.client.get("/messages/random?lang=bn").json()
+        self.assertEqual(set(body.keys()), {"id", "text", "source_label", "category"})
 
     # --- inactive messages ---------------------------------------------------
 

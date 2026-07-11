@@ -7,89 +7,97 @@ import { RingerControlPanel } from '../components/RingerControlPanel';
 import { API_BASE_URL, SHOW_DEV_TOOLS } from '../config/env';
 import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
 import { getDeviceId } from '../lib/deviceId';
+import { useT, type TranslationKey } from '../lib/i18n';
 import type { RootStackParamList } from '../navigation/types';
 
 type StackRoute = keyof RootStackParamList;
 
 interface SettingsRow {
   readonly icon: keyof typeof Ionicons.glyphMap;
-  readonly label: string;
-  readonly subtitle: string;
+  readonly labelKey: TranslationKey;
+  readonly subtitleKey: TranslationKey;
   readonly route: StackRoute;
 }
 
 interface SettingsSection {
-  readonly title: string;
+  readonly titleKey: TranslationKey;
   readonly rows: readonly SettingsRow[];
 }
 
 // Everything reachable from the old Home link list, regrouped into themed
-// sections so it scans as settings rather than a flat pile of buttons.
+// sections so it scans as settings rather than a flat pile of buttons. Labels are
+// translation keys, resolved to the active language at render time.
 const SECTIONS: readonly SettingsSection[] = [
   {
-    title: 'Prayer & worship',
+    titleKey: 'settings.section.prayer',
     rows: [
       {
         icon: 'time-outline',
-        label: 'Prayer times',
-        subtitle: 'Calculation method and Asr school',
+        labelKey: 'settings.prayerTimes.label',
+        subtitleKey: 'settings.prayerTimes.subtitle',
         route: 'PrayerSettings',
       },
       {
         icon: 'compass-outline',
-        label: 'Qibla direction',
-        subtitle: 'Find the direction of the Kaaba',
+        labelKey: 'settings.qibla.label',
+        subtitleKey: 'settings.qibla.subtitle',
         route: 'Qibla',
       },
     ],
   },
   {
-    title: 'Locations',
+    titleKey: 'settings.section.locations',
     rows: [
       {
         icon: 'pin-outline',
-        label: 'Pinned zones',
-        subtitle: 'Custom places to silence your phone',
+        labelKey: 'settings.pinnedZones.label',
+        subtitleKey: 'settings.pinnedZones.subtitle',
         route: 'PinnedLocations',
       },
     ],
   },
   {
-    title: 'Messages',
+    titleKey: 'settings.section.messages',
     rows: [
       {
         icon: 'heart-outline',
-        label: 'Saved messages',
-        subtitle: 'Your favourited reminders',
+        labelKey: 'settings.savedMessages.label',
+        subtitleKey: 'settings.savedMessages.subtitle',
         route: 'SavedMessages',
       },
       {
         icon: 'notifications-outline',
-        label: 'Daily reminder',
-        subtitle: 'A message at a time you choose',
+        labelKey: 'settings.dailyReminder.label',
+        subtitleKey: 'settings.dailyReminder.subtitle',
         route: 'DailyReminder',
       },
     ],
   },
   {
-    title: 'App',
+    titleKey: 'settings.section.app',
     rows: [
       {
         icon: 'color-palette-outline',
-        label: 'Appearance',
-        subtitle: 'Light, dark, or system theme',
+        labelKey: 'settings.appearance.label',
+        subtitleKey: 'settings.appearance.subtitle',
         route: 'ThemeSettings',
       },
       {
+        icon: 'language-outline',
+        labelKey: 'settings.language.label',
+        subtitleKey: 'settings.language.subtitle',
+        route: 'LanguageSettings',
+      },
+      {
         icon: 'shield-checkmark-outline',
-        label: 'Permissions',
-        subtitle: 'Location and Do Not Disturb access',
+        labelKey: 'settings.permissions.label',
+        subtitleKey: 'settings.permissions.subtitle',
         route: 'Permissions',
       },
       {
         icon: 'list-outline',
-        label: 'Activity log',
-        subtitle: 'When and where your phone was silenced',
+        labelKey: 'settings.activity.label',
+        subtitleKey: 'settings.activity.subtitle',
         route: 'Activity',
       },
     ],
@@ -104,6 +112,7 @@ const SECTIONS: readonly SettingsSection[] = [
 export function SettingsScreen() {
   const navigation = useNavigation();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const [deviceId, setDeviceId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -123,8 +132,8 @@ export function SettingsScreen() {
       showsVerticalScrollIndicator={false}
     >
       {SECTIONS.map((section) => (
-        <View key={section.title} style={styles.section}>
-          <Text style={styles.sectionTitle}>{section.title}</Text>
+        <View key={section.titleKey} style={styles.section}>
+          <Text style={styles.sectionTitle}>{t(section.titleKey)}</Text>
           <View style={styles.card}>
             {section.rows.map((row, index) => (
               <Row
@@ -145,7 +154,7 @@ export function SettingsScreen() {
       {SHOW_DEV_TOOLS && (
         <>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Developer</Text>
+            <Text style={styles.sectionTitle}>{t('settings.section.developer')}</Text>
             <RingerControlPanel />
           </View>
 
@@ -170,6 +179,8 @@ function Row({
 }) {
   const c = useColors();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
+  const label = t(row.labelKey);
   return (
     <Pressable
       style={({ pressed }) => [
@@ -179,14 +190,14 @@ function Row({
       ]}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={row.label}
+      accessibilityLabel={label}
     >
       <View style={styles.rowIcon}>
         <Ionicons name={row.icon} size={20} color={c.brand} />
       </View>
       <View style={styles.rowText}>
-        <Text style={styles.rowLabel}>{row.label}</Text>
-        <Text style={styles.rowSubtitle}>{row.subtitle}</Text>
+        <Text style={styles.rowLabel}>{label}</Text>
+        <Text style={styles.rowSubtitle}>{t(row.subtitleKey)}</Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color={c.muted} />
     </Pressable>

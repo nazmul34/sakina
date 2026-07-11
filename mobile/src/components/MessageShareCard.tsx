@@ -15,6 +15,7 @@
 import { forwardRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useT } from '../lib/i18n';
 import type { IslamicMessage } from '../lib/messagesApi';
 
 /** Logical card size (9:16). Captured at the device pixel ratio for a crisp PNG. */
@@ -27,9 +28,10 @@ interface MessageShareCardProps {
 
 export const MessageShareCard = forwardRef<View, MessageShareCardProps>(
   function MessageShareCard({ message }, ref) {
+    const t = useT();
     return (
       <View ref={ref} style={styles.card} collapsable={false}>
-        <Text style={styles.kicker}>Daily reminder</Text>
+        <Text style={styles.kicker}>{t('shareCard.kicker')}</Text>
 
         <View style={styles.body}>
           <Text style={styles.quoteMark}>“</Text>
@@ -41,7 +43,7 @@ export const MessageShareCard = forwardRef<View, MessageShareCardProps>(
 
         <View style={styles.footer}>
           <Text style={styles.wordmark}>Sakina</Text>
-          <Text style={styles.tagline}>Find your calm</Text>
+          <Text style={styles.tagline}>{t('shareCard.tagline')}</Text>
         </View>
       </View>
     );

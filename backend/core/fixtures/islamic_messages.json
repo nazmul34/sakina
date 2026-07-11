@@ -134,6 +134,7 @@
     "pk": "00000000-0000-0000-0000-000000000014",
     "fields": {
       "text": "Take care of your prayers — they are your direct connection with Allah.",
+      "text_bn": "আপনার নামাজের যত্ন নিন — এটিই আল্লাহর সাথে আপনার সরাসরি সংযোগ।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -144,7 +145,9 @@
     "pk": "00000000-0000-0000-0000-000000000015",
     "fields": {
       "text": "A kind word is also a form of charity.",
+      "text_bn": "একটি সদয় কথাও এক ধরনের সদকা।",
       "source_label": "Sahih al-Bukhari 2989",
+      "source_label_bn": "সহিহ বুখারি ২৯৮৯",
       "category": "reminder",
       "is_active": true
     }
@@ -154,6 +157,7 @@
     "pk": "00000000-0000-0000-0000-000000000016",
     "fields": {
       "text": "Begin each task with Bismillah and you invite blessing into your effort.",
+      "text_bn": "প্রতিটি কাজ বিসমিল্লাহ দিয়ে শুরু করুন, তাহলে আপনার প্রচেষ্টায় বরকত আসবে।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1164,6 +1168,7 @@
     "pk": "00000000-0000-0000-0000-000000000117",
     "fields": {
       "text": "Begin your day with the name of Allah, and let gratitude be your first thought.",
+      "text_bn": "আল্লাহর নাম দিয়ে আপনার দিন শুরু করুন, আর কৃতজ্ঞতাই হোক আপনার প্রথম ভাবনা।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1174,6 +1179,7 @@
     "pk": "00000000-0000-0000-0000-000000000118",
     "fields": {
       "text": "A small deed done sincerely is greater than a large one done for show.",
+      "text_bn": "লোক-দেখানো বড় আমলের চেয়ে আন্তরিকতার সাথে করা ছোট আমল উত্তম।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1184,6 +1190,7 @@
     "pk": "00000000-0000-0000-0000-000000000119",
     "fields": {
       "text": "When you feel far from Allah, remember: He never moved. Turn back.",
+      "text_bn": "যখন আল্লাহর থেকে দূরত্ব অনুভব করেন, মনে রাখবেন: তিনি কখনো সরে যাননি। ফিরে আসুন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1194,6 +1201,7 @@
     "pk": "00000000-0000-0000-0000-000000000120",
     "fields": {
       "text": "Patience is not passive waiting; it is trusting Allah's timing while you keep striving.",
+      "text_bn": "ধৈর্য মানে নিষ্ক্রিয় অপেক্ষা নয়; বরং চেষ্টা চালিয়ে যাওয়ার পাশাপাশি আল্লাহর নির্ধারিত সময়ে আস্থা রাখা।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1204,6 +1212,7 @@
     "pk": "00000000-0000-0000-0000-000000000121",
     "fields": {
       "text": "Guard your five daily prayers; they are the pillars that hold up your day.",
+      "text_bn": "আপনার পাঁচ ওয়াক্ত নামাজ রক্ষা করুন; এগুলোই আপনার দিনকে ধরে রাখা স্তম্ভ।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1214,6 +1223,7 @@
     "pk": "00000000-0000-0000-0000-000000000122",
     "fields": {
       "text": "Forgive others, not because they deserve it, but because you seek Allah's forgiveness.",
+      "text_bn": "অন্যকে ক্ষমা করুন—তারা যোগ্য বলে নয়, বরং আপনি আল্লাহর ক্ষমা চান বলে।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1224,6 +1234,7 @@
     "pk": "00000000-0000-0000-0000-000000000123",
     "fields": {
       "text": "Your tongue can be charity or harm — choose your words as if they are recorded, for they are.",
+      "text_bn": "আপনার জিহ্বা সদকাও হতে পারে, ক্ষতিও—শব্দগুলো এমনভাবে বেছে নিন যেন তা লেখা হচ্ছে, কারণ সত্যিই তা লেখা হচ্ছে।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1234,6 +1245,7 @@
     "pk": "00000000-0000-0000-0000-000000000124",
     "fields": {
       "text": "Dua is never wasted: it is answered, stored, or turned into protection from harm.",
+      "text_bn": "দোয়া কখনো বৃথা যায় না: হয় কবুল হয়, নয় জমা রাখা হয়, নয়তো বিপদ থেকে রক্ষায় রূপ নেয়।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1244,6 +1256,7 @@
     "pk": "00000000-0000-0000-0000-000000000125",
     "fields": {
       "text": "Lower your gaze, and Allah will raise your heart.",
+      "text_bn": "আপনার দৃষ্টি নত করুন, আল্লাহ আপনার অন্তরকে উন্নত করবেন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1254,6 +1267,7 @@
     "pk": "00000000-0000-0000-0000-000000000126",
     "fields": {
       "text": "The quiet worship no one sees may be the deed that saves you.",
+      "text_bn": "কেউ দেখে না এমন নীরব ইবাদতই হয়তো সেই আমল যা আপনাকে মুক্তি দেবে।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1264,6 +1278,7 @@
     "pk": "00000000-0000-0000-0000-000000000127",
     "fields": {
       "text": "Do not let a moment of anger destroy what years of kindness built.",
+      "text_bn": "এক মুহূর্তের রাগ যেন বছরের পর বছরের সদাচারে গড়া সম্পর্ক ধ্বংস না করে।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1274,6 +1289,7 @@
     "pk": "00000000-0000-0000-0000-000000000128",
     "fields": {
       "text": "Give in secret; let your right hand not know what your left hand gives.",
+      "text_bn": "গোপনে দান করুন; আপনার ডান হাত যেন না জানে বাম হাত কী দিল।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1284,6 +1300,7 @@
     "pk": "00000000-0000-0000-0000-000000000129",
     "fields": {
       "text": "Every difficulty you face is known to Allah, and nothing is too big for Him.",
+      "text_bn": "আপনার প্রতিটি কষ্ট আল্লাহর জানা, আর তাঁর কাছে কোনো কিছুই বড় নয়।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1294,6 +1311,7 @@
     "pk": "00000000-0000-0000-0000-000000000130",
     "fields": {
       "text": "Seek forgiveness often; it opens doors you did not know were closed.",
+      "text_bn": "বেশি বেশি ক্ষমা প্রার্থনা করুন; এটি এমন দরজা খুলে দেয় যা বন্ধ ছিল বলেও জানতেন না।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1304,6 +1322,7 @@
     "pk": "00000000-0000-0000-0000-000000000131",
     "fields": {
       "text": "Be the reason someone believes in the goodness of Muslims.",
+      "text_bn": "এমন হোন, যাতে কেউ মুসলিমদের কল্যাণে বিশ্বাস স্থাপন করে।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1314,6 +1333,7 @@
     "pk": "00000000-0000-0000-0000-000000000132",
     "fields": {
       "text": "Consistency in small acts of worship outlasts bursts of enthusiasm.",
+      "text_bn": "অল্প ইবাদতে নিয়মিততা ক্ষণিক উদ্দীপনার চেয়ে বেশি টেকে।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1324,6 +1344,7 @@
     "pk": "00000000-0000-0000-0000-000000000133",
     "fields": {
       "text": "Your parents' du'a for you is a treasure; earn it while you can.",
+      "text_bn": "আপনার জন্য মা-বাবার দোয়া এক অমূল্য সম্পদ; সুযোগ থাকতেই তা অর্জন করুন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1334,6 +1355,7 @@
     "pk": "00000000-0000-0000-0000-000000000134",
     "fields": {
       "text": "Gratitude turns what you have into enough.",
+      "text_bn": "কৃতজ্ঞতা আপনার যা আছে তাকেই যথেষ্ট করে তোলে।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1344,6 +1366,7 @@
     "pk": "00000000-0000-0000-0000-000000000135",
     "fields": {
       "text": "Do not measure your worth by people's praise, but by your standing with Allah.",
+      "text_bn": "মানুষের প্রশংসা দিয়ে নয়, বরং আল্লাহর কাছে আপনার অবস্থান দিয়ে নিজের মূল্য মাপুন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1354,6 +1377,7 @@
     "pk": "00000000-0000-0000-0000-000000000136",
     "fields": {
       "text": "Remember death often; it softens the heart and orders your priorities.",
+      "text_bn": "মৃত্যুকে বেশি বেশি স্মরণ করুন; এটি অন্তরকে কোমল করে ও অগ্রাধিকার ঠিক করে দেয়।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1364,6 +1388,7 @@
     "pk": "00000000-0000-0000-0000-000000000137",
     "fields": {
       "text": "The dunya is a bridge — cross it, but do not build your house upon it.",
+      "text_bn": "দুনিয়া একটি সেতু—পার হয়ে যান, কিন্তু এর উপর ঘর বাঁধবেন না।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1374,6 +1399,7 @@
     "pk": "00000000-0000-0000-0000-000000000138",
     "fields": {
       "text": "A grateful heart in hardship is worth more than a complaining heart in ease.",
+      "text_bn": "স্বাচ্ছন্দ্যে অভিযোগকারী অন্তরের চেয়ে কষ্টে কৃতজ্ঞ অন্তর অনেক মূল্যবান।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1384,6 +1410,7 @@
     "pk": "00000000-0000-0000-0000-000000000139",
     "fields": {
       "text": "Keep good company; you become like those you sit with.",
+      "text_bn": "ভালো সঙ্গ রাখুন; আপনি যাদের সাথে বসেন, তাদের মতোই হয়ে ওঠেন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1394,6 +1421,7 @@
     "pk": "00000000-0000-0000-0000-000000000140",
     "fields": {
       "text": "When in doubt about a choice, pray istikhara and trust where Allah leads you.",
+      "text_bn": "কোনো সিদ্ধান্তে দ্বিধায় পড়লে ইস্তিখারা করুন এবং আল্লাহ যেদিকে পরিচালিত করেন তাতে আস্থা রাখুন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1404,6 +1432,7 @@
     "pk": "00000000-0000-0000-0000-000000000141",
     "fields": {
       "text": "Honor your neighbour, even the one who wrongs you.",
+      "text_bn": "আপনার প্রতিবেশীকে সম্মান করুন, এমনকি যে আপনার প্রতি অন্যায় করে তাকেও।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1414,6 +1443,7 @@
     "pk": "00000000-0000-0000-0000-000000000142",
     "fields": {
       "text": "Speak gently to your family; the best of you are the best to their families.",
+      "text_bn": "পরিবারের সাথে কোমলভাবে কথা বলুন; তোমাদের মধ্যে সেই উত্তম, যে তার পরিবারের কাছে উত্তম।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1424,6 +1454,7 @@
     "pk": "00000000-0000-0000-0000-000000000143",
     "fields": {
       "text": "Reading a single verse with reflection is better than reciting many in haste.",
+      "text_bn": "তাড়াহুড়ো করে অনেক আয়াত পড়ার চেয়ে চিন্তাভাবনা করে একটি আয়াত পড়া উত্তম।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1434,6 +1465,7 @@
     "pk": "00000000-0000-0000-0000-000000000144",
     "fields": {
       "text": "Anxiety shrinks when you hand your affairs to the One who controls all affairs.",
+      "text_bn": "যিনি সব বিষয় নিয়ন্ত্রণ করেন তাঁর হাতে নিজের বিষয় সঁপে দিলে দুশ্চিন্তা কমে যায়।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1444,6 +1476,7 @@
     "pk": "00000000-0000-0000-0000-000000000145",
     "fields": {
       "text": "Do not delay repentance for tomorrow that may never come.",
+      "text_bn": "তওবা এমন আগামীকালের জন্য দেরি করবেন না, যা হয়তো কখনো আসবে না।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1454,6 +1487,7 @@
     "pk": "00000000-0000-0000-0000-000000000146",
     "fields": {
       "text": "The Prophet ﷺ smiled often; a cheerful face is a gift you can give freely.",
+      "text_bn": "নবীজি ﷺ প্রায়ই হাসতেন; হাস্যোজ্জ্বল মুখ এমন এক উপহার যা আপনি অকাতরে দিতে পারেন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1464,6 +1498,7 @@
     "pk": "00000000-0000-0000-0000-000000000147",
     "fields": {
       "text": "Wealth is a test as much as poverty; both ask, 'Will you remember Allah?'",
+      "text_bn": "দারিদ্র্যের মতো সম্পদও এক পরীক্ষা; উভয়ই জিজ্ঞেস করে, ‘তুমি কি আল্লাহকে স্মরণ করবে?’",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1474,6 +1509,7 @@
     "pk": "00000000-0000-0000-0000-000000000148",
     "fields": {
       "text": "Feed the hungry, visit the sick, and free your heart of pride.",
+      "text_bn": "ক্ষুধার্তকে খাওয়ান, অসুস্থকে দেখতে যান, আর অন্তরকে অহংকারমুক্ত করুন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1484,6 +1520,7 @@
     "pk": "00000000-0000-0000-0000-000000000149",
     "fields": {
       "text": "Whatever you missed was never meant to reach you; whatever reached you was never meant to miss.",
+      "text_bn": "যা হাতছাড়া হয়েছে তা কখনো আপনার কাছে পৌঁছানোর ছিল না; আর যা পৌঁছেছে তা কখনো হাতছাড়া হওয়ার ছিল না।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1494,6 +1531,7 @@
     "pk": "00000000-0000-0000-0000-000000000150",
     "fields": {
       "text": "Make du'a for your brothers and sisters in their absence; the angels say, 'And for you the same.'",
+      "text_bn": "আপনার ভাই-বোনদের জন্য তাদের অনুপস্থিতিতে দোয়া করুন; ফেরেশতারা বলেন, ‘আর তোমার জন্যও তাই।’",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1504,6 +1542,7 @@
     "pk": "00000000-0000-0000-0000-000000000151",
     "fields": {
       "text": "A heart attached to the mosque is shaded on the Day when there is no shade but His.",
+      "text_bn": "মসজিদের সাথে সংযুক্ত অন্তর সেই দিন ছায়া পাবে, যেদিন তাঁর ছায়া ছাড়া আর কোনো ছায়া থাকবে না।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1514,6 +1553,7 @@
     "pk": "00000000-0000-0000-0000-000000000152",
     "fields": {
       "text": "Control your anger, and Paradise is promised to you.",
+      "text_bn": "নিজের রাগ নিয়ন্ত্রণ করুন, আপনার জন্য জান্নাতের প্রতিশ্রুতি রয়েছে।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1524,6 +1564,7 @@
     "pk": "00000000-0000-0000-0000-000000000153",
     "fields": {
       "text": "The best gift to give your children is your good example.",
+      "text_bn": "সন্তানদের দেওয়া সেরা উপহার হলো আপনার উত্তম দৃষ্টান্ত।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1534,6 +1575,7 @@
     "pk": "00000000-0000-0000-0000-000000000154",
     "fields": {
       "text": "Do not despair over sins; despair is a trap. The door of return is always open.",
+      "text_bn": "গুনাহের কারণে হতাশ হবেন না; হতাশা একটি ফাঁদ। ফিরে আসার দরজা সবসময় খোলা।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1544,6 +1586,7 @@
     "pk": "00000000-0000-0000-0000-000000000155",
     "fields": {
       "text": "Say 'Alhamdulillah' in ease and 'Alhamdulillah' in hardship; both are worship.",
+      "text_bn": "স্বাচ্ছন্দ্যে ‘আলহামদুলিল্লাহ’ বলুন, কষ্টেও ‘আলহামদুলিল্লাহ’ বলুন; দুটোই ইবাদত।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1554,6 +1597,7 @@
     "pk": "00000000-0000-0000-0000-000000000156",
     "fields": {
       "text": "Protect your prayer times, and your day will find its order around them.",
+      "text_bn": "আপনার নামাজের সময়গুলো রক্ষা করুন, আপনার দিন সেগুলোকে ঘিরেই শৃঙ্খলা খুঁজে পাবে।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1564,6 +1608,7 @@
     "pk": "00000000-0000-0000-0000-000000000157",
     "fields": {
       "text": "Kind words cost nothing yet weigh heavily on the scale of good deeds.",
+      "text_bn": "সদয় কথায় কোনো খরচ নেই, তবু তা নেক আমলের পাল্লায় ভারী হয়।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1574,6 +1619,7 @@
     "pk": "00000000-0000-0000-0000-000000000158",
     "fields": {
       "text": "Be quick to forgive and slow to take offense.",
+      "text_bn": "ক্ষমা করতে দ্রুত হোন, আর মনে আঘাত নিতে ধীর হোন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1584,6 +1630,7 @@
     "pk": "00000000-0000-0000-0000-000000000159",
     "fields": {
       "text": "Every breath is a blessing counted; use it in what pleases Allah.",
+      "text_bn": "প্রতিটি নিঃশ্বাস গণিত এক নিয়ামত; তা আল্লাহর সন্তুষ্টির কাজে ব্যয় করুন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1594,6 +1641,7 @@
     "pk": "00000000-0000-0000-0000-000000000160",
     "fields": {
       "text": "The one who trusts Allah is never truly alone.",
+      "text_bn": "যে আল্লাহর উপর ভরসা রাখে, সে কখনো সত্যিকার অর্থে একা নয়।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1604,6 +1652,7 @@
     "pk": "00000000-0000-0000-0000-000000000161",
     "fields": {
       "text": "Hold your tongue from complaint and your heart from envy.",
+      "text_bn": "আপনার জিহ্বাকে অভিযোগ থেকে আর অন্তরকে হিংসা থেকে সংযত রাখুন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1614,6 +1663,7 @@
     "pk": "00000000-0000-0000-0000-000000000162",
     "fields": {
       "text": "Charity given with a smile is doubled in beauty.",
+      "text_bn": "হাসিমুখে দেওয়া দান সৌন্দর্যে দ্বিগুণ হয়ে যায়।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1624,6 +1674,7 @@
     "pk": "00000000-0000-0000-0000-000000000163",
     "fields": {
       "text": "A moment of sincere du'a in the last third of the night can change a life.",
+      "text_bn": "রাতের শেষ তৃতীয়াংশে আন্তরিক দোয়ার একটি মুহূর্ত একটি জীবন বদলে দিতে পারে।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1634,6 +1685,7 @@
     "pk": "00000000-0000-0000-0000-000000000164",
     "fields": {
       "text": "Do not underestimate a sincere 'SubhanAllah' — it fills the scale.",
+      "text_bn": "একটি আন্তরিক ‘সুবহানাল্লাহ’-কে তুচ্ছ মনে করবেন না—এটি পাল্লা পূর্ণ করে দেয়।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1644,6 +1696,7 @@
     "pk": "00000000-0000-0000-0000-000000000165",
     "fields": {
       "text": "Return to Allah before you are returned to Him.",
+      "text_bn": "আপনাকে তাঁর কাছে ফিরিয়ে নেওয়ার আগেই আল্লাহর দিকে ফিরে আসুন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1654,6 +1707,7 @@
     "pk": "00000000-0000-0000-0000-000000000166",
     "fields": {
       "text": "The strongest among you is the one who pardons when able to punish.",
+      "text_bn": "তোমাদের মধ্যে সবচেয়ে শক্তিশালী সে-ই, যে শাস্তি দিতে সক্ষম হয়েও ক্ষমা করে।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1664,6 +1718,7 @@
     "pk": "00000000-0000-0000-0000-000000000167",
     "fields": {
       "text": "Let your last words before sleep be the remembrance of Allah.",
+      "text_bn": "ঘুমানোর আগে আপনার শেষ কথা হোক আল্লাহর স্মরণ।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1674,6 +1729,7 @@
     "pk": "00000000-0000-0000-0000-000000000168",
     "fields": {
       "text": "Mercy given is mercy earned.",
+      "text_bn": "যে দয়া করে, সে দয়া অর্জন করে।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1684,6 +1740,7 @@
     "pk": "00000000-0000-0000-0000-000000000169",
     "fields": {
       "text": "Plant goodness wherever you go; you may not see the harvest, but Allah records the seed.",
+      "text_bn": "যেখানেই যান কল্যাণের বীজ বপন করুন; ফসল হয়তো দেখবেন না, কিন্তু আল্লাহ বীজটি লিখে রাখেন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1694,6 +1751,7 @@
     "pk": "00000000-0000-0000-0000-000000000170",
     "fields": {
       "text": "A humble servant is dearer to Allah than a proud worshipper.",
+      "text_bn": "অহংকারী ইবাদতকারীর চেয়ে বিনয়ী বান্দা আল্লাহর কাছে অধিক প্রিয়।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1704,6 +1762,7 @@
     "pk": "00000000-0000-0000-0000-000000000171",
     "fields": {
       "text": "Keep your promises, even the small ones.",
+      "text_bn": "আপনার প্রতিশ্রুতি রক্ষা করুন, ছোটগুলোও।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1714,6 +1773,7 @@
     "pk": "00000000-0000-0000-0000-000000000172",
     "fields": {
       "text": "When the world overwhelms you, return to sujood.",
+      "text_bn": "যখন দুনিয়া আপনাকে অভিভূত করে ফেলে, সিজদায় ফিরে আসুন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1724,6 +1784,7 @@
     "pk": "00000000-0000-0000-0000-000000000173",
     "fields": {
       "text": "Your reaction to a test is itself the test.",
+      "text_bn": "পরীক্ষার প্রতি আপনার প্রতিক্রিয়াই আসলে পরীক্ষা।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1734,6 +1795,7 @@
     "pk": "00000000-0000-0000-0000-000000000174",
     "fields": {
       "text": "Do good and cast it into the sea; if the fish do not know it, Allah does.",
+      "text_bn": "ভালো কাজ করুন এবং তা সাগরে ভাসিয়ে দিন; মাছ যদি তা না-ও জানে, আল্লাহ জানেন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1744,6 +1806,7 @@
     "pk": "00000000-0000-0000-0000-000000000175",
     "fields": {
       "text": "The believer's affair is wholly good: grateful in ease, patient in hardship.",
+      "text_bn": "মুমিনের সব বিষয়ই কল্যাণকর: স্বাচ্ছন্দ্যে কৃতজ্ঞ, কষ্টে ধৈর্যশীল।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1754,6 +1817,7 @@
     "pk": "00000000-0000-0000-0000-000000000176",
     "fields": {
       "text": "Water your faith daily with dhikr, or watch it wither.",
+      "text_bn": "প্রতিদিন যিকির দিয়ে আপনার ঈমানকে সিঞ্চিত করুন, নয়তো তা শুকিয়ে যেতে দেখবেন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true
@@ -1764,6 +1828,7 @@
     "pk": "00000000-0000-0000-0000-000000000177",
     "fields": {
       "text": "Be a source of ease for people, and Allah will ease your affairs.",
+      "text_bn": "মানুষের জন্য স্বস্তির উৎস হোন, আল্লাহ আপনার বিষয়গুলো সহজ করে দেবেন।",
       "source_label": "",
       "category": "reminder",
       "is_active": true

@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
+import { useT } from '../lib/i18n';
 import {
   applyReminderSettings,
   DEFAULT_REMINDER,
@@ -34,6 +35,7 @@ import {
 
 export function DailyReminderScreen() {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const [settings, setSettings] = useState<ReminderSettings>(DEFAULT_REMINDER);
   const [loading, setLoading] = useState(true);
   const [showPicker, setShowPicker] = useState(false);
@@ -69,8 +71,8 @@ export function DailyReminderScreen() {
     const granted = await ensureNotificationPermission();
     if (!granted) {
       Alert.alert(
-        'Notifications off',
-        'Enable notifications for Sakina in your system settings to get daily reminders.',
+        t('dailyReminderScreen.notifOff'),
+        t('dailyReminderScreen.notifOffBody'),
       );
       return;
     }
@@ -107,9 +109,9 @@ export function DailyReminderScreen() {
     <View style={styles.container}>
       <View style={styles.row}>
         <View style={styles.rowText}>
-          <Text style={styles.title}>Daily reminder</Text>
+          <Text style={styles.title}>{t('dailyReminderScreen.title')}</Text>
           <Text style={styles.subtitle}>
-            Get one message as a notification at a time you choose.
+            {t('dailyReminderScreen.subtitle')}
           </Text>
         </View>
         <Switch
@@ -123,18 +125,15 @@ export function DailyReminderScreen() {
         onPress={() => setShowPicker(true)}
         disabled={!settings.enabled}
         accessibilityRole="button"
-        accessibilityLabel="Change reminder time"
+        accessibilityLabel={t('dailyReminderScreen.changeTime')}
       >
-        <Text style={styles.timeLabel}>Time</Text>
+        <Text style={styles.timeLabel}>{t('dailyReminderScreen.time')}</Text>
         <Text style={styles.timeValue}>
           {formatReminderTime(settings.hour, settings.minute)}
         </Text>
       </Pressable>
 
-      <Text style={styles.note}>
-        Reminders are scheduled on your device — no account needed, and they work
-        offline.
-      </Text>
+      <Text style={styles.note}>{t('dailyReminderScreen.note')}</Text>
 
       {showPicker && (
         <DateTimePicker

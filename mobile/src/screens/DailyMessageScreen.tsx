@@ -25,6 +25,7 @@ import { captureRef } from 'react-native-view-shot';
 import { MessageShareCard } from '../components/MessageShareCard';
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import { useFavorites } from '../lib/favorites';
+import { useT, type TranslationKey } from '../lib/i18n';
 import {
   composeShareText,
   fetchRandomMessage,
@@ -33,22 +34,23 @@ import {
 } from '../lib/messagesApi';
 
 interface CategoryChip {
-  readonly label: string;
+  readonly labelKey: TranslationKey;
   readonly value: MessageCategory | undefined;
 }
 
 const CHIPS: CategoryChip[] = [
-  { label: 'All', value: undefined },
-  { label: "Qur'an", value: 'quran' },
-  { label: 'Hadith', value: 'hadith' },
-  { label: "Du'a", value: 'dua' },
-  { label: 'Reminder', value: 'reminder' },
+  { labelKey: 'dailyMessage.all', value: undefined },
+  { labelKey: 'dailyMessage.quran', value: 'quran' },
+  { labelKey: 'dailyMessage.hadith', value: 'hadith' },
+  { labelKey: 'dailyMessage.dua', value: 'dua' },
+  { labelKey: 'dailyMessage.reminder', value: 'reminder' },
 ];
 
 type Status = 'loading' | 'success' | 'empty' | 'error';
 
 export function DailyMessageScreen() {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const [category, setCategory] = useState<MessageCategory | undefined>(
     undefined,
   );
@@ -126,20 +128,26 @@ export function DailyMessageScreen() {
     try {
       const uri = await captureRef(cardRef, { format: 'png', quality: 1 });
       if (!(await Sharing.isAvailableAsync())) {
-        Alert.alert('Sharing unavailable', 'Image sharing is not available on this device.');
+        Alert.alert(
+          t('dailyMessage.sharingUnavailable'),
+          t('dailyMessage.sharingUnavailableBody'),
+        );
         return;
       }
       await Sharing.shareAsync(uri, {
         mimeType: 'image/png',
-        dialogTitle: 'Share message card',
+        dialogTitle: t('dailyMessage.shareDialogTitle'),
         UTI: 'public.png',
       });
     } catch {
-      Alert.alert('Could not create image', 'Something went wrong rendering the card.');
+      Alert.alert(
+        t('dailyMessage.imageError'),
+        t('dailyMessage.imageErrorBody'),
+      );
     } finally {
       setImageBusy(false);
     }
-  }, []);
+  }, [t]);
 
   return (
     <ScrollView
@@ -150,19 +158,20 @@ export function DailyMessageScreen() {
       <View style={styles.chips} accessibilityRole="tablist">
         {CHIPS.map((chip) => {
           const selected = chip.value === category;
+          const label = t(chip.labelKey);
           return (
             <Pressable
-              key={chip.label}
+              key={chip.labelKey}
               style={[styles.chip, selected && styles.chipSelected]}
               onPress={() => handleChip(chip.value)}
               accessibilityRole="tab"
               accessibilityState={{ selected }}
-              accessibilityLabel={`Filter by ${chip.label}`}
+              accessibilityLabel={t('dailyMessage.filterBy', { label })}
             >
               <Text
                 style={[styles.chipText, selected && styles.chipTextSelected]}
               >
-                {chip.label}
+                {label}
               </Text>
             </Pressable>
           );
@@ -184,7 +193,11 @@ export function DailyMessageScreen() {
               onPress={() => toggleFavorite(message)}
               accessibilityRole="button"
               accessibilityState={{ selected: isSaved }}
-              accessibilityLabel={isSaved ? 'Remove from saved' : 'Save message'}
+              accessibilityLabel={
+                isSaved
+                  ? t('dailyMessage.removeFromSaved')
+                  : t('dailyMessage.saveMessage')
+              }
               hitSlop={12}
             >
               <Text style={[styles.heartIcon, isSaved && styles.heartIconOn]}>
@@ -200,18 +213,18 @@ export function DailyMessageScreen() {
 
         {status === 'empty' && (
           <View style={styles.centered}>
-            <Text style={styles.emptyTitle}>No messages</Text>
+            <Text style={styles.emptyTitle}>{t('dailyMessage.noMessages')}</Text>
             <Text style={styles.emptyBody}>
-              There are no messages in this category yet.
+              {t('dailyMessage.noMessagesBody')}
             </Text>
           </View>
         )}
 
         {status === 'error' && (
           <View style={styles.centered}>
-            <Text style={styles.errorTitle}>{"Couldn't load a message"}</Text>
+            <Text style={styles.errorTitle}>{t('dailyMessage.loadError')}</Text>
             <Text style={styles.errorBody}>
-              {errorDetail || 'Check your connection and try again.'}
+              {errorDetail || t('dailyMessage.loadErrorBody')}
             </Text>
           </View>
         )}
@@ -225,9 +238,11 @@ export function DailyMessageScreen() {
             style={styles.shareButton}
             onPress={() => void handleShare(message)}
             accessibilityRole="button"
-            accessibilityLabel="Share this message as text"
+            accessibilityLabel={t('dailyMessage.shareAsText')}
           >
-            <Text style={styles.shareButtonText}>Share text</Text>
+            <Text style={styles.shareButtonText}>
+              {t('dailyMessage.shareText')}
+            </Text>
           </Pressable>
 
           {/* Rendered image-card share (F-04.4) */}
@@ -239,10 +254,12 @@ export function DailyMessageScreen() {
             onPress={() => void handleShareImage()}
             disabled={imageBusy}
             accessibilityRole="button"
-            accessibilityLabel="Share this message as an image card"
+            accessibilityLabel={t('dailyMessage.shareAsImage')}
           >
             <Text style={styles.shareImageButtonText}>
-              {imageBusy ? 'Preparing image…' : 'Share as image'}
+              {imageBusy
+                ? t('dailyMessage.preparingImage')
+                : t('dailyMessage.shareImage')}
             </Text>
           </Pressable>
         </>
@@ -257,10 +274,12 @@ export function DailyMessageScreen() {
         onPress={() => void load(category)}
         disabled={status === 'loading'}
         accessibilityRole="button"
-        accessibilityLabel={status === 'error' ? 'Try again' : 'Next message'}
+        accessibilityLabel={
+          status === 'error' ? t('common.tryAgain') : t('dailyMessage.next')
+        }
       >
         <Text style={styles.nextButtonText}>
-          {status === 'error' ? 'Try again' : 'Next message'}
+          {status === 'error' ? t('common.tryAgain') : t('dailyMessage.next')}
         </Text>
       </Pressable>
 

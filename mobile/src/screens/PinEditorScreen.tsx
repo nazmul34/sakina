@@ -26,6 +26,7 @@ import {
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { PinMap } from '../components/PinMap';
 import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
+import { useT } from '../lib/i18n';
 import { armGeofencing } from '../lib/geofencing';
 import type { LatLng } from '../lib/geofencing/types';
 import { getHighAccuracyFix } from '../lib/location';
@@ -49,6 +50,7 @@ export function PinEditorScreen() {
   const navigation = useNavigation();
   const c = useColors();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const { params } = useRoute<RouteProp<RootStackParamList, 'PinEditor'>>();
   const pinId = params?.pinId;
 
@@ -134,7 +136,7 @@ export function PinEditorScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator />
-        <Text style={styles.centeredBody}>Finding your location…</Text>
+        <Text style={styles.centeredBody}>{t('pinEditor.findingLocation')}</Text>
       </View>
     );
   }
@@ -150,13 +152,11 @@ export function PinEditorScreen() {
         contentContainerStyle={styles.panelContent}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.hint}>
-          Tap the map or drag the pin to set the spot.
-        </Text>
+        <Text style={styles.hint}>{t('pinEditor.tapHint')}</Text>
 
         {!pinId ? (
           <>
-            <Text style={styles.fieldLabel}>Suggested</Text>
+            <Text style={styles.fieldLabel}>{t('pinEditor.suggested')}</Text>
             <View style={styles.presets}>
               {PIN_PRESETS.map((preset) => {
                 const selected =
@@ -184,18 +184,18 @@ export function PinEditorScreen() {
           </>
         ) : null}
 
-        <Text style={styles.fieldLabel}>Label</Text>
+        <Text style={styles.fieldLabel}>{t('pinEditor.label')}</Text>
         <TextInput
           style={styles.input}
           value={label}
           onChangeText={setLabel}
-          placeholder="e.g. My local masjid"
+          placeholder={t('pinEditor.labelPlaceholder')}
           placeholderTextColor={c.muted}
           returnKeyType="done"
           maxLength={60}
         />
 
-        <Text style={styles.fieldLabel}>Radius</Text>
+        <Text style={styles.fieldLabel}>{t('pinEditor.radius')}</Text>
         <View style={styles.presets}>
           {PIN_RADIUS_PRESETS_M.map((preset) => {
             const selected = preset === radiusM;
@@ -227,7 +227,7 @@ export function PinEditorScreen() {
           accessibilityRole="button"
         >
           <Text style={styles.saveButtonText}>
-            {pinId ? 'Save changes' : 'Save pin'}
+            {pinId ? t('pinEditor.saveChanges') : t('pinEditor.savePin')}
           </Text>
         </Pressable>
 
@@ -237,16 +237,19 @@ export function PinEditorScreen() {
             onPress={() => setConfirmingDelete(true)}
             accessibilityRole="button"
           >
-            <Text style={styles.deleteButtonText}>Delete pin</Text>
+            <Text style={styles.deleteButtonText}>
+              {t('pinEditor.deletePin')}
+            </Text>
           </Pressable>
         ) : null}
       </ScrollView>
 
       <ConfirmDialog
         visible={confirmingDelete}
-        title="Delete this pin?"
-        message="This silent zone will be removed from this device."
-        confirmLabel="Delete"
+        title={t('pinEditor.deleteTitle')}
+        message={t('pinEditor.deleteMessage')}
+        confirmLabel={t('pinEditor.delete')}
+        cancelLabel={t('common.cancel')}
         destructive
         onConfirm={handleDelete}
         onCancel={() => setConfirmingDelete(false)}

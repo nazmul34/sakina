@@ -22,6 +22,12 @@ class IslamicMessage(UUIDModel):
 
     text = models.TextField()
     source_label = models.CharField(max_length=200, blank=True)
+    # Bangla translations (F-i18n). Optional per row: when blank, the endpoint
+    # falls back to the English `text` / `source_label`, so the Bangla UI still
+    # shows content for messages not yet translated (e.g. scripture awaiting a
+    # vetted translation). Populated from the fixture.
+    text_bn = models.TextField(blank=True)
+    source_label_bn = models.CharField(max_length=200, blank=True)
     category = models.CharField(
         max_length=20,
         choices=Category.choices,
@@ -31,6 +37,18 @@ class IslamicMessage(UUIDModel):
 
     class Meta:
         ordering = ["id"]
+
+    def text_for(self, lang: str) -> str:
+        """The message text in `lang`, falling back to English when untranslated."""
+        if lang == "bn" and self.text_bn:
+            return self.text_bn
+        return self.text
+
+    def source_label_for(self, lang: str) -> str:
+        """The source label in `lang`, falling back to English when untranslated."""
+        if lang == "bn" and self.source_label_bn:
+            return self.source_label_bn
+        return self.source_label
 
     def __str__(self) -> str:
         label = self.source_label or self.category

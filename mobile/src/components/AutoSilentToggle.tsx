@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
+import { useT } from '../lib/i18n';
 import {
   useAutoSilentEnabled,
   useSilenceMode,
@@ -17,6 +18,7 @@ import {
  */
 export function AutoSilentToggle() {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const [enabled, setEnabled] = useAutoSilentEnabled();
   const [mode, setMode] = useSilenceMode();
 
@@ -24,10 +26,8 @@ export function AutoSilentToggle() {
     <View style={styles.card}>
       <View style={styles.header}>
         <View style={styles.text}>
-          <Text style={styles.title}>Auto-quiet</Text>
-          <Text style={styles.subtitle}>
-            Quiet your phone automatically near mosques and during prayer.
-          </Text>
+          <Text style={styles.title}>{t('autoSilent.title')}</Text>
+          <Text style={styles.subtitle}>{t('autoSilent.subtitle')}</Text>
         </View>
         <Switch value={enabled} onValueChange={setEnabled} />
       </View>
@@ -35,13 +35,13 @@ export function AutoSilentToggle() {
       {enabled && (
         <View style={styles.modeRow} accessibilityRole="radiogroup">
           <ModeOption
-            label="Silent"
+            label={t('autoSilent.silent')}
             icon="notifications-off-outline"
             selected={mode === 'silent'}
             onPress={() => setMode('silent')}
           />
           <ModeOption
-            label="Vibrate"
+            label={t('autoSilent.vibrate')}
             icon="phone-portrait-outline"
             selected={mode === 'vibrate'}
             onPress={() => setMode('vibrate')}

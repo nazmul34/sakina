@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
+import { useT } from '../lib/i18n';
 import {
   checkPermissions,
   fixPermission,
@@ -29,6 +30,7 @@ import {
  */
 export function PermissionsScreen() {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const [items, setItems] = useState<PermissionItem[] | null>(null);
   const [busy, setBusy] = useState<PermissionKey | null>(null);
 
@@ -70,10 +72,7 @@ export function PermissionsScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.intro}>
-        Auto-silent needs these four permissions to silence your phone near
-        mosques — even when the app is closed.
-      </Text>
+      <Text style={styles.intro}>{t('permissions.intro')}</Text>
 
       {items === null ? (
         <ActivityIndicator style={styles.loading} />
@@ -81,7 +80,7 @@ export function PermissionsScreen() {
         <>
           {allGranted && (
             <View style={styles.allSet}>
-              <Text style={styles.allSetText}>✓ All set — you’re covered.</Text>
+              <Text style={styles.allSetText}>{t('permissions.allSet')}</Text>
             </View>
           )}
           {items.map((item) => (
@@ -108,27 +107,31 @@ function PermissionRow({
   onFix: () => void;
 }) {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
+  const title = t(item.titleKey);
   return (
     <View style={styles.row}>
       <View style={styles.rowText}>
         <View style={styles.rowTitleLine}>
           <Text style={styles.statusDot}>{item.granted ? '🟢' : '🔴'}</Text>
-          <Text style={styles.rowTitle}>{item.title}</Text>
+          <Text style={styles.rowTitle}>{title}</Text>
         </View>
-        <Text style={styles.rowDescription}>{item.description}</Text>
+        <Text style={styles.rowDescription}>{t(item.descKey)}</Text>
       </View>
 
       {item.granted ? (
-        <Text style={styles.grantedLabel}>Granted</Text>
+        <Text style={styles.grantedLabel}>{t('permissions.granted')}</Text>
       ) : (
         <Pressable
           style={[styles.fixButton, busy && styles.fixButtonBusy]}
           onPress={onFix}
           disabled={busy}
           accessibilityRole="button"
-          accessibilityLabel={`Fix ${item.title}`}
+          accessibilityLabel={t('permissions.fixLabel', { title })}
         >
-          <Text style={styles.fixButtonText}>{busy ? '…' : 'Fix'}</Text>
+          <Text style={styles.fixButtonText}>
+            {busy ? '…' : t('permissions.fix')}
+          </Text>
         </Pressable>
       )}
     </View>

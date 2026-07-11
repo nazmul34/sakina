@@ -33,6 +33,7 @@ export type RootStackParamList = {
   PrayerSettings: undefined;
   Qibla: undefined;
   ThemeSettings: undefined;
+  LanguageSettings: undefined;
 };
 
 declare global {
