@@ -11,21 +11,29 @@
 import { useTheme } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useLocale } from '../lib/i18n';
+import { localizePlaceLabel } from '../lib/i18n/bdPlaces';
 import { usePlaceName } from '../lib/placeName';
 
 export function LocationHeader() {
   const name = usePlaceName();
+  const locale = useLocale();
   const { colors } = useTheme();
 
   if (!name) {
     return null;
   }
 
+  // Translate BD place names to Bangla when the app language is Bangla (the OS
+  // geocoder only returns them in the device locale). Reactive to the locale, so
+  // switching language re-localizes the header without re-resolving the fix.
+  const display = localizePlaceLabel(name, locale);
+
   return (
     <View style={styles.container} accessibilityRole="text">
       <Text style={[styles.pin, { color: colors.primary }]}>📍</Text>
       <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
-        {name}
+        {display}
       </Text>
     </View>
   );
