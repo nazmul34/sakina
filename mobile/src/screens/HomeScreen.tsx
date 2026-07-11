@@ -9,6 +9,7 @@ import { CurrentPrayerCard } from '../components/CurrentPrayerCard';
 import { LocationHeader } from '../components/LocationHeader';
 import { apiFetch } from '../lib/api';
 import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
+import { useT } from '../lib/i18n';
 
 /**
  * Home dashboard — the app's landing tab.
@@ -22,6 +23,7 @@ import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
 export function HomeScreen() {
   const navigation = useNavigation();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
 
   useEffect(() => {
     // Ping the backend on first paint so the server upserts a Device row on
@@ -37,36 +39,34 @@ export function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
-          <Text style={styles.greeting}>Assalamu alaikum</Text>
+          <Text style={styles.greeting}>{t('home.greeting')}</Text>
           <LocationHeader />
-          <Text style={styles.tagline}>
-            Your phone, respectful around mosques and during prayer.
-          </Text>
+          <Text style={styles.tagline}>{t('home.tagline')}</Text>
         </View>
 
         <CurrentPrayerCard />
         <AutoSilentToggle />
 
-        <Text style={styles.sectionTitle}>Quick actions</Text>
+        <Text style={styles.sectionTitle}>{t('home.quickActions')}</Text>
         <View style={styles.grid}>
           <QuickAction
             icon="location-outline"
-            label="Nearby mosques"
+            label={t('home.nearbyMosques')}
             onPress={() => navigation.navigate('MainTabs', { screen: 'Mosques' })}
           />
           <QuickAction
             icon="compass-outline"
-            label="Qibla direction"
+            label={t('home.qiblaDirection')}
             onPress={() => navigation.navigate('Qibla')}
           />
           <QuickAction
             icon="book-outline"
-            label="Daily message"
+            label={t('home.dailyMessage')}
             onPress={() => navigation.navigate('MainTabs', { screen: 'Messages' })}
           />
           <QuickAction
             icon="time-outline"
-            label="Prayer times"
+            label={t('home.prayerTimes')}
             onPress={() => navigation.navigate('PrayerSettings')}
           />
         </View>

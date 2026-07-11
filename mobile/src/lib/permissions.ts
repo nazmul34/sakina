@@ -21,6 +21,7 @@ import * as Location from 'expo-location';
 import { Alert, Linking } from 'react-native';
 
 import RingerControl from '../../modules/ringer-control';
+import { translate, type TranslationKey } from './i18n';
 import { ensureLocationPermission } from './location';
 import { ensureNotificationPermission } from './notifications';
 
@@ -61,29 +62,31 @@ export type PermissionKey = 'dnd' | 'location' | 'notifications' | 'battery';
 
 export interface PermissionItem {
   readonly key: PermissionKey;
-  readonly title: string;
-  /** One-line "why we need it", shown under the title. */
-  readonly description: string;
+  /** Translation key for the title, resolved by the screen at render time. */
+  readonly titleKey: TranslationKey;
+  /** Translation key for the one-line "why we need it", shown under the title. */
+  readonly descKey: TranslationKey;
   readonly granted: boolean;
 }
 
-const COPY: Record<PermissionKey, { title: string; description: string }> = {
-  dnd: {
-    title: 'Do Not Disturb access',
-    description: 'Lets Sakina silence — and restore — your ringer near mosques.',
-  },
+// Translation keys per permission; the screen resolves them so the checklist
+// re-renders in the active language without re-reading native status.
+const COPY: Record<
+  PermissionKey,
+  { titleKey: TranslationKey; descKey: TranslationKey }
+> = {
+  dnd: { titleKey: 'permissions.dnd.title', descKey: 'permissions.dnd.desc' },
   location: {
-    title: 'Location — “Allow all the time”',
-    description:
-      'Detects when you arrive at and leave a mosque, even in the background.',
+    titleKey: 'permissions.location.title',
+    descKey: 'permissions.location.desc',
   },
   notifications: {
-    title: 'Notifications',
-    description: 'Shows the ongoing auto-silent status and any warnings.',
+    titleKey: 'permissions.notifications.title',
+    descKey: 'permissions.notifications.desc',
   },
   battery: {
-    title: 'Ignore battery optimization',
-    description: 'Stops the system from delaying auto-silent while idle.',
+    titleKey: 'permissions.battery.title',
+    descKey: 'permissions.battery.desc',
   },
 };
 
@@ -153,14 +156,14 @@ async function fixLocation(): Promise<void> {
     // Already permanently denied → only system settings can change it.
     if (!foreground.canAskAgain) {
       await openSettings(
-        'Location is turned off',
-        'Enable Location for Sakina in system settings, then choose “Allow all the time”.',
+        translate('permissions.locationOffTitle'),
+        translate('permissions.locationOffBody'),
       );
       return;
     }
     const proceed = await confirm(
-      'Location access',
-      'Sakina uses your location to silence your phone near mosques and during prayer. First allow location, then choose “Allow all the time”.',
+      translate('permissions.locationAccessTitle'),
+      translate('permissions.locationAccessBody'),
     );
     if (!proceed) return;
     const requested = await Location.requestForegroundPermissionsAsync();
@@ -171,8 +174,8 @@ async function fixLocation(): Promise<void> {
   if (background.granted) return;
 
   const proceed = await confirm(
-    'Allow all the time',
-    'So silencing keeps working when the app is closed, set Location to “Allow all the time” on the next screen.',
+    translate('permissions.allTimeTitle'),
+    translate('permissions.allTimeBody'),
   );
   if (!proceed) return;
 
@@ -190,8 +193,12 @@ function confirm(title: string, message: string): Promise<boolean> {
       title,
       message,
       [
-        { text: 'Not now', style: 'cancel', onPress: () => resolve(false) },
-        { text: 'Continue', onPress: () => resolve(true) },
+        {
+          text: translate('common.notNow'),
+          style: 'cancel',
+          onPress: () => resolve(false),
+        },
+        { text: translate('common.continue'), onPress: () => resolve(true) },
       ],
       { onDismiss: () => resolve(false) },
     );
@@ -205,9 +212,13 @@ function openSettings(title: string, message: string): Promise<void> {
       title,
       message,
       [
-        { text: 'Not now', style: 'cancel', onPress: () => resolve() },
         {
-          text: 'Open settings',
+          text: translate('common.notNow'),
+          style: 'cancel',
+          onPress: () => resolve(),
+        },
+        {
+          text: translate('common.openSettings'),
           onPress: () => {
             void Linking.openSettings();
             resolve();

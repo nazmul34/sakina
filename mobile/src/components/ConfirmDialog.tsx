@@ -1,6 +1,7 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
+import { useT } from '../lib/i18n';
 
 interface ConfirmDialogProps {
   visible: boolean;
@@ -24,13 +25,16 @@ export function ConfirmDialog({
   visible,
   title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   destructive = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
+  const confirmText = confirmLabel ?? t('common.confirm');
+  const cancelText = cancelLabel ?? t('common.cancel');
   return (
     <Modal
       visible={visible}
@@ -52,7 +56,7 @@ export function ConfirmDialog({
               onPress={onCancel}
               accessibilityRole="button"
             >
-              <Text style={styles.cancelText}>{cancelLabel}</Text>
+              <Text style={styles.cancelText}>{cancelText}</Text>
             </Pressable>
             <Pressable
               style={[
@@ -67,7 +71,7 @@ export function ConfirmDialog({
                   destructive ? styles.destructiveText : styles.confirmText
                 }
               >
-                {confirmLabel}
+                {confirmText}
               </Text>
             </Pressable>
           </View>

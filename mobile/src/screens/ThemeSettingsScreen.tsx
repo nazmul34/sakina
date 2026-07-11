@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useColors, useThemedStyles, type ThemeColors } from '../lib/colors';
+import { useT } from '../lib/i18n';
 import {
   THEME_OPTIONS,
   useResolvedScheme,
@@ -32,15 +33,19 @@ const THEME_ICONS: Record<AppTheme, keyof typeof Ionicons.glyphMap> = {
 export function ThemeSettingsScreen() {
   const styles = useThemedStyles(makeStyles);
   const colors = useColors();
+  const t = useT();
   const [preference, setPreference] = useThemePreference();
   const scheme = useResolvedScheme();
+  const schemeLabel =
+    scheme === 'dark' ? t('theme.schemeDark') : t('theme.schemeLight');
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Theme</Text>
+      <Text style={styles.sectionTitle}>{t('theme.section')}</Text>
       <View style={styles.grid}>
-        {THEME_OPTIONS.map(({ key, label }) => {
+        {THEME_OPTIONS.map(({ key }) => {
           const selected = preference === key;
+          const label = t(`theme.${key}`);
           return (
             <Pressable
               key={key}
@@ -65,10 +70,7 @@ export function ThemeSettingsScreen() {
         })}
       </View>
 
-      <Text style={styles.note}>
-        “System” follows your device’s light/dark setting (currently {scheme}).
-        Your choice is saved on this device and synced to your other devices.
-      </Text>
+      <Text style={styles.note}>{t('theme.note', { scheme: schemeLabel })}</Text>
     </View>
   );
 }

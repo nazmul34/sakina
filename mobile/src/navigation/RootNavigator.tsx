@@ -1,7 +1,9 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { useT } from '../lib/i18n';
 import { ActivityScreen } from '../screens/ActivityScreen';
 import { DailyReminderScreen } from '../screens/DailyReminderScreen';
+import { LanguageSettingsScreen } from '../screens/LanguageSettingsScreen';
 import { PermissionsScreen } from '../screens/PermissionsScreen';
 import { PinEditorScreen } from '../screens/PinEditorScreen';
 import { PinnedLocationsScreen } from '../screens/PinnedLocationsScreen';
@@ -21,6 +23,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
  * resolve from anywhere.
  */
 export function RootNavigator() {
+  const t = useT();
   return (
     <Stack.Navigator>
       <Stack.Screen
@@ -31,47 +34,52 @@ export function RootNavigator() {
       <Stack.Screen
         name="Permissions"
         component={PermissionsScreen}
-        options={{ title: 'Permissions' }}
+        options={{ title: t('nav.permissions') }}
       />
       <Stack.Screen
         name="Activity"
         component={ActivityScreen}
-        options={{ title: 'Activity' }}
+        options={{ title: t('nav.activity') }}
       />
       <Stack.Screen
         name="PinnedLocations"
         component={PinnedLocationsScreen}
-        options={{ title: 'Pinned zones' }}
+        options={{ title: t('nav.pinnedZones') }}
       />
       <Stack.Screen
         name="PinEditor"
         component={PinEditorScreen}
-        options={{ title: 'Pin a location' }}
+        options={{ title: t('nav.pinLocation') }}
       />
       <Stack.Screen
         name="SavedMessages"
         component={SavedMessagesScreen}
-        options={{ title: 'Saved messages' }}
+        options={{ title: t('nav.savedMessages') }}
       />
       <Stack.Screen
         name="DailyReminder"
         component={DailyReminderScreen}
-        options={{ title: 'Daily reminder' }}
+        options={{ title: t('nav.dailyReminder') }}
       />
       <Stack.Screen
         name="PrayerSettings"
         component={PrayerSettingsScreen}
-        options={{ title: 'Prayer times' }}
+        options={{ title: t('nav.prayerTimes') }}
       />
       <Stack.Screen
         name="Qibla"
         component={QiblaScreen}
-        options={{ title: 'Qibla' }}
+        options={{ title: t('nav.qibla') }}
       />
       <Stack.Screen
         name="ThemeSettings"
         component={ThemeSettingsScreen}
-        options={{ title: 'Appearance' }}
+        options={{ title: t('nav.appearance') }}
+      />
+      <Stack.Screen
+        name="LanguageSettings"
+        component={LanguageSettingsScreen}
+        options={{ title: t('nav.language') }}
       />
     </Stack.Navigator>
   );

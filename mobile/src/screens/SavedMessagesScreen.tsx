@@ -17,27 +17,26 @@ import {
 
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
 import { useFavorites } from '../lib/favorites';
+import { useT, type TranslationKey } from '../lib/i18n';
 import { composeShareText, type IslamicMessage } from '../lib/messagesApi';
 
-const CATEGORY_LABELS: Record<IslamicMessage['category'], string> = {
-  quran: "Qur'an",
-  hadith: 'Hadith',
-  dua: "Du'a",
-  reminder: 'Reminder',
+const CATEGORY_LABEL_KEYS: Record<IslamicMessage['category'], TranslationKey> = {
+  quran: 'dailyMessage.quran',
+  hadith: 'dailyMessage.hadith',
+  dua: 'dailyMessage.dua',
+  reminder: 'dailyMessage.reminder',
 };
 
 export function SavedMessagesScreen() {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const { favorites, removeFavorite } = useFavorites();
 
   if (favorites.length === 0) {
     return (
       <View style={styles.empty}>
-        <Text style={styles.emptyTitle}>No saved messages</Text>
-        <Text style={styles.emptyBody}>
-          Tap the heart on a daily message to save it here. Your saved list is
-          available offline.
-        </Text>
+        <Text style={styles.emptyTitle}>{t('savedMessages.empty')}</Text>
+        <Text style={styles.emptyBody}>{t('savedMessages.emptyBody')}</Text>
       </View>
     );
   }
@@ -49,7 +48,9 @@ export function SavedMessagesScreen() {
       contentContainerStyle={styles.list}
       renderItem={({ item }) => (
         <View style={styles.card}>
-          <Text style={styles.category}>{CATEGORY_LABELS[item.category]}</Text>
+          <Text style={styles.category}>
+            {t(CATEGORY_LABEL_KEYS[item.category])}
+          </Text>
           <Text style={styles.messageText}>{item.text}</Text>
           {item.source_label.trim() !== '' && (
             <Text style={styles.sourceLabel}>— {item.source_label}</Text>
@@ -64,17 +65,19 @@ export function SavedMessagesScreen() {
                 );
               }}
               accessibilityRole="button"
-              accessibilityLabel="Share this message as text"
+              accessibilityLabel={t('dailyMessage.shareAsText')}
             >
-              <Text style={styles.actionText}>Share</Text>
+              <Text style={styles.actionText}>{t('common.share')}</Text>
             </Pressable>
             <Pressable
               style={styles.action}
               onPress={() => removeFavorite(item.id)}
               accessibilityRole="button"
-              accessibilityLabel="Remove from saved"
+              accessibilityLabel={t('dailyMessage.removeFromSaved')}
             >
-              <Text style={[styles.actionText, styles.removeText]}>Remove</Text>
+              <Text style={[styles.actionText, styles.removeText]}>
+                {t('common.remove')}
+              </Text>
             </Pressable>
           </View>
         </View>

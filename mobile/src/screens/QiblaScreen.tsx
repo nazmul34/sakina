@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
+import { useT } from '../lib/i18n';
 import { useDeviceHeading } from '../hooks/useDeviceHeading';
 import { useHighAccuracyLocation } from '../hooks/useHighAccuracyLocation';
 import { qiblaBearing, qiblaRotation } from '../lib/qibla';
@@ -54,6 +55,7 @@ const ALIGN_TOLERANCE_DEG = 6;
 export function QiblaScreen() {
   const navigation = useNavigation();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   // Recovers on its own once location is enabled (the hook retries on
   // foreground), so the compass appears without needing an app restart.
   const { location, status: locationStatus } = useHighAccuracyLocation();
@@ -62,17 +64,18 @@ export function QiblaScreen() {
   if (locationStatus === 'denied') {
     return (
       <View style={styles.centered}>
-        <Text style={styles.centeredTitle}>Location needed</Text>
+        <Text style={styles.centeredTitle}>{t('qibla.locationNeeded')}</Text>
         <Text style={styles.centeredBody}>
-          Allow location access so Sakina can work out which way the Qibla is
-          from where you are.
+          {t('qibla.locationNeededBody')}
         </Text>
         <Pressable
           style={styles.primaryButton}
           onPress={() => navigation.navigate('Permissions')}
           accessibilityRole="button"
         >
-          <Text style={styles.primaryButtonText}>Set up permissions</Text>
+          <Text style={styles.primaryButtonText}>
+            {t('qibla.setupPermissions')}
+          </Text>
         </Pressable>
       </View>
     );
@@ -81,11 +84,8 @@ export function QiblaScreen() {
   if (locationStatus === 'error') {
     return (
       <View style={styles.centered}>
-        <Text style={styles.centeredTitle}>Couldn&apos;t find you</Text>
-        <Text style={styles.centeredBody}>
-          We couldn&apos;t get your location to compute the Qibla. Please try
-          again.
-        </Text>
+        <Text style={styles.centeredTitle}>{t('qibla.couldntFind')}</Text>
+        <Text style={styles.centeredBody}>{t('qibla.couldntFindBody')}</Text>
       </View>
     );
   }
@@ -94,7 +94,7 @@ export function QiblaScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator />
-        <Text style={styles.centeredBody}>Finding the Qibla…</Text>
+        <Text style={styles.centeredBody}>{t('qibla.finding')}</Text>
       </View>
     );
   }
@@ -106,11 +106,11 @@ export function QiblaScreen() {
   if (isAvailable === false) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.centeredTitle}>No compass sensor</Text>
+        <Text style={styles.centeredTitle}>{t('qibla.noSensor')}</Text>
         <Text style={styles.centeredBody}>
-          This device has no magnetometer, so the live compass isn&apos;t
-          available. The Qibla is{' '}
-          <Text style={styles.bold}>{Math.round(bearing)}°</Text> from north.
+          {t('qibla.noSensorBefore')}
+          <Text style={styles.bold}>{Math.round(bearing)}°</Text>
+          {t('qibla.noSensorAfter')}
         </Text>
       </View>
     );
@@ -127,11 +127,11 @@ export function QiblaScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Qibla</Text>
+      <Text style={styles.heading}>{t('qibla.heading')}</Text>
       <Text style={styles.subtitle}>
         {aligned
-          ? `You’re facing the Qibla — ${KAABA_GLYPH} is at the top.`
-          : `Turn until the ${KAABA_GLYPH} reaches the top marker.`}
+          ? t('qibla.facingSubtitle', { kaaba: KAABA_GLYPH })
+          : t('qibla.turnSubtitle', { kaaba: KAABA_GLYPH })}
       </Text>
 
       <View style={styles.dialWrap}>
@@ -194,7 +194,7 @@ export function QiblaScreen() {
       <View style={[styles.readoutCard, aligned && styles.readoutCardAligned]}>
         <Text style={styles.readoutValue}>{Math.round(bearing)}°</Text>
         <Text style={styles.readoutLabel}>
-          {aligned ? 'Facing the Qibla' : 'Qibla from north'}
+          {aligned ? t('qibla.facingReadout') : t('qibla.fromNorth')}
         </Text>
       </View>
     </View>

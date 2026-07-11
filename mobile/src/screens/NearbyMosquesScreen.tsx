@@ -26,6 +26,7 @@ import {
 } from 'react-native';
 
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
+import { translate, useT } from '../lib/i18n';
 import { useNearbyMosques } from '../hooks/useNearbyMosques';
 import { bearingDegrees } from '../lib/geofencing/geo';
 import { LocationPermissionError } from '../lib/location';
@@ -47,6 +48,7 @@ export function NearbyMosquesScreen() {
     useNearbyMosques();
   const navigation = useNavigation();
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
 
   // Pair each mosque with its bearing from the fetch origin, sorted nearest
   // first (the backend already sorts; we re-sort defensively so the AC holds
@@ -70,7 +72,7 @@ export function NearbyMosquesScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator />
-        <Text style={styles.centeredBody}>Finding mosques near you…</Text>
+        <Text style={styles.centeredBody}>{t('mosques.finding')}</Text>
       </View>
     );
   }
@@ -81,12 +83,14 @@ export function NearbyMosquesScreen() {
     return (
       <View style={styles.centered}>
         <Text style={styles.centeredTitle}>
-          {isPermission ? 'Location needed' : "Couldn't load mosques"}
+          {isPermission
+            ? t('mosques.locationNeeded')
+            : t('mosques.couldntLoad')}
         </Text>
         <Text style={styles.centeredBody}>
           {isPermission
-            ? 'Allow location access so Sakina can find mosques near you.'
-            : 'Check your connection and try again.'}
+            ? t('mosques.locationNeededBody')
+            : t('mosques.connectionBody')}
         </Text>
         <Pressable
           style={styles.primaryButton}
@@ -96,7 +100,9 @@ export function NearbyMosquesScreen() {
           accessibilityRole="button"
         >
           <Text style={styles.primaryButtonText}>
-            {isPermission ? 'Set up permissions' : 'Try again'}
+            {isPermission
+              ? t('mosques.setupPermissions')
+              : t('common.tryAgain')}
           </Text>
         </Pressable>
       </View>
@@ -120,21 +126,20 @@ export function NearbyMosquesScreen() {
         lastUpdatedAt == null ? null : fromCache ? (
           <View style={styles.staleBanner}>
             <Text style={styles.staleText}>
-              Showing saved results from {formatRelative(lastUpdatedAt)} —
-              couldn&apos;t refresh.
+              {t('mosques.stale', { time: formatRelative(lastUpdatedAt) })}
             </Text>
           </View>
         ) : (
           <Text style={styles.freshness}>
-            Updated {formatRelative(lastUpdatedAt)}
+            {t('mosques.updated', { time: formatRelative(lastUpdatedAt) })}
           </Text>
         )
       }
       ListEmptyComponent={
         <View style={styles.centered}>
-          <Text style={styles.centeredTitle}>No mosques nearby</Text>
+          <Text style={styles.centeredTitle}>{t('mosques.noneNearby')}</Text>
           <Text style={styles.centeredBody}>
-            We couldn&apos;t find any mosques within range of your location.
+            {t('mosques.noneNearbyBody')}
           </Text>
         </View>
       }
@@ -145,6 +150,7 @@ export function NearbyMosquesScreen() {
 
 function MosqueRow({ item }: { item: MosqueItem }) {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const { mosque, bearing } = item;
   const point = bearing == null ? null : COMPASS_POINTS[compassIndex(bearing)];
   const arrow = bearing == null ? null : COMPASS_ARROWS[compassIndex(bearing)];
@@ -171,17 +177,17 @@ function MosqueRow({ item }: { item: MosqueItem }) {
           style={styles.navButton}
           onPress={() => openNavigation(mosque)}
           accessibilityRole="button"
-          accessibilityLabel={`Navigate to ${mosque.name}`}
+          accessibilityLabel={t('mosques.navigateTo', { name: mosque.name })}
         >
-          <Text style={styles.navButtonText}>Navigate</Text>
+          <Text style={styles.navButtonText}>{t('common.navigate')}</Text>
         </Pressable>
         <Pressable
           style={styles.reportButton}
           onPress={() => reportIncorrect(mosque)}
           accessibilityRole="button"
-          accessibilityLabel={`Report ${mosque.name} as incorrect`}
+          accessibilityLabel={t('mosques.reportAs', { name: mosque.name })}
         >
-          <Text style={styles.reportButtonText}>Report</Text>
+          <Text style={styles.reportButtonText}>{t('common.report')}</Text>
         </Pressable>
       </View>
     </View>
@@ -195,25 +201,25 @@ function MosqueRow({ item }: { item: MosqueItem }) {
  */
 function reportIncorrect(mosque: NearbyMosque): void {
   Alert.alert(
-    'Report incorrect mosque',
-    `Let us know "${mosque.name}" looks wrong — closed, misnamed, or not a mosque. We'll review it.`,
+    translate('mosques.reportTitle'),
+    translate('mosques.reportMessage', { name: mosque.name }),
     [
-      { text: 'Cancel', style: 'cancel' },
+      { text: translate('common.cancel'), style: 'cancel' },
       {
-        text: 'Report',
+        text: translate('common.report'),
         style: 'destructive',
         onPress: () => {
           void submitMosqueReport(mosque)
             .then(() =>
               Alert.alert(
-                'Thanks for the report',
-                "We'll review this mosque's details.",
+                translate('mosques.reportThanks'),
+                translate('mosques.reportThanksBody'),
               ),
             )
             .catch(() =>
               Alert.alert(
-                'Could not send report',
-                'Please try again in a moment.',
+                translate('mosques.reportFailed'),
+                translate('mosques.reportFailedBody'),
               ),
             );
         },
@@ -249,7 +255,10 @@ function openNavigation(mosque: NearbyMosque): void {
       : `geo:${latitude},${longitude}?q=${latitude},${longitude}(${label})`;
 
   Linking.openURL(url).catch(() => {
-    Alert.alert('Could not open maps', 'No maps app is available to navigate.');
+    Alert.alert(
+      translate('mosques.couldntOpenMaps'),
+      translate('mosques.couldntOpenMapsBody'),
+    );
   });
 }
 
@@ -268,14 +277,14 @@ const dateFormatter = new Intl.DateTimeFormat(undefined, {
 function formatRelative(at: number): string {
   const diffMin = Math.round((Date.now() - at) / 60_000);
   if (diffMin < 1) {
-    return 'just now';
+    return translate('mosques.justNow');
   }
   if (diffMin < 60) {
-    return `${diffMin} min ago`;
+    return translate('mosques.minAgo', { n: diffMin });
   }
   const diffHr = Math.round(diffMin / 60);
   if (diffHr < 24) {
-    return `${diffHr} h ago`;
+    return translate('mosques.hAgo', { n: diffHr });
   }
   return dateFormatter.format(new Date(at));
 }

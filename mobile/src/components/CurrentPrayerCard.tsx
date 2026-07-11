@@ -18,11 +18,11 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { useHighAccuracyLocation } from '../hooks/useHighAccuracyLocation';
 import { useThemedStyles, type ThemeColors } from '../lib/colors';
+import { useT } from '../lib/i18n';
 import { usePrayerTimesConfig } from '../lib/prayerSettings';
 import {
   formatTimeOfDay,
   getCurrentPrayer,
-  PRAYER_LABELS,
   type CurrentPrayer,
 } from '../lib/prayerTimes';
 
@@ -39,6 +39,7 @@ function formatCountdown(ms: number): string {
 
 export function CurrentPrayerCard() {
   const styles = useThemedStyles(makeStyles);
+  const t = useT();
   const [config] = usePrayerTimesConfig();
   // Best-effort location fix. Without it we can't compute times; the hook retries
   // on foreground, so the card fills in once location is enabled rather than
@@ -67,10 +68,8 @@ export function CurrentPrayerCard() {
   if (locationError && !current) {
     return (
       <View style={styles.card}>
-        <Text style={styles.label}>Current prayer</Text>
-        <Text style={styles.hint}>
-          Enable location to see prayer times and your countdown.
-        </Text>
+        <Text style={styles.label}>{t('currentPrayer.label')}</Text>
+        <Text style={styles.hint}>{t('currentPrayer.enableLocation')}</Text>
       </View>
     );
   }
@@ -85,12 +84,16 @@ export function CurrentPrayerCard() {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>Current prayer</Text>
+      <Text style={styles.label}>{t('currentPrayer.label')}</Text>
       <View style={styles.row}>
-        <Text style={styles.name}>{PRAYER_LABELS[current.name]}</Text>
-        <Text style={styles.at}>ends {formatTimeOfDay(current.end)}</Text>
+        <Text style={styles.name}>{t(`prayer.${current.name}`)}</Text>
+        <Text style={styles.at}>
+          {t('currentPrayer.endsAt', { time: formatTimeOfDay(current.end) })}
+        </Text>
       </View>
-      <Text style={styles.countdown}>{formatCountdown(remaining)} left</Text>
+      <Text style={styles.countdown}>
+        {t('currentPrayer.remaining', { time: formatCountdown(remaining) })}
+      </Text>
     </View>
   );
 }

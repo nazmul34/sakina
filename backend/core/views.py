@@ -277,6 +277,8 @@ def random_message(request: Request) -> Response:
     """``GET /messages/random`` — one random active Islamic message (FR-4.1/4.2).
 
     Optionally filter by ``?category=`` (quran / hadith / dua / reminder).
+    Pass ``?lang=bn`` to receive Bangla text where available; any row without a
+    Bangla translation falls back to its English text (never blank).
     Returns ``404`` when no active messages match (e.g. unknown category or
     empty seed), ``400`` when the category value is not a recognised choice.
     """
@@ -299,14 +301,16 @@ def random_message(request: Request) -> Response:
             status=status.HTTP_404_NOT_FOUND,
         )
 
-    return Response(_serialize_message(msg))
+    # Unknown/absent langs quietly resolve to English via the model's fallback.
+    lang = request.query_params.get("lang", "en")
+    return Response(_serialize_message(msg, lang))
 
 
-def _serialize_message(msg: IslamicMessage) -> dict:
+def _serialize_message(msg: IslamicMessage, lang: str = "en") -> dict:
     return {
         "id": str(msg.id),
-        "text": msg.text,
-        "source_label": msg.source_label,
+        "text": msg.text_for(lang),
+        "source_label": msg.source_label_for(lang),
         "category": msg.category,
     }
 
