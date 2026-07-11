@@ -17,6 +17,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 
 const PLACE_KEY = 'sakina.last_place';
 
@@ -26,7 +27,7 @@ const PLACE_KEY = 'sakina.last_place';
  *
  * We walk the address from the finest level (neighbourhood/thana) to the
  * coarsest (country) and show the two most-specific *distinct* levels. That
- * yields "Daulatpur, Khulna" rather than "Khulna, Khulna Division" when the
+ * yields "khalishpur, Khulna" rather than "Khulna, Khulna Division" when the
  * geocoder resolves a sub-locality — while still degrading gracefully to
  * "Khulna, Khulna Division" (or a bare "Khulna") when it doesn't.
  */
@@ -111,25 +112,51 @@ export async function resolveCurrentPlaceName(): Promise<string | null> {
  * The place name to show in the header. Renders the cached label immediately
  * (so it's populated offline / before a fix lands) and refreshes it from a fresh
  * last-known fix. `null` until anything is available.
+ *
+ * On a fresh install there's no last-known fix yet, so the first resolve can come
+ * back empty. To recover without needing the user to reopen the app, we re-resolve
+ * (a) shortly after mount — by then another feature's active fix (e.g. the
+ * current-prayer card) has populated the OS last-known position — and (b) whenever
+ * the app returns to the foreground, mirroring how the prayer/Qibla screens
+ * recover their own fixes.
  */
 export function usePlaceName(): string | null {
   const [name, setName] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
+
+    const applyFresh = (fresh: string | null) => {
+      if (active && fresh) {
+        setName(fresh);
+      }
+    };
+
     void getCachedPlaceName().then((cached) => {
       // Don't overwrite a fresh value that may have already resolved.
       if (active && cached) {
         setName((current) => current ?? cached);
       }
     });
-    void resolveCurrentPlaceName().then((fresh) => {
-      if (active && fresh) {
-        setName(fresh);
+    void resolveCurrentPlaceName().then(applyFresh);
+
+    // Second attempt once a last-known fix has likely landed (fresh install has
+    // none at mount). Cheap and non-fatal; ignored if the first attempt worked.
+    const retry = setTimeout(() => {
+      void resolveCurrentPlaceName().then(applyFresh);
+    }, 4000);
+
+    // And re-resolve each time the app comes back to the foreground.
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        void resolveCurrentPlaceName().then(applyFresh);
       }
     });
+
     return () => {
       active = false;
+      clearTimeout(retry);
+      sub.remove();
     };
   }, []);
 
